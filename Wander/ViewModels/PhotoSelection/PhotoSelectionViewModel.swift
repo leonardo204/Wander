@@ -135,6 +135,18 @@ class PhotoSelectionViewModel {
         }
     }
 
+    func addToSelection(_ asset: PHAsset) {
+        if !selectedAssets.contains(asset) {
+            selectedAssets.append(asset)
+        }
+    }
+
+    func removeFromSelection(_ asset: PHAsset) {
+        if let index = selectedAssets.firstIndex(of: asset) {
+            selectedAssets.remove(at: index)
+        }
+    }
+
     func selectionOrder(for asset: PHAsset) -> Int? {
         guard let index = selectedAssets.firstIndex(of: asset) else { return nil }
         return index + 1
@@ -142,6 +154,12 @@ class PhotoSelectionViewModel {
 
     func clearSelection() {
         selectedAssets.removeAll()
+    }
+
+    func selectAll() {
+        selectedAssets = photos
+        let count = photos.count
+        logger.info("📷 [VM] 전체 선택: \(count)장")
     }
 
     // MARK: - Analysis

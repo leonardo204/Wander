@@ -284,23 +284,111 @@ enum ActivityType: String, Codable {
 
 ---
 
-## 디버깅
+## 로깅 가이드라인
 
-### 로그 확인 방법
+### 로깅 규칙 (필수)
+
+모든 새로운 코드에는 `os.log`를 사용한 로깅을 추가해야 합니다.
+
 ```swift
 import os.log
-private let logger = Logger(subsystem: "com.zerolive.wander", category: "CategoryName")
+
+// 파일 상단에 logger 선언 (private)
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "카테고리명")
 ```
 
-**Console.app에서 확인:**
-1. Mac에서 Console.app 열기
-2. 연결된 디바이스 선택
-3. 검색창에 `com.zerolive.wander` 입력
+### 로깅 위치 (필수 추가)
 
-### 주요 로그 카테고리
-- `AnalyzingView`: 분석 UI 플로우
-- `AnalysisEngine`: 분석 엔진 각 단계
-- `ResultView`: 결과 화면 표시
+| 위치 | 로깅 내용 |
+|------|----------|
+| View의 `onAppear` | 화면 진입, 주요 상태값 |
+| 버튼/액션 핸들러 | 사용자 액션 |
+| 비동기 작업 시작/완료 | API 호출, 분석 시작/완료 |
+| 에러 발생 시 | 에러 메시지, 컨텍스트 |
+| 상태 변경 시 | `onChange`에서 중요 상태 변경 |
+| 권한 요청/응답 | 권한 상태 변화 |
+
+### 로깅 형식
+
+```swift
+// View 진입
+logger.info("🏠 [HomeView] 나타남 - records: \(records.count)개")
+
+// 사용자 액션
+logger.info("📷 [PhotoSelection] 사진 선택: \(asset.localIdentifier)")
+
+// 비동기 작업
+logger.info("🔬 [AnalysisEngine] 분석 시작 - photos: \(count)장")
+logger.info("✅ [AnalysisEngine] 분석 완료 - places: \(places.count)개")
+
+// 에러
+logger.error("❌ [GeocodingService] 실패: \(error.localizedDescription)")
+
+// 경고
+logger.warning("⚠️ [Clustering] GPS 없는 사진 스킵")
+```
+
+### 이모지 컨벤션
+
+| 이모지 | 용도 |
+|--------|------|
+| 🚀 | 앱 시작, 초기화 |
+| 🏠 | 홈 화면 |
+| 📷 | 사진 관련 |
+| 📍 | 위치/클러스터링 |
+| 🗺️ | 지도/지오코딩 |
+| 🔬 | 분석 엔진 |
+| ✨ | AI 스토리 |
+| ⚙️ | 설정 |
+| 🔐 | 키체인/보안 |
+| 🤖 | OpenAI |
+| 🧠 | Anthropic |
+| 💎 | Google AI |
+| ✅ | 성공 |
+| ❌ | 에러 |
+| ⚠️ | 경고 |
+| 📖 | 기록 상세 |
+| 👋 | 온보딩 |
+
+### 로그 카테고리 목록
+
+| 카테고리 | 파일 |
+|----------|------|
+| `WanderApp` | WanderApp.swift |
+| `ContentView` | ContentView.swift |
+| `HomeView` | HomeView.swift |
+| `RecordsView` | RecordsView.swift |
+| `PhotoSelectionView` | PhotoSelectionView.swift |
+| `PhotoSelectionVM` | PhotoSelectionViewModel.swift |
+| `AnalyzingView` | AnalyzingView.swift |
+| `AnalysisEngine` | AnalysisEngine.swift |
+| `ClusteringService` | ClusteringService.swift |
+| `GeocodingService` | GeocodingService.swift |
+| `ActivityInference` | ActivityInferenceService.swift |
+| `ResultView` | ResultView.swift |
+| `MapDetailView` | MapDetailView.swift |
+| `AIStoryView` | AIStoryView.swift |
+| `SettingsView` | SettingsView.swift |
+| `OpenAIService` | OpenAIService.swift |
+| `AnthropicService` | AnthropicService.swift |
+| `GoogleAIService` | GoogleAIService.swift |
+| `KeychainManager` | KeychainManager.swift |
+| `SplashView` | SplashView.swift |
+| `Onboarding` | OnboardingContainerView.swift |
+| `OnboardingIntro` | OnboardingIntroView.swift |
+| `OnboardingPhoto` | OnboardingPhotoView.swift |
+| `OnboardingLocation` | OnboardingLocationView.swift |
+
+### Console.app에서 확인
+
+1. Mac에서 **Console.app** 실행
+2. 왼쪽 패널에서 연결된 **iPhone** 선택
+3. 검색창에 `com.zerolive.wander` 입력
+4. 실시간 로그 확인
+
+**팁:**
+- `subsystem:com.zerolive.wander`로 필터링
+- `category:AnalysisEngine`으로 특정 카테고리만 필터링
 
 ---
 

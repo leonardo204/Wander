@@ -10,6 +10,11 @@ struct PhotoSelectionView: View {
     @StateObject private var viewModel = PhotoSelectionViewModel()
     @State private var showDatePicker = false
 
+    // Drag selection state
+    @State private var isDragging = false
+    @State private var dragStartedOnSelected = false
+    @State private var photosSelectedDuringDrag: Set<String> = []
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -127,23 +132,110 @@ struct PhotoSelectionView: View {
 
     // MARK: - Photo Grid Section
     private var photoGridSection: some View {
-        ScrollView {
-            LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: 2),
-                GridItem(.flexible(), spacing: 2),
-                GridItem(.flexible(), spacing: 2)
-            ], spacing: 2) {
-                ForEach(viewModel.photos, id: \.localIdentifier) { asset in
-                    PhotoGridItem(
-                        asset: asset,
-                        isSelected: viewModel.selectedAssets.contains(asset),
-                        selectionOrder: viewModel.selectionOrder(for: asset)
-                    ) {
-                        viewModel.toggleSelection(asset)
+        GeometryReader { outerGeometry in
+            ScrollView {
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: 2),
+                    GridItem(.flexible(), spacing: 2),
+                    GridItem(.flexible(), spacing: 2)
+                ], spacing: 2) {
+                    ForEach(viewModel.photos, id: \.localIdentifier) { asset in
+                        DraggablePhotoGridItem(
+                            asset: asset,
+                            isSelected: viewModel.selectedAssets.contains(asset),
+                            selectionOrder: viewModel.selectionOrder(for: asset),
+                            isDragging: isDragging
+                        ) {
+                            if !isDragging {
+                                viewModel.toggleSelection(asset)
+                            }
+                        }
+                        .background(
+                            GeometryReader { geometry in
+                                Color.clear
+                                    .preference(
+                                        key: PhotoFramePreferenceKey.self,
+                                        value: [asset.localIdentifier: geometry.frame(in: .named("photoGrid"))]
+                                    )
+                            }
+                        )
+                    }
+                }
+                .padding(.bottom, 100) // Extra padding for scroll
+            }
+            .coordinateSpace(name: "photoGrid")
+            .onPreferenceChange(PhotoFramePreferenceKey.self) { frames in
+                photoFrames = frames
+            }
+            .gesture(
+                DragGesture(minimumDistance: 20)
+                    .onChanged { value in
+                        handleDragChanged(value: value, in: outerGeometry)
+                    }
+                    .onEnded { _ in
+                        handleDragEnded()
+                    }
+            )
+        }
+    }
+
+    // Photo frames for hit testing
+    @State private var photoFrames: [String: CGRect] = [:]
+
+    private func handleDragChanged(value: DragGesture.Value, in geometry: GeometryProxy) {
+        if !isDragging {
+            // Start dragging
+            isDragging = true
+            photosSelectedDuringDrag.removeAll()
+
+            // Check if drag started on a selected photo
+            let startLocation = value.startLocation
+            if let assetId = findAsset(at: startLocation) {
+                let asset = viewModel.photos.first { $0.localIdentifier == assetId }
+                dragStartedOnSelected = asset != nil && viewModel.selectedAssets.contains(asset!)
+            } else {
+                dragStartedOnSelected = false
+            }
+
+            logger.info("📷 [PhotoSelection] 드래그 선택 시작 - deselect mode: \(dragStartedOnSelected)")
+        }
+
+        // Find asset at current drag location
+        let location = value.location
+        if let assetId = findAsset(at: location) {
+            if !photosSelectedDuringDrag.contains(assetId) {
+                photosSelectedDuringDrag.insert(assetId)
+
+                if let asset = viewModel.photos.first(where: { $0.localIdentifier == assetId }) {
+                    if dragStartedOnSelected {
+                        // Deselect mode: remove from selection
+                        if viewModel.selectedAssets.contains(asset) {
+                            viewModel.removeFromSelection(asset)
+                        }
+                    } else {
+                        // Select mode: add to selection
+                        if !viewModel.selectedAssets.contains(asset) {
+                            viewModel.addToSelection(asset)
+                        }
                     }
                 }
             }
         }
+    }
+
+    private func handleDragEnded() {
+        logger.info("📷 [PhotoSelection] 드래그 선택 종료 - 선택된 사진: \(photosSelectedDuringDrag.count)장")
+        isDragging = false
+        photosSelectedDuringDrag.removeAll()
+    }
+
+    private func findAsset(at location: CGPoint) -> String? {
+        for (assetId, frame) in photoFrames {
+            if frame.contains(location) {
+                return assetId
+            }
+        }
+        return nil
     }
 
     // MARK: - Permission Required View
@@ -191,11 +283,22 @@ struct PhotoSelectionView: View {
 
             Spacer()
 
+            // Select All Button
+            if viewModel.selectedAssets.count < viewModel.photos.count {
+                Button("전체 선택") {
+                    logger.info("📷 [PhotoSelection] 전체 선택")
+                    viewModel.selectAll()
+                }
+                .font(WanderTypography.body)
+                .foregroundColor(WanderColors.primary)
+                .padding(.trailing, WanderSpacing.space3)
+            }
+
             Button("모두 해제") {
                 viewModel.clearSelection()
             }
             .font(WanderTypography.body)
-            .foregroundColor(WanderColors.primary)
+            .foregroundColor(WanderColors.textSecondary)
         }
         .padding(WanderSpacing.space4)
         .background(WanderColors.surface)
@@ -366,6 +469,105 @@ struct DateRangePickerSheet: View {
                     Button("취소") { dismiss() }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Photo Frame Preference Key
+struct PhotoFramePreferenceKey: PreferenceKey {
+    static var defaultValue: [String: CGRect] = [:]
+
+    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
+        value.merge(nextValue()) { $1 }
+    }
+}
+
+// MARK: - Draggable Photo Grid Item
+struct DraggablePhotoGridItem: View {
+    let asset: PHAsset
+    let isSelected: Bool
+    let selectionOrder: Int?
+    let isDragging: Bool
+    let action: () -> Void
+
+    @State private var thumbnail: UIImage?
+
+    var body: some View {
+        Button(action: action) {
+            GeometryReader { geometry in
+                ZStack(alignment: .topTrailing) {
+                    // Thumbnail
+                    if let thumbnail = thumbnail {
+                        Image(uiImage: thumbnail)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: geometry.size.width, height: geometry.size.width)
+                            .clipped()
+                    } else {
+                        Rectangle()
+                            .fill(WanderColors.surface)
+                    }
+
+                    // Selection Overlay
+                    if isSelected {
+                        Rectangle()
+                            .fill(WanderColors.primary.opacity(0.3))
+
+                        // Selection Badge
+                        ZStack {
+                            Circle()
+                                .fill(WanderColors.primary)
+                                .frame(width: 24, height: 24)
+
+                            if let order = selectionOrder {
+                                Text("\(order)")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .padding(6)
+                    }
+
+                    // GPS Indicator
+                    if asset.location != nil {
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Image(systemName: "location.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.white)
+                                    .padding(4)
+                                    .background(Color.black.opacity(0.5))
+                                    .cornerRadius(4)
+                                Spacer()
+                            }
+                        }
+                        .padding(4)
+                    }
+                }
+            }
+            .aspectRatio(1, contentMode: .fit)
+        }
+        .buttonStyle(.plain)
+        .allowsHitTesting(!isDragging) // Disable tap during drag
+        .onAppear {
+            loadThumbnail()
+        }
+    }
+
+    private func loadThumbnail() {
+        let manager = PHImageManager.default()
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .opportunistic
+        options.resizeMode = .fast
+
+        manager.requestImage(
+            for: asset,
+            targetSize: CGSize(width: 200, height: 200),
+            contentMode: .aspectFill,
+            options: options
+        ) { image, _ in
+            self.thumbnail = image
         }
     }
 }
