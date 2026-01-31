@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Photos
 import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "HomeView")
@@ -8,6 +9,8 @@ struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \TravelRecord.createdAt, order: .reverse) private var records: [TravelRecord]
     @State private var showPhotoSelection = false
+    @State private var showQuickMode = false
+    @State private var showWeeklyHighlight = false
 
     var body: some View {
         NavigationStack {
@@ -35,6 +38,12 @@ struct HomeView: View {
             .sheet(isPresented: $showPhotoSelection) {
                 PhotoSelectionView()
             }
+            .sheet(isPresented: $showQuickMode) {
+                QuickModeView()
+            }
+            .sheet(isPresented: $showWeeklyHighlight) {
+                WeeklyHighlightView()
+            }
             .onAppear {
                 logger.info("🏠 [HomeView] 나타남 - 저장된 기록: \(records.count)개")
                 for (index, record) in records.prefix(5).enumerated() {
@@ -46,7 +55,8 @@ struct HomeView: View {
 
     // MARK: - Quick Action Section
     private var quickActionSection: some View {
-        HStack(spacing: WanderSpacing.space4) {
+        VStack(spacing: WanderSpacing.space4) {
+            // Main action - Travel record
             QuickActionCard(
                 icon: "camera.fill",
                 title: "새 여행 기록하기",
@@ -56,13 +66,25 @@ struct HomeView: View {
                 showPhotoSelection = true
             }
 
-            QuickActionCard(
-                icon: "map.fill",
-                title: "지도에서 보기",
-                subtitle: "여행 발자취",
-                backgroundColor: WanderColors.primaryPale
-            ) {
-                // TODO: Navigate to map view
+            // Secondary actions
+            HStack(spacing: WanderSpacing.space4) {
+                QuickActionCard(
+                    icon: "bubble.left.fill",
+                    title: "지금 뭐해?",
+                    subtitle: "바로 공유",
+                    backgroundColor: WanderColors.primaryPale
+                ) {
+                    showQuickMode = true
+                }
+
+                QuickActionCard(
+                    icon: "calendar",
+                    title: "이번 주",
+                    subtitle: "하이라이트",
+                    backgroundColor: WanderColors.primaryPale
+                ) {
+                    showWeeklyHighlight = true
+                }
             }
         }
     }
@@ -183,18 +205,31 @@ struct QuickActionCard: View {
 // MARK: - Record Card
 struct RecordCard: View {
     let record: TravelRecord
+    @State private var thumbnail: UIImage?
 
     var body: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space3) {
-            // Thumbnail placeholder
-            RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium)
-                .fill(WanderColors.primaryPale)
-                .frame(height: 120)
-                .overlay(
-                    Image(systemName: "photo.on.rectangle")
-                        .font(.system(size: 32))
-                        .foregroundColor(WanderColors.primary)
-                )
+            // Thumbnail from actual photo
+            ZStack {
+                if let thumbnail = thumbnail {
+                    Image(uiImage: thumbnail)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: 120)
+                        .clipped()
+                        .cornerRadius(WanderSpacing.radiusMedium)
+                } else {
+                    RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium)
+                        .fill(WanderColors.primaryPale)
+                        .frame(height: 120)
+                        .overlay(
+                            Image(systemName: "photo.on.rectangle")
+                                .font(.system(size: 32))
+                                .foregroundColor(WanderColors.primary)
+                        )
+                }
+            }
+            .frame(height: 120)
 
             VStack(alignment: .leading, spacing: WanderSpacing.space1) {
                 Text(record.title)
@@ -217,12 +252,46 @@ struct RecordCard: View {
         .background(WanderColors.surface)
         .cornerRadius(WanderSpacing.radiusXXL)
         .elevation1()
+        .onAppear {
+            loadThumbnail()
+        }
     }
 
     private func formatDateRange(start: Date, end: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
         return "\(formatter.string(from: start)) ~ \(formatter.string(from: end))"
+    }
+
+    private func loadThumbnail() {
+        guard let assetId = record.firstPhotoAssetIdentifier else {
+            logger.info("🏠 [RecordCard] 썸네일 없음 - \(record.title)")
+            return
+        }
+
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetId], options: nil)
+        guard let asset = fetchResult.firstObject else {
+            logger.warning("🏠 [RecordCard] PHAsset 찾을 수 없음 - \(assetId)")
+            return
+        }
+
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .opportunistic
+        options.resizeMode = .fast
+        options.isNetworkAccessAllowed = true
+
+        PHImageManager.default().requestImage(
+            for: asset,
+            targetSize: CGSize(width: 400, height: 240),
+            contentMode: .aspectFill,
+            options: options
+        ) { image, _ in
+            if let image = image {
+                DispatchQueue.main.async {
+                    self.thumbnail = image
+                }
+            }
+        }
     }
 }
 

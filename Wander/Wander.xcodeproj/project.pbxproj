@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -35,9 +35,11 @@
 		C6F45014D4E4AD45CA27D6A8 /* WanderSpacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C176F0945D37E98219E4347 /* WanderSpacing.swift */; };
 		C7E4338EA3FBE76496BC86C4 /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236FC67B2D5FE36573239035 /* OnboardingContainerView.swift */; };
 		E55B852473000EF498F1B0EA /* RecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BDB68CF4F57746D7AF6F6C /* RecordsView.swift */; };
+		EC8FD13F7F236756CACF0EEF /* WeeklyHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9A94D7767877D47292A5D6 /* WeeklyHighlightView.swift */; };
 		F053FEAC293BBEFDFA6F1A06 /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CE9F664E03D6DBD0C97AE6E /* ResultView.swift */; };
 		F0B56A8F65147DECD8344DA3 /* TravelRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27D468AA704F3E844714452 /* TravelRecord.swift */; };
 		F0EEF6703154148EC1994A3B /* MapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9F4F32B5C6B9C8CD73F7B41 /* MapDetailView.swift */; };
+		F53C6AFADF1BCE1C4B2CAC98 /* QuickModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 714F818522502D4D1BA656B1 /* QuickModeView.swift */; };
 		FA83756C2DCE71CA3DEF2678 /* AIServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01DA78D53A168F6F953CAB10 /* AIServiceProtocol.swift */; };
 		FF32092CD15E0A707B20C7E8 /* WanderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F5AF74E8976C19CA1F2931 /* WanderApp.swift */; };
 /* End PBXBuildFile section */
@@ -60,10 +62,11 @@
 		5989A12B232DB900FA252CF3 /* OnboardingIntroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingIntroView.swift; sourceTree = "<group>"; };
 		67FA4CD0C634E35AE8A56305 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		6F8D1BCB0B76A4B78253DAD2 /* ActivityInferenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityInferenceService.swift; sourceTree = "<group>"; };
+		714F818522502D4D1BA656B1 /* QuickModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickModeView.swift; sourceTree = "<group>"; };
 		73183A726FDF526C78A4DEF7 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		74A80A73AF84DC0DF5CDBCA5 /* PhotoSelectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSelectionViewModel.swift; sourceTree = "<group>"; };
 		764FB5507753C9FCEDA6310C /* GeocodingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeocodingService.swift; sourceTree = "<group>"; };
-		7A02BE0AE86E482916C8F103 /* Wander.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wander.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A02BE0AE86E482916C8F103 /* Wander.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Wander.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7BDC82ABF9DB755ECA0B69E0 /* OnboardingPhotoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPhotoView.swift; sourceTree = "<group>"; };
 		A58893162BD06ECDCDA96B6A /* AnalyzingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzingView.swift; sourceTree = "<group>"; };
 		AADA581AA1B63216B34086C1 /* OnboardingLocationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingLocationView.swift; sourceTree = "<group>"; };
@@ -71,6 +74,7 @@
 		B68785E679F65AB40EAF888D /* AnalysisEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisEngine.swift; sourceTree = "<group>"; };
 		B83A53B85B3CB3EFBC9F9389 /* GoogleAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleAIService.swift; sourceTree = "<group>"; };
 		B9F4F32B5C6B9C8CD73F7B41 /* MapDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapDetailView.swift; sourceTree = "<group>"; };
+		CC9A94D7767877D47292A5D6 /* WeeklyHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyHighlightView.swift; sourceTree = "<group>"; };
 		D32AB57310AA1E255D0FF460 /* TravelDay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelDay.swift; sourceTree = "<group>"; };
 		D4BDB68CF4F57746D7AF6F6C /* RecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView.swift; sourceTree = "<group>"; };
 		D51B4D96904A88F17FCEDF0C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -121,6 +125,14 @@
 				FFFD1D05FE7C12A250BCABE1 /* SplashView.swift */,
 			);
 			path = Launch;
+			sourceTree = "<group>";
+		};
+		2FDA34745E3EEBCD506D5A12 /* QuickMode */ = {
+			isa = PBXGroup;
+			children = (
+				714F818522502D4D1BA656B1 /* QuickModeView.swift */,
+			);
+			path = QuickMode;
 			sourceTree = "<group>";
 		};
 		3392D5D54968AD65A2604BF2 /* Analysis */ = {
@@ -228,9 +240,11 @@
 				0EFFF345C6CCFBC3068AC8FF /* Launch */,
 				F55277BF95635A3AE6FBE71C /* Onboarding */,
 				EB08FBA24C38A7B14815BA33 /* PhotoSelection */,
+				2FDA34745E3EEBCD506D5A12 /* QuickMode */,
 				751B0D159D1A9B8A354EF868 /* Records */,
 				5D42AAFB293BCA8CB8D82EA2 /* Result */,
 				E536121B41C725BADEE15BAA /* Settings */,
+				F33584D27A451B7AE6B71BD7 /* Weekly */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -285,6 +299,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		F33584D27A451B7AE6B71BD7 /* Weekly */ = {
+			isa = PBXGroup;
+			children = (
+				CC9A94D7767877D47292A5D6 /* WeeklyHighlightView.swift */,
+			);
+			path = Weekly;
+			sourceTree = "<group>";
+		};
 		F55277BF95635A3AE6FBE71C /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
@@ -302,6 +324,13 @@
 				4634F62FDD4ADC77AE6CA4B0 /* SwiftData */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		"TEMP_FAF13D83-CA50-47F2-A28E-303C5728F726" /* Common */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Common;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -333,6 +362,11 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					DAEABFB4D177DCC30394FDDE = {
+						DevelopmentTeam = "";
+					};
+				};
 			};
 			buildConfigurationList = F9B4DCBD13A5F3108CE22518 /* Build configuration list for PBXProject "Wander" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -344,6 +378,7 @@
 			);
 			mainGroup = 0E3F068FDAECC148F80E1433;
 			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -390,6 +425,7 @@
 				571EEEDE259E9D468204DAAF /* PhotoSelectionView.swift in Sources */,
 				ADA3D6A857DA9EEC387D8F0B /* PhotoSelectionViewModel.swift in Sources */,
 				B88F11C8EC476D3DB4D26194 /* Place.swift in Sources */,
+				F53C6AFADF1BCE1C4B2CAC98 /* QuickModeView.swift in Sources */,
 				E55B852473000EF498F1B0EA /* RecordsView.swift in Sources */,
 				F053FEAC293BBEFDFA6F1A06 /* ResultView.swift in Sources */,
 				06D7B35EF39572C788EEA5E1 /* SettingsView.swift in Sources */,
@@ -400,6 +436,7 @@
 				79E5783510FB1E69E2003B4F /* WanderColors.swift in Sources */,
 				C6F45014D4E4AD45CA27D6A8 /* WanderSpacing.swift in Sources */,
 				3457679691F9C61C331A5AAD /* WanderTypography.swift in Sources */,
+				EC8FD13F7F236756CACF0EEF /* WeeklyHighlightView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -411,7 +448,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = XU8HS9JUTS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "GPS 좌표를 주소로 변환하여 장소 이름을 자동으로 표시합니다.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "생성된 카드 이미지를 사진 앨범에 저장합니다.";
@@ -575,7 +611,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = XU8HS9JUTS;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "GPS 좌표를 주소로 변환하여 장소 이름을 자동으로 표시합니다.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "생성된 카드 이미지를 사진 앨범에 저장합니다.";

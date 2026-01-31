@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import Photos
 import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "RecordsView")
@@ -225,6 +226,7 @@ struct FilterChip: View {
 // MARK: - Record List Card
 struct RecordListCard: View {
     let record: TravelRecord
+    @State private var thumbnails: [UIImage] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space3) {
@@ -245,6 +247,31 @@ struct RecordListCard: View {
                 .font(WanderTypography.caption1)
                 .foregroundColor(WanderColors.textSecondary)
 
+            // Photo thumbnails strip (최대 4장)
+            if !thumbnails.isEmpty {
+                HStack(spacing: 4) {
+                    ForEach(0..<min(thumbnails.count, 4), id: \.self) { index in
+                        Image(uiImage: thumbnails[index])
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 50, height: 50)
+                            .clipped()
+                            .cornerRadius(WanderSpacing.radiusSmall)
+                    }
+                    if record.photoCount > 4 {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: WanderSpacing.radiusSmall)
+                                .fill(WanderColors.primaryPale)
+                                .frame(width: 50, height: 50)
+                            Text("+\(record.photoCount - 4)")
+                                .font(WanderTypography.caption1)
+                                .foregroundColor(WanderColors.primary)
+                        }
+                    }
+                    Spacer()
+                }
+            }
+
             // Stats
             HStack(spacing: WanderSpacing.space5) {
                 StatBadge(icon: "mappin", value: "\(record.placeCount)곳")
@@ -256,12 +283,49 @@ struct RecordListCard: View {
         .background(WanderColors.surface)
         .cornerRadius(WanderSpacing.radiusXL)
         .elevation1()
+        .onAppear {
+            loadThumbnails()
+        }
     }
 
     private func formatDateRange(start: Date, end: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
         return "\(formatter.string(from: start)) ~ \(formatter.string(from: end))"
+    }
+
+    private func loadThumbnails() {
+        let assetIds = Array(record.allPhotoAssetIdentifiers.prefix(4))
+        guard !assetIds.isEmpty else { return }
+
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: assetIds, options: nil)
+
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .opportunistic
+        options.resizeMode = .fast
+        options.isSynchronous = false
+
+        var loadedImages: [UIImage] = []
+        let group = DispatchGroup()
+
+        fetchResult.enumerateObjects { asset, _, _ in
+            group.enter()
+            PHImageManager.default().requestImage(
+                for: asset,
+                targetSize: CGSize(width: 100, height: 100),
+                contentMode: .aspectFill,
+                options: options
+            ) { image, _ in
+                if let image = image {
+                    loadedImages.append(image)
+                }
+                group.leave()
+            }
+        }
+
+        group.notify(queue: .main) {
+            self.thumbnails = loadedImages
+        }
     }
 }
 
@@ -347,6 +411,7 @@ struct RecordDetailFullView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showShareSheet = false
     @State private var showAIStorySheet = false
+    @State private var showEditSheet = false
 
     var body: some View {
         ScrollView {
@@ -400,7 +465,7 @@ struct RecordDetailFullView: View {
                     Button(action: { showAIStorySheet = true }) {
                         Label("AI 스토리 생성", systemImage: "sparkles")
                     }
-                    Button(action: {}) {
+                    Button(action: { showEditSheet = true }) {
                         Label("편집", systemImage: "pencil")
                     }
                 } label: {
@@ -414,6 +479,9 @@ struct RecordDetailFullView: View {
         }
         .sheet(isPresented: $showAIStorySheet) {
             AIStoryView(record: record)
+        }
+        .sheet(isPresented: $showEditSheet) {
+            RecordEditView(record: record)
         }
     }
 
@@ -547,34 +615,588 @@ struct DaySection: View {
 // MARK: - Place Row
 struct PlaceRow: View {
     let place: Place
+    @State private var showDetail = false
+    @State private var thumbnails: [UIImage] = []
 
     var body: some View {
-        HStack(spacing: WanderSpacing.space3) {
-            // Time
-            Text(formatTime(place.startTime))
-                .font(WanderTypography.caption1)
-                .foregroundColor(WanderColors.textTertiary)
-                .frame(width: 50, alignment: .leading)
+        Button(action: { showDetail = true }) {
+            VStack(alignment: .leading, spacing: WanderSpacing.space2) {
+                HStack(spacing: WanderSpacing.space3) {
+                    // Time
+                    Text(formatTime(place.startTime))
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textTertiary)
+                        .frame(width: 50, alignment: .leading)
 
-            // Dot
-            Circle()
-                .fill(WanderColors.primary)
-                .frame(width: 8, height: 8)
+                    // Dot
+                    Circle()
+                        .fill(WanderColors.primary)
+                        .frame(width: 8, height: 8)
 
-            // Place info
-            VStack(alignment: .leading, spacing: 2) {
-                Text(place.name)
-                    .font(WanderTypography.body)
-                    .foregroundColor(WanderColors.textPrimary)
+                    // Place info
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(place.name)
+                            .font(WanderTypography.body)
+                            .foregroundColor(WanderColors.textPrimary)
 
-                Text(place.activityLabel)
-                    .font(WanderTypography.caption1)
-                    .foregroundColor(WanderColors.textSecondary)
+                        HStack(spacing: WanderSpacing.space2) {
+                            Text(place.activityLabel)
+                                .font(WanderTypography.caption1)
+                                .foregroundColor(WanderColors.textSecondary)
+
+                            if !place.photos.isEmpty {
+                                Text("· \(place.photos.count)장")
+                                    .font(WanderTypography.caption1)
+                                    .foregroundColor(WanderColors.textTertiary)
+                            }
+                        }
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(WanderColors.textTertiary)
+                }
+
+                // Photo thumbnails (최대 4장)
+                if !thumbnails.isEmpty {
+                    HStack(spacing: 4) {
+                        Spacer().frame(width: 50 + WanderSpacing.space3 + 8 + WanderSpacing.space3) // 시간 + gap + dot + gap
+                        ForEach(0..<min(thumbnails.count, 4), id: \.self) { index in
+                            Image(uiImage: thumbnails[index])
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 44, height: 44)
+                                .clipped()
+                                .cornerRadius(WanderSpacing.radiusSmall)
+                        }
+                        Spacer()
+                    }
+                }
+            }
+            .padding(.vertical, WanderSpacing.space2)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onAppear {
+            loadThumbnails()
+        }
+        .sheet(isPresented: $showDetail) {
+            PlaceDetailSheet(place: place)
+        }
+    }
+
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private func loadThumbnails() {
+        let assetIds = place.photos.prefix(4).map { $0.assetIdentifier }
+        guard !assetIds.isEmpty else { return }
+
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: Array(assetIds), options: nil)
+
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .opportunistic
+        options.resizeMode = .fast
+
+        var loadedImages: [UIImage] = []
+        let group = DispatchGroup()
+
+        fetchResult.enumerateObjects { asset, _, _ in
+            group.enter()
+            PHImageManager.default().requestImage(
+                for: asset,
+                targetSize: CGSize(width: 88, height: 88),
+                contentMode: .aspectFill,
+                options: options
+            ) { image, _ in
+                if let image = image {
+                    loadedImages.append(image)
+                }
+                group.leave()
+            }
+        }
+
+        group.notify(queue: .main) {
+            self.thumbnails = loadedImages
+        }
+    }
+}
+
+// MARK: - Place Detail Sheet
+struct PlaceDetailSheet: View {
+    let place: Place
+    @Environment(\.dismiss) private var dismiss
+    @State private var photos: [UIImage] = []
+    @State private var selectedPhotoIndex: Int?
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: WanderSpacing.space5) {
+                    // Map Section
+                    mapSection
+
+                    // Place Info Section
+                    placeInfoSection
+
+                    // Photos Section
+                    if !place.photos.isEmpty {
+                        photosSection
+                    }
+                }
+                .padding(WanderSpacing.screenMargin)
+            }
+            .background(WanderColors.background)
+            .navigationTitle(place.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("닫기") { dismiss() }
+                }
+            }
+            .onAppear {
+                loadPhotos()
+            }
+            .fullScreenCover(item: Binding(
+                get: { selectedPhotoIndex.map { PhotoViewerItem(index: $0) } },
+                set: { selectedPhotoIndex = $0?.index }
+            )) { item in
+                PhotoViewer(photos: photos, initialIndex: item.index)
+            }
+        }
+    }
+
+    private var mapSection: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+            Text("위치")
+                .font(WanderTypography.headline)
+                .foregroundColor(WanderColors.textPrimary)
+
+            PlaceMapView(coordinate: place.coordinate, placeName: place.name)
+                .frame(height: 200)
+                .cornerRadius(WanderSpacing.radiusLarge)
+        }
+    }
+
+    private var placeInfoSection: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+            HStack(spacing: WanderSpacing.space3) {
+                // Activity Icon
+                ZStack {
+                    Circle()
+                        .fill(WanderColors.primaryPale)
+                        .frame(width: 44, height: 44)
+
+                    Text(activityEmoji)
+                        .font(.system(size: 20))
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(place.name)
+                        .font(WanderTypography.title3)
+                        .foregroundColor(WanderColors.textPrimary)
+
+                    Text(place.address)
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textSecondary)
+                }
             }
 
-            Spacer()
+            Divider()
+
+            // Details
+            HStack(spacing: WanderSpacing.space6) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("방문 시간")
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textTertiary)
+                    Text(formatTime(place.startTime))
+                        .font(WanderTypography.body)
+                        .foregroundColor(WanderColors.textPrimary)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("활동")
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textTertiary)
+                    Text(place.activityLabel)
+                        .font(WanderTypography.body)
+                        .foregroundColor(WanderColors.textPrimary)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("사진")
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textTertiary)
+                    Text("\(place.photos.count)장")
+                        .font(WanderTypography.body)
+                        .foregroundColor(WanderColors.textPrimary)
+                }
+            }
         }
-        .padding(.vertical, WanderSpacing.space2)
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .cornerRadius(WanderSpacing.radiusLarge)
+    }
+
+    private var photosSection: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+            Text("사진")
+                .font(WanderTypography.headline)
+                .foregroundColor(WanderColors.textPrimary)
+
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 4),
+                GridItem(.flexible(), spacing: 4),
+                GridItem(.flexible(), spacing: 4)
+            ], spacing: 4) {
+                ForEach(0..<photos.count, id: \.self) { index in
+                    Button(action: { selectedPhotoIndex = index }) {
+                        Image(uiImage: photos[index])
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 100, maxHeight: 100)
+                            .clipped()
+                            .cornerRadius(WanderSpacing.radiusSmall)
+                    }
+                }
+            }
+        }
+    }
+
+    private var activityEmoji: String {
+        switch place.placeType {
+        case "cafe": return "☕"
+        case "restaurant": return "🍽️"
+        case "beach": return "🏖️"
+        case "mountain": return "⛰️"
+        case "tourist": return "🏛️"
+        case "shopping": return "🛍️"
+        case "culture": return "🎭"
+        case "airport": return "✈️"
+        default: return "📍"
+        }
+    }
+
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private func loadPhotos() {
+        let assetIds = place.photos.map { $0.assetIdentifier }
+        guard !assetIds.isEmpty else { return }
+
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: assetIds, options: nil)
+
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.resizeMode = .exact
+
+        var loadedImages: [UIImage] = []
+        let group = DispatchGroup()
+
+        fetchResult.enumerateObjects { asset, _, _ in
+            group.enter()
+            PHImageManager.default().requestImage(
+                for: asset,
+                targetSize: CGSize(width: 300, height: 300),
+                contentMode: .aspectFill,
+                options: options
+            ) { image, _ in
+                if let image = image {
+                    loadedImages.append(image)
+                }
+                group.leave()
+            }
+        }
+
+        group.notify(queue: .main) {
+            self.photos = loadedImages
+        }
+    }
+}
+
+// MARK: - Place Map View
+import MapKit
+import CoreLocation
+
+struct PlaceMapView: View {
+    let coordinate: CLLocationCoordinate2D
+    let placeName: String
+
+    @State private var camera: MapCameraPosition
+
+    init(coordinate: CLLocationCoordinate2D, placeName: String) {
+        self.coordinate = coordinate
+        self.placeName = placeName
+        self._camera = State(initialValue: .region(MKCoordinateRegion(
+            center: coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+        )))
+    }
+
+    var body: some View {
+        Map(position: $camera) {
+            Annotation(placeName, coordinate: coordinate) {
+                ZStack {
+                    Circle()
+                        .fill(WanderColors.primary)
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "mappin")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+        }
+        .mapStyle(.standard)
+    }
+}
+
+// MARK: - Photo Viewer Item
+struct PhotoViewerItem: Identifiable {
+    let id = UUID()
+    let index: Int
+}
+
+// MARK: - Photo Viewer
+struct PhotoViewer: View {
+    let photos: [UIImage]
+    let initialIndex: Int
+    @Environment(\.dismiss) private var dismiss
+    @State private var currentIndex: Int
+    @State private var scale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+
+    init(photos: [UIImage], initialIndex: Int) {
+        self.photos = photos
+        self.initialIndex = initialIndex
+        self._currentIndex = State(initialValue: initialIndex)
+    }
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            TabView(selection: $currentIndex) {
+                ForEach(0..<photos.count, id: \.self) { index in
+                    ZoomableImageView(image: photos[index])
+                        .tag(index)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .automatic))
+            .indexViewStyle(.page(backgroundDisplayMode: .always))
+
+            // Top bar
+            VStack {
+                HStack {
+                    Spacer()
+
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(.white)
+                            .padding(12)
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                }
+                .padding()
+
+                Spacer()
+
+                // Bottom counter
+                Text("\(currentIndex + 1) / \(photos.count)")
+                    .font(WanderTypography.caption1)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, WanderSpacing.space4)
+                    .padding(.vertical, WanderSpacing.space2)
+                    .background(Color.black.opacity(0.5))
+                    .cornerRadius(WanderSpacing.radiusFull)
+                    .padding(.bottom, 50)
+            }
+        }
+    }
+}
+
+// MARK: - Zoomable Image View
+struct ZoomableImageView: View {
+    let image: UIImage
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+
+    var body: some View {
+        Image(uiImage: image)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .scaleEffect(scale)
+            .gesture(
+                MagnificationGesture()
+                    .onChanged { value in
+                        scale = lastScale * value
+                    }
+                    .onEnded { _ in
+                        lastScale = scale
+                        if scale < 1.0 {
+                            withAnimation {
+                                scale = 1.0
+                                lastScale = 1.0
+                            }
+                        }
+                    }
+            )
+            .onTapGesture(count: 2) {
+                withAnimation {
+                    if scale > 1.0 {
+                        scale = 1.0
+                        lastScale = 1.0
+                    } else {
+                        scale = 2.5
+                        lastScale = 2.5
+                    }
+                }
+            }
+    }
+}
+
+// MARK: - Export Options View
+struct ExportOptionsView: View {
+    let record: TravelRecord
+    @Environment(\.dismiss) private var dismiss
+    @State private var showShareSheet = false
+    @State private var exportedText = ""
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("공유 형식") {
+                    Button(action: { shareAsText() }) {
+                        Label("텍스트로 공유", systemImage: "doc.text")
+                    }
+                    Button(action: { shareAsImage() }) {
+                        Label("이미지로 공유", systemImage: "photo")
+                    }
+                }
+
+                Section("내보내기") {
+                    Button(action: { exportAsMarkdown() }) {
+                        Label("Markdown으로 내보내기", systemImage: "doc.richtext")
+                    }
+                    Button(action: { exportAsHTML() }) {
+                        Label("HTML로 내보내기", systemImage: "globe")
+                    }
+                }
+            }
+            .navigationTitle("공유 및 내보내기")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("닫기") { dismiss() }
+                }
+            }
+            .sheet(isPresented: $showShareSheet) {
+                ShareSheet(items: [exportedText])
+            }
+        }
+    }
+
+    private func shareAsText() {
+        exportedText = generateTextExport()
+        showShareSheet = true
+    }
+
+    private func shareAsImage() {
+        // TODO: Generate share card image
+        exportedText = "이미지 공유 기능은 준비 중입니다."
+        showShareSheet = true
+    }
+
+    private func exportAsMarkdown() {
+        exportedText = generateMarkdownExport()
+        showShareSheet = true
+    }
+
+    private func exportAsHTML() {
+        exportedText = generateHTMLExport()
+        showShareSheet = true
+    }
+
+    private func generateTextExport() -> String {
+        var text = "📍 \(record.title)\n"
+        text += "📅 \(formatDate(record.startDate)) ~ \(formatDate(record.endDate))\n\n"
+
+        for day in record.days.sorted(by: { $0.dayNumber < $1.dayNumber }) {
+            text += "Day \(day.dayNumber)\n"
+            for place in day.places.sorted(by: { $0.order < $1.order }) {
+                let time = formatTime(place.startTime)
+                text += "  \(time) - \(place.name) (\(place.activityLabel))\n"
+            }
+            text += "\n"
+        }
+
+        text += "🚗 총 이동거리: \(Int(record.totalDistance))km\n"
+        text += "📸 사진: \(record.photoCount)장\n"
+
+        return text
+    }
+
+    private func generateMarkdownExport() -> String {
+        var md = "# \(record.title)\n\n"
+        md += "**기간**: \(formatDate(record.startDate)) ~ \(formatDate(record.endDate))\n\n"
+        md += "---\n\n"
+
+        for day in record.days.sorted(by: { $0.dayNumber < $1.dayNumber }) {
+            md += "## Day \(day.dayNumber)\n\n"
+            for place in day.places.sorted(by: { $0.order < $1.order }) {
+                let time = formatTime(place.startTime)
+                md += "- **\(time)** - \(place.name) _(\(place.activityLabel))_\n"
+            }
+            md += "\n"
+        }
+
+        md += "---\n\n"
+        md += "📊 **통계**\n"
+        md += "- 이동거리: \(Int(record.totalDistance))km\n"
+        md += "- 방문장소: \(record.placeCount)곳\n"
+        md += "- 사진: \(record.photoCount)장\n"
+
+        return md
+    }
+
+    private func generateHTMLExport() -> String {
+        var html = "<html><head><meta charset='UTF-8'><title>\(record.title)</title></head><body>\n"
+        html += "<h1>\(record.title)</h1>\n"
+        html += "<p><strong>기간:</strong> \(formatDate(record.startDate)) ~ \(formatDate(record.endDate))</p>\n"
+        html += "<hr>\n"
+
+        for day in record.days.sorted(by: { $0.dayNumber < $1.dayNumber }) {
+            html += "<h2>Day \(day.dayNumber)</h2>\n<ul>\n"
+            for place in day.places.sorted(by: { $0.order < $1.order }) {
+                let time = formatTime(place.startTime)
+                html += "  <li><strong>\(time)</strong> - \(place.name) <em>(\(place.activityLabel))</em></li>\n"
+            }
+            html += "</ul>\n"
+        }
+
+        html += "<hr>\n<h3>통계</h3>\n<ul>\n"
+        html += "<li>이동거리: \(Int(record.totalDistance))km</li>\n"
+        html += "<li>방문장소: \(record.placeCount)곳</li>\n"
+        html += "<li>사진: \(record.photoCount)장</li>\n"
+        html += "</ul>\n</body></html>"
+
+        return html
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy.MM.dd"
+        return formatter.string(from: date)
     }
 
     private func formatTime(_ date: Date) -> String {
@@ -584,34 +1206,309 @@ struct PlaceRow: View {
     }
 }
 
-// MARK: - Export Options View (Placeholder)
-struct ExportOptionsView: View {
+// MARK: - Share Sheet
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+// MARK: - Record Edit View
+struct RecordEditView: View {
     let record: TravelRecord
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @State private var editedTitle: String
+    @State private var showDeleteConfirmation = false
+
+    init(record: TravelRecord) {
+        self.record = record
+        self._editedTitle = State(initialValue: record.title)
+    }
 
     var body: some View {
         NavigationStack {
-            List {
-                Section("공유 형식") {
-                    Button(action: {}) {
-                        Label("텍스트로 공유", systemImage: "doc.text")
+            Form {
+                Section("기본 정보") {
+                    TextField("제목", text: $editedTitle)
+
+                    HStack {
+                        Text("기간")
+                        Spacer()
+                        Text(formatDateRange())
+                            .foregroundColor(WanderColors.textSecondary)
                     }
-                    Button(action: {}) {
-                        Label("이미지로 공유", systemImage: "photo")
+
+                    HStack {
+                        Text("유형")
+                        Spacer()
+                        Text(recordTypeLabel)
+                            .foregroundColor(WanderColors.textSecondary)
                     }
-                    Button(action: {}) {
-                        Label("Markdown으로 내보내기", systemImage: "doc.richtext")
+                }
+
+                Section("통계") {
+                    HStack {
+                        Label("장소", systemImage: "mappin")
+                        Spacer()
+                        Text("\(record.placeCount)곳")
+                            .foregroundColor(WanderColors.textSecondary)
+                    }
+
+                    HStack {
+                        Label("이동거리", systemImage: "car.fill")
+                        Spacer()
+                        Text(String(format: "%.1fkm", record.totalDistance))
+                            .foregroundColor(WanderColors.textSecondary)
+                    }
+
+                    HStack {
+                        Label("사진", systemImage: "photo")
+                        Spacer()
+                        Text("\(record.photoCount)장")
+                            .foregroundColor(WanderColors.textSecondary)
+                    }
+                }
+
+                Section("타임라인") {
+                    ForEach(record.days.sorted { $0.dayNumber < $1.dayNumber }) { day in
+                        NavigationLink(destination: DayEditView(day: day)) {
+                            HStack {
+                                Text("Day \(day.dayNumber)")
+                                    .font(WanderTypography.headline)
+                                Spacer()
+                                Text("\(day.places.count)곳")
+                                    .font(WanderTypography.caption1)
+                                    .foregroundColor(WanderColors.textSecondary)
+                            }
+                        }
+                    }
+                }
+
+                Section {
+                    Button(role: .destructive, action: { showDeleteConfirmation = true }) {
+                        HStack {
+                            Spacer()
+                            Label("기록 삭제", systemImage: "trash")
+                            Spacer()
+                        }
                     }
                 }
             }
-            .navigationTitle("내보내기")
+            .navigationTitle("편집")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("닫기") { dismiss() }
+                    Button("취소") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("저장") {
+                        saveChanges()
+                        dismiss()
+                    }
+                    .disabled(editedTitle.isEmpty)
+                }
+            }
+            .confirmationDialog(
+                "이 기록을 삭제하시겠습니까?",
+                isPresented: $showDeleteConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("삭제", role: .destructive) {
+                    deleteRecord()
+                    dismiss()
+                }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("삭제된 기록은 복구할 수 없습니다.")
+            }
+        }
+    }
+
+    private var recordTypeLabel: String {
+        switch record.recordType {
+        case "travel": return "여행"
+        case "daily": return "일상"
+        case "weekly": return "주간"
+        default: return "기록"
+        }
+    }
+
+    private func formatDateRange() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy.MM.dd"
+        return "\(formatter.string(from: record.startDate)) ~ \(formatter.string(from: record.endDate))"
+    }
+
+    private func saveChanges() {
+        record.title = editedTitle
+        record.updatedAt = Date()
+        try? modelContext.save()
+        logger.info("📝 [RecordEditView] 기록 저장됨: \(editedTitle)")
+    }
+
+    private func deleteRecord() {
+        modelContext.delete(record)
+        try? modelContext.save()
+        logger.info("🗑️ [RecordEditView] 기록 삭제됨")
+    }
+}
+
+// MARK: - Day Edit View
+struct DayEditView: View {
+    let day: TravelDay
+    @Environment(\.modelContext) private var modelContext
+
+    var body: some View {
+        List {
+            ForEach(day.places.sorted { $0.order < $1.order }) { place in
+                NavigationLink(destination: PlaceEditView(place: place)) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(place.name)
+                                .font(WanderTypography.body)
+                            Text(place.activityLabel)
+                                .font(WanderTypography.caption1)
+                                .foregroundColor(WanderColors.textSecondary)
+                        }
+                        Spacer()
+                        Text(formatTime(place.startTime))
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.textTertiary)
+                    }
+                }
+            }
+            .onMove { from, to in
+                var places = day.places.sorted { $0.order < $1.order }
+                places.move(fromOffsets: from, toOffset: to)
+                for (index, place) in places.enumerated() {
+                    place.order = index
+                }
+                try? modelContext.save()
+            }
+        }
+        .navigationTitle("Day \(day.dayNumber)")
+        .toolbar {
+            EditButton()
+        }
+    }
+
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Place Edit View
+struct PlaceEditView: View {
+    let place: Place
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @State private var editedName: String
+    @State private var editedMemo: String
+    @State private var editedActivityLabel: String
+
+    init(place: Place) {
+        self.place = place
+        self._editedName = State(initialValue: place.name)
+        self._editedMemo = State(initialValue: place.memo ?? "")
+        self._editedActivityLabel = State(initialValue: place.activityLabel)
+    }
+
+    var body: some View {
+        Form {
+            Section("장소 정보") {
+                TextField("이름", text: $editedName)
+
+                HStack {
+                    Text("주소")
+                    Spacer()
+                    Text(place.address)
+                        .foregroundColor(WanderColors.textSecondary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.trailing)
+                }
+
+                HStack {
+                    Text("방문 시간")
+                    Spacer()
+                    Text(formatTime(place.startTime))
+                        .foregroundColor(WanderColors.textSecondary)
+                }
+            }
+
+            Section("활동 유형") {
+                Picker("활동", selection: $editedActivityLabel) {
+                    Text("카페").tag("카페")
+                    Text("식사").tag("식사")
+                    Text("해변").tag("해변")
+                    Text("등산").tag("등산")
+                    Text("관광").tag("관광")
+                    Text("쇼핑").tag("쇼핑")
+                    Text("문화").tag("문화")
+                    Text("공항").tag("공항")
+                    Text("기타").tag("기타")
+                }
+                .pickerStyle(.menu)
+            }
+
+            Section("메모") {
+                TextEditor(text: $editedMemo)
+                    .frame(minHeight: 100)
+            }
+
+            Section("사진") {
+                HStack {
+                    Text("등록된 사진")
+                    Spacer()
+                    Text("\(place.photos.count)장")
+                        .foregroundColor(WanderColors.textSecondary)
                 }
             }
         }
+        .navigationTitle("장소 편집")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("저장") {
+                    saveChanges()
+                    dismiss()
+                }
+            }
+        }
+    }
+
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private func saveChanges() {
+        place.name = editedName
+        place.memo = editedMemo.isEmpty ? nil : editedMemo
+        place.activityLabel = editedActivityLabel
+
+        // Update placeType based on activityLabel
+        switch editedActivityLabel {
+        case "카페": place.placeType = "cafe"
+        case "식사": place.placeType = "restaurant"
+        case "해변": place.placeType = "beach"
+        case "등산": place.placeType = "mountain"
+        case "관광": place.placeType = "tourist"
+        case "쇼핑": place.placeType = "shopping"
+        case "문화": place.placeType = "culture"
+        case "공항": place.placeType = "airport"
+        default: place.placeType = "other"
+        }
+
+        try? modelContext.save()
+        logger.info("📝 [PlaceEditView] 장소 저장됨: \(editedName)")
     }
 }
 

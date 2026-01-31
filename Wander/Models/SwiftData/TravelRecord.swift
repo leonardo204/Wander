@@ -36,4 +36,33 @@ final class TravelRecord {
         self.updatedAt = Date()
         self.days = []
     }
+
+    /// 첫 번째 사진의 assetIdentifier 반환 (썸네일용)
+    var firstPhotoAssetIdentifier: String? {
+        // days를 날짜순으로 정렬하고, 각 day의 places를 순서대로 확인
+        let sortedDays = days.sorted { $0.dayNumber < $1.dayNumber }
+        for day in sortedDays {
+            let sortedPlaces = day.places.sorted { $0.order < $1.order }
+            for place in sortedPlaces {
+                if let firstPhoto = place.photos.sorted(by: { $0.order < $1.order }).first {
+                    return firstPhoto.assetIdentifier
+                }
+            }
+        }
+        return nil
+    }
+
+    /// 모든 사진의 assetIdentifier 목록 반환
+    var allPhotoAssetIdentifiers: [String] {
+        var identifiers: [String] = []
+        let sortedDays = days.sorted { $0.dayNumber < $1.dayNumber }
+        for day in sortedDays {
+            let sortedPlaces = day.places.sorted { $0.order < $1.order }
+            for place in sortedPlaces {
+                let sortedPhotos = place.photos.sorted { $0.order < $1.order }
+                identifiers.append(contentsOf: sortedPhotos.map { $0.assetIdentifier })
+            }
+        }
+        return identifiers
+    }
 }
