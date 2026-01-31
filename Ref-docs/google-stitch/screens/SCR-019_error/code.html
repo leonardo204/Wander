@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#84c3f1",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111a21",
+                        "warning": "#FF9800",
+                        "secondary-text": "#8A9BA3"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans KR", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-white dark:bg-background-dark font-display">
+<div class="relative flex h-screen w-full flex-col bg-white dark:bg-background-dark overflow-hidden max-w-[430px] mx-auto border-x border-gray-100 dark:border-gray-800 shadow-xl">
+<!-- TopAppBar -->
+<div class="flex items-center bg-white dark:bg-background-dark p-4 pb-2 justify-between">
+<div class="text-[#111518] dark:text-white flex size-12 shrink-0 items-center cursor-pointer" data-icon="arrow_back_ios">
+<span class="material-symbols-outlined text-2xl">arrow_back_ios</span>
+</div>
+<div class="flex-1"></div>
+<div class="size-12"></div>
+</div>
+<!-- Main Content (Centered) -->
+<div class="flex flex-1 flex-col items-center justify-center px-6 gap-8 text-center">
+<!-- Error Content -->
+<div class="flex flex-col items-center gap-6 w-full">
+<!-- Icon: Warning Triangle -->
+<div class="text-warning flex items-center justify-center">
+<span class="material-symbols-outlined !text-[64pt]">warning</span>
+</div>
+<!-- Title & Message -->
+<div class="flex flex-col gap-3">
+<h2 class="text-[#111518] dark:text-white text-2xl font-bold leading-tight tracking-[-0.015em]">
+                        문제가 발생했어요
+                    </h2>
+<p class="text-secondary-text text-base font-normal leading-relaxed max-w-[300px] mx-auto">
+                        일시적인 오류가 발생했습니다.<br/>잠시 후 다시 시도해주세요.
+                    </p>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col items-center gap-3 w-full">
+<!-- Primary Button -->
+<button class="flex w-[200pt] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] hover:opacity-90 transition-opacity">
+<span class="truncate">다시 시도</span>
+</button>
+<!-- Secondary Button (SingleButton Style) -->
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-transparent text-secondary-text text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">홈으로</span>
+</button>
+</div>
+</div>
+<!-- Help Link (MetaText) -->
+<div class="px-6 py-4">
+<p class="text-secondary-text text-[13px] font-normal leading-normal text-center">
+                문제가 계속되면 <span class="underline text-primary cursor-pointer font-medium">문의하기</span>를 통해 알려주세요
+            </p>
+</div>
+<!-- BottomNavBar (Exactly 3 tabs, inactive state) -->
+<div class="flex gap-2 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-background-dark px-4 pb-8 pt-2">
+<!-- Home Tab -->
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-secondary-text" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined text-2xl">house</span>
+</div>
+<p class="text-[11px] font-medium leading-normal tracking-[0.015em]">홈</p>
+</a>
+<!-- Records Tab -->
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-secondary-text" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined text-2xl">newspaper</span>
+</div>
+<p class="text-[11px] font-medium leading-normal tracking-[0.015em]">기록</p>
+</a>
+<!-- Settings Tab -->
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-secondary-text" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined text-2xl">settings</span>
+</div>
+<p class="text-[11px] font-medium leading-normal tracking-[0.015em]">설정</p>
+</a>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wander Notification Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89d0ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#121c20",
+                        "surface-accent": "#F8FBFD",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans KR", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+        .ios-toggle:checked + div {
+            background-color: #89d0ec;
+        }
+        .ios-toggle:checked + div > div {
+            transform: translateX(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen">
+<div class="max-w-md mx-auto min-h-screen flex flex-col bg-background-light dark:bg-background-dark">
+<!-- Navigation Header -->
+<header class="sticky top-0 z-10 flex items-center bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md p-4 justify-between">
+<button class="text-[#121617] dark:text-white flex size-10 items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<h1 class="text-[#121617] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-10">알림 설정</h1>
+</header>
+<main class="flex-1 px-4 py-2 space-y-6">
+<!-- Master Toggle Card -->
+<section class="mt-2">
+<div class="flex flex-1 flex-col items-start justify-between gap-4 rounded-xl border border-[#dce2e5] dark:border-gray-700 bg-surface-accent dark:bg-gray-800/50 p-5 @[480px]:flex-row @[480px]:items-center shadow-sm">
+<div class="flex flex-col gap-1">
+<p class="text-[#121617] dark:text-white text-base font-bold leading-tight">알림 허용</p>
+<p class="text-[#657c86] dark:text-gray-400 text-sm font-normal leading-normal">모든 알림을 켜거나 끕니다</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer ios-toggle" type="checkbox" value=""/>
+<div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</section>
+<!-- Notification Types Grouped List -->
+<section class="space-y-2">
+<h2 class="px-1 text-xs font-semibold text-[#657c86] dark:text-gray-500 uppercase tracking-wider">알림 유형</h2>
+<div class="bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-[#dce2e5] dark:border-gray-800 divide-y divide-[#dce2e5]/50 dark:divide-gray-800">
+<!-- Item 1: 추억 리마인드 -->
+<div class="flex items-center gap-4 px-4 min-h-[72px] py-2 justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<div class="flex flex-col justify-center">
+<p class="text-[#121617] dark:text-white text-base font-medium leading-normal">📅 추억 리마인드</p>
+<p class="text-[#657c86] dark:text-gray-400 text-sm font-normal leading-normal">"1년 전 오늘" 알림</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Item 2: 주간 요약 알림 -->
+<div class="flex items-center gap-4 px-4 min-h-[72px] py-2 justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<div class="flex flex-col justify-center">
+<p class="text-[#121617] dark:text-white text-base font-medium leading-normal">📍 주간 요약 알림</p>
+<p class="text-[#657c86] dark:text-gray-400 text-sm font-normal leading-normal">매주 일요일 하이라이트 알림</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Item 3: 분석 완료 알림 -->
+<div class="flex items-center gap-4 px-4 min-h-[72px] py-2 justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<div class="flex flex-col justify-center">
+<p class="text-[#121617] dark:text-white text-base font-medium leading-normal">🤖 분석 완료 알림</p>
+<p class="text-[#657c86] dark:text-gray-400 text-sm font-normal leading-normal">백그라운드 분석 완료 시</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Reminder Time Setting -->
+<section class="space-y-2">
+<h2 class="px-1 text-xs font-semibold text-[#657c86] dark:text-gray-500 uppercase tracking-wider">상세 설정</h2>
+<button class="w-full flex items-center justify-between bg-white dark:bg-gray-900 px-4 py-4 rounded-xl border border-[#dce2e5] dark:border-gray-800 active:bg-gray-50 dark:active:bg-gray-800 transition-colors">
+<div class="flex flex-col items-start">
+<p class="text-[#121617] dark:text-white text-base font-medium">알림 시간</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-primary font-medium">오전 9시</span>
+<span class="material-symbols-outlined text-[#657c86] text-xl">chevron_right</span>
+</div>
+</button>
+</section>
+<!-- Help/Info text -->
+<footer class="pt-4 pb-8">
+<p class="text-[#657c86] dark:text-gray-500 text-xs text-center leading-relaxed">
+                    Wander는 사용자의 소중한 추억을 적절한 시기에<br/>
+                    리마인드 해드리기 위해 최소한의 알림을 사용합니다.
+                </p>
+</footer>
+</main>
+</div>
+</body></html>

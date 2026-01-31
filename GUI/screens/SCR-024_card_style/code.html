@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#87cbee",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111b21",
+                        "surface-tint": "#F8FBFD"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<title>Wander Share Card Customization</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111517] dark:text-white transition-colors duration-300">
+<div class="relative flex min-h-screen w-full flex-col max-w-md mx-auto bg-white dark:bg-[#111b21] shadow-xl overflow-x-hidden">
+<!-- Navigation Header -->
+<header class="sticky top-0 z-10 flex items-center bg-white/80 dark:bg-[#111b21]/80 backdrop-blur-md p-4 justify-between border-b border-gray-100 dark:border-gray-800">
+<div class="flex size-10 items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+<span class="material-symbols-outlined text-2xl">arrow_back_ios_new</span>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">카드 스타일</h2>
+<div class="flex size-10 items-center justify-end">
+<button class="text-primary text-base font-bold leading-normal tracking-[0.015em] hover:opacity-80 transition-opacity">공유</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-10">
+<!-- Card Preview Area -->
+<div class="p-6 flex flex-col items-center">
+<div class="w-full aspect-[4/5] bg-white dark:bg-gray-800 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] overflow-hidden flex flex-col border border-gray-100 dark:border-gray-700 relative">
+<!-- Map Placeholder -->
+<div class="flex-1 w-full bg-cover bg-center bg-no-repeat" data-alt="Stylized mini travel map with route" data-location="Seoul" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD9ntDPCMeuZccy77IaMa7kGd5JeZ2TOyzE97RFcCBVIGysiFPPh3o1Rqc2cx3zI5scwRMjsMRY1QnGrt7H-3u1rDGt_T5u6jwhoQEq3UlO9ZkB1grjXppinx0tn0ZXYx_MvlvNTMuEngw2GXvL3jiCo026PxTdVn00_-AptRHv_CYrfdWZr1k-YKPVveaoX1kT655wllCvTFY4pF7qWuJZC2iDeZehJdDOKBfs-UFR-Z9g_R_OZJ-490atdcR7vWTvFtUz383Rvz0W");'>
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-white/20"></div>
+</div>
+<!-- Trip Stats Over Map -->
+<div class="absolute bottom-[25%] left-4 right-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur p-4 rounded-lg shadow-sm">
+<div class="flex justify-between items-center">
+<div>
+<p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Total Distance</p>
+<p class="text-lg font-bold">1,240km</p>
+</div>
+<div class="text-right">
+<p class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Locations</p>
+<p class="text-lg font-bold">5 Locations</p>
+</div>
+</div>
+</div>
+<!-- Card Bottom Info -->
+<div class="p-4 flex items-center justify-between bg-white dark:bg-gray-900">
+<div class="flex flex-col">
+<p class="text-sm font-bold text-gray-900 dark:text-white">Summer in Switzerland</p>
+<p class="text-[11px] text-gray-500">2024.07.12 - 2024.07.19</p>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-xl">explore</span>
+<span class="text-sm font-bold tracking-tight text-gray-900 dark:text-white">Wander</span>
+</div>
+</div>
+</div>
+<p class="text-xs text-gray-400 mt-4 italic">이미지를 길게 눌러 저장할 수 있습니다</p>
+</div>
+<!-- Style Selection -->
+<section class="px-4 py-2">
+<h3 class="text-[#111517] dark:text-white text-base font-bold mb-3">스타일</h3>
+<div class="flex h-11 flex-1 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-primary has-[:checked]:text-white text-gray-500 dark:text-gray-400 text-sm font-semibold transition-all duration-200">
+<span class="truncate">심플</span>
+<input checked="" class="hidden" name="style-select" type="radio" value="simple"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-primary has-[:checked]:text-white text-gray-500 dark:text-gray-400 text-sm font-semibold transition-all duration-200">
+<span class="truncate">사진중심</span>
+<input class="hidden" name="style-select" type="radio" value="photo"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-primary has-[:checked]:text-white text-gray-500 dark:text-gray-400 text-sm font-semibold transition-all duration-200">
+<span class="truncate">타임라인</span>
+<input class="hidden" name="style-select" type="radio" value="timeline"/>
+</label>
+</div>
+</section>
+<!-- Background Color Selection -->
+<section class="px-4 py-6">
+<h3 class="text-[#111517] dark:text-white text-base font-bold mb-3">배경색</h3>
+<div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+<button class="size-8 rounded-full bg-white border-2 border-primary ring-2 ring-offset-2 ring-primary/20 shrink-0"></button>
+<button class="size-8 rounded-full bg-black border border-gray-200 shrink-0"></button>
+<button class="size-8 rounded-full bg-blue-500 shrink-0"></button>
+<button class="size-8 rounded-full bg-green-500 shrink-0"></button>
+<button class="size-8 rounded-full bg-yellow-400 shrink-0"></button>
+<button class="size-8 rounded-full bg-orange-500 shrink-0"></button>
+<button class="size-8 rounded-full bg-red-500 shrink-0"></button>
+<button class="size-8 rounded-full bg-purple-500 shrink-0"></button>
+</div>
+</section>
+<!-- Display Info -->
+<section class="px-4 py-2">
+<h3 class="text-[#111517] dark:text-white text-base font-bold mb-3">표시 정보</h3>
+<div class="bg-surface-tint dark:bg-gray-800/50 rounded-xl p-4 border border-blue-50/50 dark:border-gray-700">
+<div class="grid grid-cols-2 gap-4">
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center">
+<input checked="" class="peer size-5 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary" type="checkbox"/>
+</div>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">지도</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center">
+<input checked="" class="peer size-5 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary" type="checkbox"/>
+</div>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">날짜</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center">
+<input checked="" class="peer size-5 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary" type="checkbox"/>
+</div>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">통계</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center">
+<input class="peer size-5 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary" type="checkbox"/>
+</div>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">정확한 주소</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center">
+<input checked="" class="peer size-5 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary" type="checkbox"/>
+</div>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">장소명</span>
+</label>
+</div>
+</div>
+</section>
+<!-- Source Attribution -->
+<section class="px-4 py-6">
+<h3 class="text-[#111517] dark:text-white text-base font-bold mb-3">출처 표기</h3>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<input checked="" class="size-5 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary" name="attribution" type="radio"/>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">워터마크 (이미지 내)</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<input class="size-5 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary" name="attribution" type="radio"/>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">캡션으로 (편집 가능)</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<input class="size-5 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary" name="attribution" type="radio"/>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">표시 안 함</span>
+</label>
+</div>
+</section>
+</main>
+</div>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

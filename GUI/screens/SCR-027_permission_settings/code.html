@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wander Permission Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89d0ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#121c20",
+                        "surface-light": "#F8FBFD",
+                        "info-blue": "#E3F2FD",
+                        "success": "#4CAF50",
+                        "warning": "#FF9800",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem", // 12pt approx
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", "Noto Sans KR", sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col font-display">
+<!-- Navigation Header -->
+<header class="sticky top-0 z-50 bg-white dark:bg-background-dark border-b border-gray-100 dark:border-gray-800">
+<div class="flex items-center p-4 max-w-md mx-auto">
+<button class="text-[#121617] dark:text-white flex items-center justify-center w-10 h-10 -ml-2">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<h1 class="flex-1 text-[#121617] dark:text-white text-lg font-bold leading-tight tracking-tight text-center pr-8">
+                권한 설정
+            </h1>
+</div>
+</header>
+<main class="flex-1 max-w-md mx-auto w-full p-4 space-y-4">
+<!-- Photo Permission Card (Allowed State) -->
+<section class="bg-surface-light dark:bg-gray-800/50 rounded-lg p-5 border border-gray-100 dark:border-gray-700 shadow-sm transition-all">
+<div class="flex flex-col gap-4">
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-xl">📷</span>
+<h2 class="text-[#121617] dark:text-white text-lg font-bold leading-tight">사진 접근</h2>
+</div>
+<p class="text-success text-base font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+                            전체 접근 허용됨
+                        </p>
+<p class="text-[#657c86] dark:text-gray-400 text-sm font-normal leading-relaxed mt-1">
+                            앱이 모든 사진에 접근할 수 있어요
+                        </p>
+</div>
+</div>
+<!-- Secondary Style Button -->
+<button class="w-full h-12 flex items-center justify-center rounded-xl bg-gray-200/50 dark:bg-gray-700 text-[#121617] dark:text-white text-sm font-semibold tracking-tight">
+                    iOS 설정에서 변경
+                </button>
+</div>
+</section>
+<!-- Location Permission Card (Denied State) -->
+<section class="bg-surface-light dark:bg-gray-800/50 rounded-lg p-5 border border-gray-100 dark:border-gray-700 shadow-sm transition-all">
+<div class="flex flex-col gap-4">
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-xl">📍</span>
+<h2 class="text-[#121617] dark:text-white text-lg font-bold leading-tight">위치 접근</h2>
+</div>
+<p class="text-warning text-base font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+                            허용 안 됨
+                        </p>
+<p class="text-[#657c86] dark:text-gray-400 text-sm font-normal leading-relaxed mt-1">
+                            위치 권한을 허용하면 사진의 GPS 정보를 더 정확하게 분석할 수 있어요
+                        </p>
+</div>
+</div>
+<!-- Primary Style Button -->
+<button class="w-full h-12 flex items-center justify-center rounded-xl bg-primary text-[#121617] text-sm font-bold tracking-tight shadow-md active:scale-[0.98] transition-transform">
+                    권한 허용하기
+                </button>
+</div>
+</section>
+<!-- Spacer for visual balance -->
+<div class="h-2"></div>
+<!-- Info Note Action Panel -->
+<div class="bg-info-blue dark:bg-primary/10 border border-[#89d0ec]/30 rounded-xl p-5">
+<div class="flex flex-col gap-4 @[480px]:flex-row @[480px]:items-center justify-between">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-[#121617] dark:text-primary mt-0.5">info</span>
+<div class="flex flex-col gap-1">
+<p class="text-[#121617] dark:text-white text-[15px] font-medium leading-normal">
+                            권한을 변경하면 앱이 재시작될 수 있습니다
+                        </p>
+</div>
+</div>
+<button class="flex min-w-[60px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-primary text-[#121617] text-sm font-bold leading-normal self-end @[480px]:self-center">
+                    확인
+                </button>
+</div>
+</div>
+</main>
+<!-- Visual Footer Decoration -->
+<div class="max-w-md mx-auto w-full p-4 pb-8 flex justify-center opacity-40">
+<div class="h-1 w-16 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+</div>
+</body></html>

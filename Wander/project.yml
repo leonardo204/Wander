@@ -1,0 +1,46 @@
+name: Wander
+options:
+  bundleIdPrefix: com.zerolive
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "15.0"
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    DEVELOPMENT_TEAM: ""
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    INFOPLIST_KEY_CFBundleDisplayName: "Wander"
+    INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.travel"
+    SWIFT_EMIT_LOC_STRINGS: "YES"
+    ASSETCATALOG_COMPILER_APPICON_NAME: "AppIcon"
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: "AccentColor"
+
+targets:
+  Wander:
+    type: application
+    platform: iOS
+    sources:
+      - WanderApp.swift
+      - ContentView.swift
+      - App
+      - Core
+      - Models
+      - Services
+      - ViewModels
+      - Views
+      - Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zerolive.wander
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait"
+        INFOPLIST_KEY_UIStatusBarStyle: "UIStatusBarStyleDefault"
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "사진의 촬영 시간과 위치 정보를 분석하여 여행 기록을 만들어 드립니다."
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "생성된 카드 이미지를 사진 앨범에 저장합니다."
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "GPS 좌표를 주소로 변환하여 장소 이름을 자동으로 표시합니다."

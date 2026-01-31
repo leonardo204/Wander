@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wander Quick Select Sheet</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#30abe8",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111c21",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans KR", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", "Noto Sans KR", sans-serif;
+        }
+        .ios-sheet-height {
+            height: 70vh;
+        }
+        .backdrop-blur-md {
+            backdrop-filter: blur(12px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-slate-200 dark:bg-slate-900 flex items-center justify-center min-h-screen">
+<!-- Screen Mockup Container (Mobile Phone Frame) -->
+<div class="relative w-full max-w-[430px] h-[932px] bg-white dark:bg-background-dark overflow-hidden shadow-2xl rounded-[3rem] border-[8px] border-slate-800">
+<!-- Background Content (Simulated Main App) -->
+<div class="absolute inset-0 p-6 flex flex-col gap-6 opacity-40 grayscale pointer-events-none">
+<div class="h-10 w-32 bg-slate-200 rounded-full"></div>
+<div class="h-64 w-full bg-slate-200 rounded-xl"></div>
+<div class="h-4 w-3/4 bg-slate-200 rounded-full"></div>
+<div class="h-4 w-1/2 bg-slate-200 rounded-full"></div>
+<div class="grid grid-cols-2 gap-4">
+<div class="h-32 bg-slate-200 rounded-xl"></div>
+<div class="h-32 bg-slate-200 rounded-xl"></div>
+</div>
+</div>
+<!-- Dimmed Backdrop Overlay -->
+<div class="absolute inset-0 bg-black/40 z-10"></div>
+<!-- Bottom Sheet Container -->
+<div class="absolute bottom-0 left-0 right-0 z-20 flex flex-col justify-end">
+<div class="bg-white dark:bg-background-dark rounded-t-[20pt] ios-sheet-height flex flex-col shadow-[0_-8px_30px_rgb(0,0,0,0.12)]">
+<!-- BottomSheetHandle -->
+<div class="flex h-6 w-full items-center justify-center shrink-0">
+<div class="h-1 w-9 rounded-full bg-[#d0dfe7] dark:bg-slate-700"></div>
+</div>
+<!-- TopAppBar -->
+<div class="flex items-center px-5 py-2 justify-between shrink-0">
+<h2 class="text-[#0e171b] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em] flex-1">지금 뭐해?</h2>
+<button class="text-[#0e171b] dark:text-white size-10 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-2xl">close</span>
+</button>
+</div>
+<!-- BodyText (Subtitle) -->
+<div class="px-5 pt-1 pb-3 shrink-0">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal">방금 찍은 사진을 공유해 보세요</p>
+</div>
+<!-- ImageGrid Scrollable Area -->
+<div class="flex-1 overflow-y-auto px-5">
+<div class="grid grid-cols-3 gap-2">
+<!-- Photo 1 (Selected) -->
+<div class="relative group cursor-pointer aspect-square rounded-lg overflow-hidden border-2 border-primary">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="close up of a colorful summer cocktail" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC8AAprB-GPhS9KRUjM2VDvyFmjtj7nnHEctuxvqzsMbMPMbxXnKzMr78qnj_UczoosLwGy95fhFbNCthrzyg39rug_nji-QigrXcwNbgUtFSvN5GTQTE2cf2j_QLkZZk5zcvVSPpiyv2r1UIgaKTbZ9UF7eLPTeWVrI9fD8LqR_YWluCcajsUSgnEVOSQ0ejqSrdXDoApVNUG7_bYG00kGjeGHvxYuYhu2C_qOrxTKk9f5KR6DOd9xjWZfT2vcKHM7LSdfuiVmnc-A");'></div>
+<div class="absolute inset-0 bg-primary/30"></div>
+<div class="absolute top-2 right-2 h-6 w-6 bg-primary rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+<span class="text-white text-xs font-bold">1</span>
+</div>
+</div>
+<!-- Photo 2 (Selected) -->
+<div class="relative group cursor-pointer aspect-square rounded-lg overflow-hidden border-2 border-primary">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="vibrant street art on a city wall" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDdhCfy2sNwqQ5l-GWVqaBgBlSZHk0UKHrSR8K9NAg6kerfSkt1EMve0lYK8ELzIwhmwV3wyXFnnTd4gspQEVFPV7hbYIByqF8ANpEzigHI_2knAgaNlnvsz9OQe2N6fs_-N5rc5KdyRBPukWz9wiqF4oOHcUYO7ehnqa5IVpb9Cv2MeNXfVFeAYQBxvBkNrpefklCDKz0tOmtoqAJTAlrSXs4szhtFwg7vAZWsCeiTDVFQcnRldnokkEYM6qN0ZqoDPc7RELwWH6ua");'></div>
+<div class="absolute inset-0 bg-primary/30"></div>
+<div class="absolute top-2 right-2 h-6 w-6 bg-primary rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+<span class="text-white text-xs font-bold">2</span>
+</div>
+</div>
+<!-- Photo 3 -->
+<div class="relative group cursor-pointer aspect-square rounded-lg overflow-hidden">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="scenic view of mountains during sunset" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAXVUbltZWBayLBIUlm5tvEjgA-mNSZW32NgteuBZz6UgMNMlOwRpQFGIS8zP1cnhl8Ju4dF60epfEFXCtTmltSAmJ_6KFXox5C5o_6oY6xsXlC004YFGtARrFJ6KfMT64wDEcq6tBVFm79hBVWVntxO1_OKvVEmFNXLC9OEh48AvZngt4yq8XskZSplLZGUe6FklGGxyX81nZcd2y-vDJh9dPqGKPXx2HTxDr47huTeIU9h7GGAosUtpi8OdDSnw2cQZ8LYW-9nbqG");'></div>
+<div class="absolute inset-0 group-hover:bg-black/10 transition-colors"></div>
+</div>
+<!-- Photo 4 -->
+<div class="relative group cursor-pointer aspect-square rounded-lg overflow-hidden">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="latte art on a wooden table" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAlqVuMKORmyfhW_Plc92Cg4td-IdoYrYhLCVsjP3JcFMchzo9QztfuYKFhx5rAZsO3CSn2eXt46trxRUDPFoYVrxldCH_vuzWNmCOOA49Iq1SvH-nIe0NmK_Q5o3BgWiEig6FEA-kgxdpvPN_4Pyp2tnMKhGqpbNEWISp7JWXyFpwJ_wBOonE70jEG2-sXlj1MjngkKOKHAwG_wIElU5yFdP-fjp1yyydEe-1OM4Wgu2tJFg6kwT8egSnizVFf8Vg4VVwAY3wwlfdF");'></div>
+</div>
+<!-- Photo 5 -->
+<div class="relative group cursor-pointer aspect-square rounded-lg overflow-hidden">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="minimalist architecture with blue sky" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBv0cNurDojDrEb1gJAOU1sTJLDnqqi6uwpU5Mj8e365Kd2x588AH14p8Wd-jZVTMC0n3pWdZnKrsfFwct5uERYkik4IQHk6zWmZnWU2Oo5FeWaT1iVAftSkreGdccrzAJxeblnzOFhvCuyCxo25fdhQeJycJY6gJAeD4Gzrpsr9ifBUuHSlNQiekco45sk00n6_OCHVciJVuA4KdSp86O6eaLT5BXAoWZceYAj4635yVvC6zYO2wilwCSGgZjX03JMCRUgW6LUiZKQ");'></div>
+</div>
+<!-- Photo 6 -->
+<div class="relative group cursor-pointer aspect-square rounded-lg overflow-hidden">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="lush green plant leaves indoors" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBWqKxyOC8blrcYgT5waJYxMMfGpgxTtE5Lja5EICyX1xz1q-Aq8YxzxwIZc5ecsJwBBXf0tzbf3BF9-01cC27qT9a7aDL-hx1ltS1CtfqZaiscsvia_5Qtn68eNzq0saVFWYppNeO_WvaeM9st4ZevdW9qHNmNX6ulYnqjtasn0e8Sn4hGGpvLhsRKfbMVaaSkFKjV3aeWVAS_JL4kkXaqwqaZzBhfyUOkAoCcgwgK66tcqSHmcxZAGjc50cI9m1yNd0U5iL4hxEBL");'></div>
+</div>
+<!-- Photo 7 -->
+<div class="relative group cursor-pointer aspect-square rounded-lg overflow-hidden">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="night city lights with motion blur" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA02Q1B2eyVuoC5PkZUngVYX1cPEfUxmkvLx83kPrvkQD4ZEhy_gKXJFgL-Oz8CEbBXK2Blkv44v8JRD1a-c-sWhP17CTdFbAKhwgIsJayA5VXTr_KOpSzIA7sNp4LkGuZ9Tkg36fskZCOUt885zM1qaq3ya50fpUQ1hqBIn0xFj7jsVIEX21ehDRT0-56rW0HjGkYndj-IFvrVytLG5J_UPTT7553feXrv8qBTZAjFa0HSJxX2AgNaYGkwWnPrOmQ1qFhpAMXia5tl");'></div>
+</div>
+<!-- Photo 8 -->
+<div class="relative group cursor-pointer aspect-square rounded-lg overflow-hidden">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="tasty avocado toast breakfast" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDnv3sp1GwlPgedaftezhV1Gschbwz7yLE5mKyLhySge2ShF5q6e2141iRT7nD3f7CPGFqDNJhX8P8D9xklhMHAxyWSQ6TInClvtvqLZ0MGxBAGMrN4_1a-T6rYGJ9HUmbRSKVfyVMrZmmXfh1x76IWN9anmCbWBOueQnuhOMqK4p7SbdeIwh7JUC9A1fwLoNRoM4JFMH_1SjmiW2MI2wZRNNqV-YfwoSHU1rhNfol3VH1xwSJngq8pBIyu2ClbuXafUe-Ef4bEVum5");'></div>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="px-5 py-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-background-dark">
+<div class="flex flex-col gap-2 mb-4">
+<!-- ButtonGroup: Camera & Gallery -->
+<button class="flex items-center justify-center gap-2 w-full h-12 bg-primary/10 dark:bg-primary/20 text-primary rounded-xl font-bold text-sm transition-active active:scale-95">
+<span class="material-symbols-outlined text-[20px]">photo_camera</span>
+                            카메라 열기
+                        </button>
+<button class="flex items-center justify-center gap-2 w-full h-12 bg-transparent text-slate-600 dark:text-slate-300 rounded-xl font-bold text-sm transition-active active:scale-95">
+<span class="material-symbols-outlined text-[20px]">photo_library</span>
+                            갤러리에서 더 선택
+                        </button>
+</div>
+<!-- Primary Action Button (Fixed Bottom) -->
+<div class="pb-6">
+<button class="w-full h-14 bg-primary text-white rounded-xl font-bold text-base shadow-lg shadow-primary/20 transition-active active:scale-[0.98] flex items-center justify-center">
+                            완료 (2장 선택)
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- iOS Home Indicator -->
+<div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-black/10 dark:bg-white/10 rounded-full z-30"></div>
+</div>
+</body></html>

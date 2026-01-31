@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89cbec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#121b20",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-black/40 min-h-screen flex items-end font-display">
+<!-- Bottom Sheet Container -->
+<div class="relative w-full max-w-md mx-auto bg-white dark:bg-background-dark rounded-t-[20pt] overflow-hidden flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
+<!-- BottomSheetHandle -->
+<div class="flex flex-col items-center pt-3 pb-1">
+<div class="h-1.5 w-10 rounded-full bg-[#d1dfe6] dark:bg-gray-700"></div>
+</div>
+<!-- SectionHeader: Title -->
+<div class="w-full text-center py-4">
+<h4 class="text-[#0e161a] dark:text-white text-lg font-bold leading-tight">공유하기</h4>
+</div>
+<!-- Format Selection Grid -->
+<div class="grid grid-cols-2 gap-3 px-4 py-4">
+<!-- Selected State -->
+<div class="flex flex-col gap-3 rounded-xl border-2 border-primary bg-[#E8F6FC] dark:bg-primary/20 p-4 items-center cursor-pointer">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-12 shrink-0 bg-primary/30 flex items-center justify-center" data-alt="Illustration of a travel polaroid photo">
+<span class="material-symbols-outlined text-primary text-3xl">image</span>
+</div>
+<h2 class="text-[#0e161a] dark:text-white text-sm font-bold leading-tight">이미지 카드</h2>
+</div>
+<!-- Unselected State -->
+<div class="flex flex-col gap-3 rounded-xl border border-[#E5EEF2] dark:border-gray-700 bg-[#F8FBFD] dark:bg-gray-800 p-4 items-center cursor-pointer">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-12 shrink-0 bg-gray-100 dark:bg-gray-700 flex items-center justify-center" data-alt="Simple text document icon">
+<span class="material-symbols-outlined text-gray-400 text-3xl">notes</span>
+</div>
+<h2 class="text-[#0e161a] dark:text-gray-300 text-sm font-bold leading-tight">텍스트만</h2>
+</div>
+</div>
+<!-- Quick Share Section Header -->
+<div class="px-4 pt-4">
+<h3 class="text-[#0e161a] dark:text-white text-base font-bold leading-tight tracking-tight">바로 공유</h3>
+</div>
+<!-- ActionsBar: Social Icons -->
+<div class="px-4 py-6">
+<div class="grid grid-cols-4 gap-4">
+<!-- KakaoTalk -->
+<div class="flex flex-col items-center gap-2 group cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-[#FEE500] flex items-center justify-center active:scale-95 transition-transform shadow-sm">
+<span class="material-symbols-outlined text-[#3C1E1E] text-2xl">chat_bubble</span>
+</div>
+<p class="text-[#0e161a] dark:text-gray-300 text-xs font-medium">카카오톡</p>
+</div>
+<!-- Instagram -->
+<div class="flex flex-col items-center gap-2 group cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-gradient-to-tr from-[#FFDC80] via-[#E1306C] to-[#C13584] flex items-center justify-center active:scale-95 transition-transform shadow-sm">
+<span class="material-symbols-outlined text-white text-2xl">photo_camera</span>
+</div>
+<p class="text-[#0e161a] dark:text-gray-300 text-xs font-medium">인스타그램</p>
+</div>
+<!-- Messages -->
+<div class="flex flex-col items-center gap-2 group cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-[#34C759] flex items-center justify-center active:scale-95 transition-transform shadow-sm">
+<span class="material-symbols-outlined text-white text-2xl">sms</span>
+</div>
+<p class="text-[#0e161a] dark:text-gray-300 text-xs font-medium">메시지</p>
+</div>
+<!-- More -->
+<div class="flex flex-col items-center gap-2 group cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-[#e8eff2] dark:bg-gray-700 flex items-center justify-center active:scale-95 transition-transform shadow-sm">
+<span class="material-symbols-outlined text-[#0e161a] dark:text-white text-2xl">more_horiz</span>
+</div>
+<p class="text-[#0e161a] dark:text-gray-300 text-xs font-medium">더보기</p>
+</div>
+</div>
+</div>
+<!-- Footer Action Button -->
+<div class="px-4 pb-8 pt-2">
+<button class="w-full bg-primary/20 hover:bg-primary/30 dark:bg-primary/10 text-[#0e161a] dark:text-primary font-bold py-4 rounded-xl transition-colors">
+                기타 앱으로 공유
+            </button>
+</div>
+<!-- iOS Safe Area Bottom Indicator -->
+<div class="h-2 bg-transparent"></div>
+</div>
+<!-- Hidden Background Context (Mock of the app behind the sheet) -->
+<div class="fixed inset-0 -z-10 bg-background-light dark:bg-background-dark p-6">
+<div class="w-full h-64 rounded-xl bg-gray-200 dark:bg-gray-800 mb-4 overflow-hidden">
+<div class="w-full h-full bg-cover bg-center" data-alt="Panoramic mountain landscape during sunset" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC-KHhzUF3iYoYV7p_1czMGHB70XIgneVJqCjRrLK2_0HB8NS4rn5-AErf_W1usC4BmSzhdOG0mLtCjY5dtb951hO_4YmGKY4SaUU-SrR12JqlNXZ3W79860iLO0BPkPy__79SHic3sSCC0JfK7x2SHbCv0o0UlXn6TS3IfH9pWqqsHkMWQta5_8NHersd_ZhDfzlCEKemrh1D20QRmoZ2_OROsoLiDPgOXyqNfDd2D8dG8nCIozoukJ5Fs9MRT8BEVq8Pi-xXjWBrW')"></div>
+</div>
+<div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-800 rounded-full mb-2"></div>
+<div class="h-4 w-1/2 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+</div>
+</body></html>

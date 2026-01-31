@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wander Quick Mode Result</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#30abe8",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111c21",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex justify-center">
+<div class="relative flex h-full min-h-screen w-full max-w-[480px] flex-col bg-white dark:bg-slate-900 overflow-x-hidden shadow-2xl">
+<!-- Header -->
+<div class="flex items-center bg-white dark:bg-slate-900 p-4 pb-2 justify-between sticky top-0 z-10">
+<div class="w-12"></div> <!-- Spacer for centering -->
+<h2 class="text-[#0e171b] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">지금 뭐해?</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-transparent text-[#0e171b] dark:text-white transition-colors hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+<!-- Photo Carousel Section -->
+<div class="px-4 py-3">
+<div class="relative group">
+<div class="bg-cover bg-center flex flex-col justify-end overflow-hidden rounded-[16pt] h-[280pt] shadow-sm transition-all" data-alt="People enjoying a live indie music performance at a club" style='background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 40%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuAkfz9WBIRwH17AF2KY5vKIVK6jMQ0_IJuYuEWud5pRzy7z4d8QxavynJi4Tl1dqcaalhAis6OTlT76ipczKUZfTrnScCmOiuNGIaJwY62fL3HtP3hdXjFh9Fz1q3d_4qlAKOOszJ3t2BAPTsjwmNjSI5VS3gRu58PaDY1PsKk63AYasEaZdnDyRTMNXOXEDHGUwLID4QWEt8AT2VCMHGnKD2HMlhALyDL3MQOg-lktPps7Zpn1UPjExWzWBbC_LsGNL_yFEt5V4Qfh");'>
+<!-- Page Indicators -->
+<div class="flex justify-center gap-2 p-5">
+<div class="h-1.5 w-1.5 rounded-full bg-white"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-white/40"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-white/40"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-white/40"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- AI Narrative Section -->
+<div class="flex flex-col items-center px-6 pt-6 pb-4">
+<h3 class="text-[#0e171b] dark:text-white tracking-tight text-xl font-bold leading-tight text-center pb-3">
+                🎤 홍대 뮤직클럽에서 인디밴드 공연 보는 중!
+            </h3>
+<div class="flex flex-col gap-1 items-center">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal flex items-center gap-1">
+                    📍 홍대입구역 근처
+                </p>
+<p class="text-slate-400 dark:text-slate-500 text-sm font-normal leading-normal flex items-center gap-1">
+                    🕗 저녁 8시
+                </p>
+</div>
+<button class="mt-6 flex items-center gap-1 text-primary text-sm font-bold hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-lg">edit</span>
+                문구 수정
+            </button>
+</div>
+<!-- Share Grid -->
+<div class="px-8 py-8 grid grid-cols-4 gap-4">
+<div class="flex flex-col items-center gap-2">
+<div class="h-[72pt] w-[72pt] bg-[#FEE500] rounded-[20pt] flex items-center justify-center shadow-sm cursor-pointer hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[#3C1E1E] text-3xl">chat_bubble</span>
+</div>
+<span class="text-[11px] font-medium text-slate-600 dark:text-slate-400">카카오톡</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="h-[72pt] w-[72pt] bg-white border border-slate-100 dark:border-slate-700 rounded-[20pt] flex items-center justify-center shadow-sm cursor-pointer hover:scale-105 transition-transform overflow-hidden relative">
+<div class="absolute inset-0 bg-gradient-to-tr from-[#f09433] via-[#e6683c] via-[#dc2743] via-[#cc2366] to-[#bc1888] opacity-10"></div>
+<span class="material-symbols-outlined text-[#bc1888] text-3xl relative z-10">photo_camera</span>
+</div>
+<span class="text-[11px] font-medium text-slate-600 dark:text-slate-400">인스타그램</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="h-[72pt] w-[72pt] bg-[#34C759] rounded-[20pt] flex items-center justify-center shadow-sm cursor-pointer hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-white text-3xl">textsms</span>
+</div>
+<span class="text-[11px] font-medium text-slate-600 dark:text-slate-400">메시지</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="h-[72pt] w-[72pt] bg-slate-100 dark:bg-slate-800 rounded-[20pt] flex items-center justify-center shadow-sm cursor-pointer hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300 text-3xl">more_horiz</span>
+</div>
+<span class="text-[11px] font-medium text-slate-600 dark:text-slate-400">기타 저장</span>
+</div>
+</div>
+<!-- Spacer to push button down -->
+<div class="flex-grow"></div>
+<!-- Primary Action Button -->
+<div class="p-6 pb-10">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-full shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">download</span>
+                이미지로 저장
+            </button>
+</div>
+</div>
+</body></html>

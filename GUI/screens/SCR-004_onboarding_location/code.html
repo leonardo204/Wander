@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89d0ec",
+                        "background-light": "#ffffff",
+                        "background-dark": "#121c20",
+                        "surface": "#F8FBFD",
+                        "secondary-text": "#5A6B73",
+                        "tertiary-text": "#8A9BA3"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans KR", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center justify-between transition-colors duration-300">
+<div class="w-full max-w-[480px] flex flex-col h-screen p-6">
+<div class="flex-1 flex flex-col items-center justify-center">
+<div class="mb-8">
+<span class="material-symbols-outlined text-[64px] text-primary" data-icon="location_on">
+                    location_on
+                </span>
+</div>
+<h1 class="text-[#0e171a] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] text-center mb-8 px-2">
+                위치 정보 사용을 허용하면 더 정확한 분석이 가능해요
+            </h1>
+<div class="w-full bg-surface dark:bg-primary/10 rounded-xl p-5 mb-4">
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">
+                            check_circle
+                        </span>
+<p class="text-secondary-text dark:text-slate-300 text-base font-normal leading-normal">
+                            GPS 좌표를 주소로 변환
+                        </p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">
+                            check_circle
+                        </span>
+<p class="text-secondary-text dark:text-slate-300 text-base font-normal leading-normal">
+                            장소 이름 자동 인식
+                        </p>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle">
+                            check_circle
+                        </span>
+<p class="text-secondary-text dark:text-slate-300 text-base font-normal leading-normal">
+                            위치 정보는 기기에서만 처리됩니다
+                        </p>
+</div>
+</div>
+</div>
+<p class="text-tertiary-text dark:text-slate-400 text-sm font-normal leading-normal text-center">
+                💡 허용하지 않아도 기본 기능 사용이 가능합니다
+            </p>
+</div>
+<div class="w-full flex flex-col items-center pb-8 gap-6">
+<div class="flex w-full flex-row items-center justify-center gap-3">
+<div class="h-2 w-2 rounded-full bg-[#d1e0e6] dark:bg-slate-700"></div>
+<div class="h-2 w-2 rounded-full bg-[#d1e0e6] dark:bg-slate-700"></div>
+<div class="h-2 w-2 rounded-full bg-primary"></div>
+</div>
+<div class="w-full flex flex-col gap-3">
+<button class="w-full h-14 bg-primary text-white font-bold text-lg rounded-xl shadow-sm hover:opacity-90 transition-opacity">
+                    위치 사용 허용
+                </button>
+<button class="w-full h-12 text-secondary-text dark:text-slate-400 font-medium text-base rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    허용하지 않고 계속
+                </button>
+</div>
+</div>
+</div>
+</body></html>

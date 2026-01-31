@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#85ccef",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111c21",
+                        "error": "#F44336",
+                        "surface-accent": "#F8FBFD",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", "Noto Sans KR", sans-serif;
+        }
+        .ios-toggle {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+        }
+        .ios-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 27px;
+            width: 27px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input:checked + .slider {
+            background-color: #85ccef;
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-[#111517] dark:text-white min-h-screen flex flex-col">
+<!-- Navigation Header -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="flex items-center p-4 justify-between max-w-md mx-auto w-full">
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined text-2xl">arrow_back_ios</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">데이터 관리</h2>
+</div>
+</header>
+<main class="flex-1 max-w-md mx-auto w-full pb-24">
+<!-- Storage Usage Section -->
+<div class="p-4">
+<div class="bg-white dark:bg-gray-900 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="flex flex-col gap-1 mb-4">
+<p class="text-[#111517] dark:text-white text-lg font-bold">저장 공간 사용량</p>
+<p class="text-[#647b87] dark:text-gray-400 text-sm">기기 전체 사용량 중 앱 데이터</p>
+</div>
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-end">
+<p class="text-primary font-bold text-2xl">1.2GB <span class="text-sm font-normal text-gray-400">/ 5GB</span></p>
+<p class="text-xs text-gray-500">24% 사용 중</p>
+</div>
+<div class="h-3 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 24%;"></div>
+</div>
+</div>
+<div class="mt-6 space-y-3">
+<div class="flex justify-between items-center py-1">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-primary"></div>
+<p class="text-gray-600 dark:text-gray-300 text-sm">여행 기록</p>
+</div>
+<p class="text-sm font-medium">800MB</p>
+</div>
+<div class="flex justify-between items-center py-1">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-blue-300"></div>
+<p class="text-gray-600 dark:text-gray-300 text-sm">캐시</p>
+</div>
+<p class="text-sm font-medium">234MB</p>
+</div>
+<div class="flex justify-between items-center py-1">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-gray-300"></div>
+<p class="text-gray-600 dark:text-gray-300 text-sm">기타</p>
+</div>
+<p class="text-sm font-medium">166MB</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Management Options Group -->
+<div class="px-4 py-2">
+<h3 class="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider px-1 mb-2">관리 옵션</h3>
+<div class="bg-surface-accent dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800">
+<button class="w-full flex justify-between items-center p-4 hover:bg-black/5 active:bg-black/10 transition-colors">
+<span class="text-sm font-medium">캐시 삭제</span>
+<span class="text-sm text-gray-500">234MB <span class="material-symbols-outlined align-middle ml-1 text-lg">chevron_right</span></span>
+</button>
+<div class="h-px bg-gray-200 dark:bg-gray-800 mx-4"></div>
+<button class="w-full flex justify-between items-center p-4 hover:bg-black/5 active:bg-black/10 transition-colors">
+<span class="text-sm font-medium">분석 데이터 초기화</span>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</button>
+<div class="h-px bg-gray-200 dark:bg-gray-800 mx-4"></div>
+<button class="w-full flex justify-between items-center p-4 hover:bg-black/5 active:bg-black/10 transition-colors">
+<span class="text-sm font-medium text-error">모든 기록 삭제</span>
+<span class="material-symbols-outlined text-error/50">delete_forever</span>
+</button>
+</div>
+</div>
+<!-- Backup Section -->
+<div class="px-4 py-4">
+<h3 class="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wider px-1 mb-2">백업 및 복구</h3>
+<div class="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+<span class="material-symbols-outlined text-primary">cloud_upload</span>
+</div>
+<div>
+<p class="text-sm font-semibold">iCloud 백업</p>
+<p class="text-xs text-gray-500">마지막 백업: 2024.01.15</p>
+</div>
+</div>
+<label class="ios-toggle">
+<input checked="" type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Tab Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 z-50">
+<div class="max-w-md mx-auto flex justify-around items-center h-20 pb-4">
+<button class="flex flex-col items-center gap-1 flex-1 text-gray-400">
+<span class="material-symbols-outlined text-2xl">home</span>
+<span class="text-[10px] font-medium">홈</span>
+</button>
+<button class="flex flex-col items-center gap-1 flex-1 text-gray-400">
+<span class="material-symbols-outlined text-2xl">photo_library</span>
+<span class="text-[10px] font-medium">기록</span>
+</button>
+<button class="flex flex-col items-center gap-1 flex-1 text-primary">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="text-[10px] font-bold">설정</span>
+</button>
+</div>
+</nav>
+</body></html>

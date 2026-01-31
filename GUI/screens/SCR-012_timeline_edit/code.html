@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#86c6ee",
+                        "accent-blue": "#87CEEB",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111b21",
+                        "card-blue": "#F8FBFD",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        'elevation-1': '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .dashed-connector {
+            background-image: linear-gradient(to bottom, #cbd5e1 50%, rgba(255, 255, 255, 0) 0%);
+            background-position: center;
+            background-size: 2px 10px;
+            background-repeat: repeat-y;
+            width: 2px;
+            height: 40px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen">
+<div class="max-w-md mx-auto bg-white dark:bg-background-dark min-h-screen flex flex-col relative shadow-xl overflow-x-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+<div class="flex items-center justify-between">
+<button class="text-[#647987] text-base font-medium">취소</button>
+<h1 class="text-[#111517] dark:text-white text-lg font-bold tracking-tight">편집 모드</h1>
+<button class="text-accent-blue text-base font-bold">완료</button>
+</div>
+</header>
+<!-- Sticky Day Header -->
+<div class="sticky top-[52px] z-40 bg-white dark:bg-background-dark px-4 py-3">
+<h2 class="text-[#111517] dark:text-white text-lg font-bold flex items-center gap-2">
+<span>📅</span> Day 1 (1/15)
+            </h2>
+</div>
+<!-- Timeline Content -->
+<main class="flex-1 px-4 pb-24">
+<!-- Place Card 1 -->
+<div class="relative flex flex-col items-center">
+<div class="w-full bg-card-blue dark:bg-gray-800/50 rounded-lg p-4 shadow-elevation-1 border border-blue-50/50">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-gray-400 cursor-grab">drag_handle</span>
+<div>
+<h3 class="text-[#111517] dark:text-white text-base font-bold">제주공항</h3>
+<p class="text-[#647987] text-xs font-medium">🕐 10:30 · ✈️ 도착</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-1.5 text-gray-400 hover:text-gray-600"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-1.5 text-gray-400 hover:text-red-400"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</div>
+</div>
+<!-- Activity Chips -->
+<div class="flex gap-2 mb-4">
+<button class="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-full shadow-sm">
+<span class="text-sm">✈️ 공항/이동</span>
+<span class="material-symbols-outlined text-[16px] text-gray-400">arrow_drop_down</span>
+</button>
+</div>
+<!-- Image Grid -->
+<div class="grid grid-cols-4 gap-2">
+<div class="relative aspect-square">
+<div class="w-full h-full rounded-lg bg-cover bg-center" data-alt="Jeju airport terminal interior" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAM3me15e30hxr1FDBem6C0vXVMr8v4ra85SedfGl_q01P_RIczVmsNrHW6IFSEFN0bMGY9Q2CgRgQCRMA5LAKGyj-NL0NalYZFfwScU788xpfiqmbfY6uNGMQjC9KQM1s8KakJI7zzTBru2L7EtFJou72gFSOCHdznjmW6cmoOMxlWx2d-MFxYG2OittBlOg4Pe8SRwo5gFqn1JJD7CbRrtjnUQN2ti_f-AnVtURrOLOGYjXbppUJhvBSsN5fUhbjCWQKXHTvr2EkU')"></div>
+<button class="absolute -top-1 -right-1 bg-black/50 text-white rounded-full p-0.5"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full rounded-lg bg-cover bg-center" data-alt="Airplane window view clouds" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCoyYOoJ834jEobOavamGSU0JYVN9DbKKMbDjeVWgGGHcEHfhPbUzv3j6JrQU_QqZftM7bOumXjhqiUNi5mIRseWJ586cA94l6yp_LB0VLjDwrgpiCD4RByA5_esdMe30__ta67YKd9PLgQHXeEas9kFtWg5QVg7QKoeau-D8q60oWzwC1FVWzl4oJcQNagJwI0B5T8C47JdXjQPXhlHZ2_3Rf8S40tl3iUMe2mTEhKKx2XpT-iqdvHXowe64c34XswvAb6bdYnSbZF')"></div>
+<button class="absolute -top-1 -right-1 bg-black/50 text-white rounded-full p-0.5"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full rounded-lg bg-cover bg-center" data-alt="Baggage carousel at airport" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBCdCZNhnUYBsfuKZAogOpIQPl5sj0Dbk9MP6qwQfUW-O2w8fzI1IRH8Wrj6uobm_PF_ZTDk6DHPAN_06iZNgX4tmpBCMNZwDVPW3bgA-xFe3Td1hQsQvuRyausfq-6GLXmym6yTsQJSEZ6l49tpohrV7-lURSxih45KIs5RGpVqRFocoYJzLCREysqChJDwo0ZkCKYHRaPTV6Qxm0yY8RnFtlev9Cf9nMJJjib6xpqoEySkj-sy1ORZ9OwL9zC3v_KTIQq3ixSoTnK')"></div>
+<button class="absolute -top-1 -right-1 bg-black/50 text-white rounded-full p-0.5"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</div>
+<button class="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-lg text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="text-[10px] font-bold">사진 추가</span>
+</button>
+</div>
+</div>
+<!-- Connector -->
+<div class="flex flex-col items-center my-1">
+<div class="dashed-connector"></div>
+<div class="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-3 py-1 rounded-full shadow-sm my-1">
+<span class="text-[#647987] text-[11px] font-bold">32km, 40분</span>
+</div>
+<div class="dashed-connector"></div>
+</div>
+<!-- Place Card 2 -->
+<div class="w-full bg-card-blue dark:bg-gray-800/50 rounded-lg p-4 shadow-elevation-1 border border-blue-50/50">
+<div class="flex items-start justify-between mb-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-gray-400 cursor-grab">drag_handle</span>
+<div>
+<h3 class="text-[#111517] dark:text-white text-base font-bold">협재해수욕장</h3>
+<p class="text-[#647987] text-xs font-medium">🕐 13:00 · 🏖️ 해변</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-1.5 text-gray-400 hover:text-gray-600"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-1.5 text-gray-400 hover:text-red-400"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+</div>
+</div>
+<!-- Activity Chips -->
+<div class="flex gap-2 mb-4">
+<button class="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-full shadow-sm">
+<span class="text-sm">🏖️ 해변</span>
+<span class="material-symbols-outlined text-[16px] text-gray-400">arrow_drop_down</span>
+</button>
+</div>
+<!-- Memo Field -->
+<div class="bg-white/50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-100 dark:border-gray-600 cursor-pointer">
+<div class="flex items-center gap-2 text-gray-400">
+<span class="material-symbols-outlined text-[18px]">notes</span>
+<span class="text-sm">탭하여 추가</span>
+</div>
+</div>
+</div>
+<!-- Connector to bottom -->
+<div class="flex flex-col items-center my-4">
+<div class="dashed-connector h-12"></div>
+</div>
+<!-- Add New Place Button -->
+<button class="w-full py-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-center gap-2 text-[#647987] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-bold">새 장소 추가</span>
+</button>
+</div>
+</main>
+<!-- Bottom Safe Area Spacer -->
+<div class="h-8 bg-white dark:bg-background-dark"></div>
+</div>
+</body></html>

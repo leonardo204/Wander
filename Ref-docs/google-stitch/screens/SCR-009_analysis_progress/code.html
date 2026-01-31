@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4cabe6",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111b21",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-end p-4 h-14">
+<button class="text-[#0e161b] dark:text-white p-2">
+<span class="material-symbols-outlined">close</span>
+</button>
+</header>
+<main class="flex-1 flex flex-col items-center justify-center px-8 pb-20">
+<!-- Pulsing Circular Loader -->
+<div class="relative mb-12">
+<div class="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
+<div class="w-14 h-14 rounded-full bg-primary shadow-[0_0_20px_rgba(76,171,230,0.4)]"></div>
+</div>
+</div>
+<!-- Title -->
+<h1 class="text-[#0e161b] dark:text-white text-[22px] font-bold leading-tight tracking-[-0.015em] text-center mb-10">
+            사진을 분석하고 있어요...
+        </h1>
+<!-- Progress Section -->
+<div class="w-full max-w-[320px] flex flex-col gap-4">
+<!-- Progress Bar Container -->
+<div class="w-full h-2 bg-[#d1dee6] dark:bg-gray-700 rounded-full overflow-hidden">
+<!-- 60% Fill -->
+<div class="h-full bg-primary rounded-full" style="width: 60%;"></div>
+</div>
+<!-- Labels -->
+<div class="flex flex-col items-center gap-2">
+<p class="text-primary text-xl font-bold leading-none">60%</p>
+<div class="flex items-center gap-2 text-[#507b95] dark:text-gray-400">
+<span class="text-base">🗺️</span>
+<p class="text-sm font-medium leading-normal">주소 정보 변환 중...</p>
+</div>
+</div>
+</div>
+<!-- Image Samples (Subtle) -->
+<div class="mt-12 grid grid-cols-3 gap-3 opacity-40 grayscale pointer-events-none">
+<div class="w-16 h-16 rounded-lg bg-cover bg-center" data-alt="blurred photo of a city street" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBHf9NlpaIQKITq6BEaU3Mgl7gId61AX3Sl7YxM7X4npDJUKTw6GVlnULMAgwF2WztMenqmz7PN6h7HmVyNbhzh_NB4uFW1Xnotb8kCTOZus6hC8uxwNK6oQgk6lgeDdCaenzduDcm8uteFPTL2ibML7G0L3_0tsV_81DU0oI3lhb9bleufOaqPT2l2j0hdd38Go8z8EwztHcD843Ogj5BFu83viVs6hdlmxBV02cHdAhMoEnjL5IZwL_9iSeBtp9sMfDdkGti_fGYg');"></div>
+<div class="w-16 h-16 rounded-lg bg-cover bg-center" data-alt="blurred photo of a mountain range" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAFGv3jClBUHldayikyHWpIcj4saAO__wWqJKjkPavMT2sGd30XaDKhkrPlkYehoJ9hC0wJkPHfx0iLjEmmGR1x8qrbfgabD8kdDcxB8jm6XeLmlJ7I39LFbA79vsJlqT23YYn3XPZssXXNfsz5fS7_3cfQEsCHE0ujYJI5ow5JZTbDSQ-40DtaLflbz4uA-bbsd1_FY76pF5y9hap7y-aEDTcfn7-ub5hb5vVPgxkDD_ZFPuq-0ytgSC2AP9-YT_6vCDt7jATdqqkY');"></div>
+<div class="w-16 h-16 rounded-lg bg-cover bg-center" data-alt="blurred photo of a beach" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA745tPeZi-eutD1VZAEKXksokaXB_-oe3cQ6sgd5abEEtoV0smowW_2SSKd8JDbXZgqmC0uIfAN-p31f00hequdxpUGrnOWn5-OkYD74zyTd2t_brKR4_yb9RkJWO-IUajyo4M673bpBYGg9LpTG9vpBiBCvMb4C0kU9CxGFUAF5FOp6qIZZV78KBKbr2D6nkPtr8vqg0VhOU8GLhbS5hRgQlAR02gYzndlP-m6y7RKYV9UCMACLoQJhLbDN3O_EVTWXKI_GtZQKLr');"></div>
+</div>
+</main>
+<!-- Bottom Privacy Notice -->
+<footer class="pb-10 px-6">
+<div class="bg-white/50 dark:bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20 dark:border-white/5">
+<p class="text-[#507b95] dark:text-gray-400 text-xs font-normal leading-normal text-center">
+                💡 Wander는 모든 처리를 기기 내에서 수행해요
+            </p>
+</div>
+<!-- Safe area spacing -->
+<div class="h-5"></div>
+</footer>
+</body></html>

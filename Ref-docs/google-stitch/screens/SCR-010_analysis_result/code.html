@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#30abe8",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111c21",
+                        "stats-bg": "#F8FBFD"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans KR", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif; }
+        .timeline-line {
+            background-image: linear-gradient(to bottom, #30abe8 50%, transparent 50%);
+            background-size: 2px 8px;
+            background-repeat: repeat-y;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-[#0e171b] dark:text-slate-100 min-h-screen">
+<div class="max-w-[480px] mx-auto min-h-screen flex flex-col relative pb-24">
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="flex items-center p-4 pb-2 justify-between">
+<div class="text-[#0e171b] dark:text-white flex size-12 shrink-0 items-center justify-start cursor-pointer">
+<span class="material-symbols-outlined">close</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<h2 class="text-[#0e171b] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">제주도 3박4일</h2>
+<p class="text-[#4e7f97] dark:text-slate-400 text-[11px] font-normal leading-normal">2024.05.10 - 05.13</p>
+</div>
+<div class="flex w-12 items-center justify-end">
+<button class="flex items-center justify-center rounded-xl h-12 bg-transparent text-[#0e171b] dark:text-white">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Map Section -->
+<div class="px-4 py-3">
+<div class="w-full h-[200px] bg-center bg-no-repeat bg-cover rounded-xl object-cover relative overflow-hidden shadow-sm" data-location="Jeju Island, South Korea" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC4E3tOp9UmBIVyyGqYMJjipeuPoPWNh8Uoqa7oldsZGDsjJ1vpx-Co7cNFWqkj6EpmyQqPC9_X_SMu8l7iO8VTzNE39O0OXt-I9tyvRF_B4PEduNN4N3mohJzoDQhlfMD4DtragrWugAqF2mAQA-KYSlRs3-TxL-F9RvR9QD85doEC-J94f412IPjZ0-6IY8VZwSUCh6mzYDLs9iOBKGfsr-zY-4KSA0MsD_SI956C5p_e52NdjuyfJ-xyqjaRx3jMGXS-wgD-9IzP");'>
+<!-- Overlay for "pastel sky blue route" look -->
+<div class="absolute inset-0 bg-primary/10"></div>
+<!-- Mockup path and pins -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<svg class="w-full h-full" viewbox="0 0 300 150">
+<path d="M50,100 Q150,20 250,120" fill="none" opacity="0.8" stroke="#30abe8" stroke-dasharray="8 6" stroke-linecap="round" stroke-width="4"></path>
+<circle cx="50" cy="100" fill="#30abe8" r="5" stroke="white" stroke-width="2"></circle>
+<circle cx="250" cy="120" fill="#30abe8" r="5" stroke="white" stroke-width="2"></circle>
+<circle cx="150" cy="45" fill="#30abe8" r="5" stroke="white" stroke-width="2"></circle>
+</svg>
+</div>
+</div>
+</div>
+<!-- Stats Bar -->
+<div class="flex flex-wrap gap-3 p-4">
+<div class="flex flex-1 flex-col gap-1 rounded-xl p-4 bg-stats-bg dark:bg-slate-800 border border-primary/10">
+<p class="text-[#4e7f97] dark:text-slate-400 text-xs font-medium">Distance</p>
+<p class="text-[#0e171b] dark:text-white tracking-tight text-xl font-bold">245km</p>
+</div>
+<div class="flex flex-1 flex-col gap-1 rounded-xl p-4 bg-stats-bg dark:bg-slate-800 border border-primary/10">
+<p class="text-[#4e7f97] dark:text-slate-400 text-xs font-medium">Places</p>
+<p class="text-[#0e171b] dark:text-white tracking-tight text-xl font-bold">12</p>
+</div>
+<div class="flex flex-1 flex-col gap-1 rounded-xl p-4 bg-stats-bg dark:bg-slate-800 border border-primary/10">
+<p class="text-[#4e7f97] dark:text-slate-400 text-xs font-medium">Photos</p>
+<p class="text-[#0e171b] dark:text-white tracking-tight text-xl font-bold">50</p>
+</div>
+</div>
+<!-- Timeline -->
+<div class="flex flex-col px-4">
+<!-- Day 1 Header -->
+<div class="sticky top-[72px] bg-background-light/95 dark:bg-background-dark/95 z-40 py-4">
+<h2 class="text-[#0e171b] dark:text-white text-xl font-extrabold tracking-tight">Day 1</h2>
+</div>
+<!-- Place Card 1 -->
+<div class="relative pl-8 pb-10">
+<!-- Timeline Line -->
+<div class="absolute left-[7px] top-2 bottom-0 w-0.5 timeline-line opacity-30"></div>
+<!-- Timeline Dot -->
+<div class="absolute left-0 top-1.5 size-4 rounded-full bg-primary border-4 border-white dark:border-background-dark z-10 shadow-sm"></div>
+<div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex justify-between items-start mb-2">
+<div>
+<div class="flex items-center gap-1 mb-1">
+<span class="material-symbols-outlined text-primary text-sm">location_on</span>
+<h3 class="text-[#0e171b] dark:text-white font-bold text-lg">제주공항</h3>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">#입도</span>
+<span class="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">#설렘</span>
+</div>
+</div>
+<span class="text-[#4e7f97] dark:text-slate-400 text-xs font-medium pt-1">10:30 도착</span>
+</div>
+</div>
+<!-- Transition Badge -->
+<div class="absolute left-[-16px] bottom-2 w-full flex justify-center z-20">
+<div class="bg-slate-100 dark:bg-slate-700 text-[#4e7f97] dark:text-slate-300 text-[10px] px-3 py-1 rounded-full border border-white dark:border-slate-800 font-bold shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">directions_car</span>
+                        32km · 40분
+                    </div>
+</div>
+</div>
+<!-- Place Card 2 -->
+<div class="relative pl-8 pb-10">
+<div class="absolute left-[7px] top-2 bottom-0 w-0.5 timeline-line opacity-30"></div>
+<div class="absolute left-0 top-1.5 size-4 rounded-full bg-primary border-4 border-white dark:border-background-dark z-10 shadow-sm"></div>
+<div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex justify-between items-start mb-3">
+<div>
+<div class="flex items-center gap-1 mb-1">
+<span class="material-symbols-outlined text-primary text-sm">beach_access</span>
+<h3 class="text-[#0e171b] dark:text-white font-bold text-lg">협재해수욕장</h3>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">#에메랄드빛</span>
+<span class="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">#바다산책</span>
+</div>
+</div>
+<span class="text-[#4e7f97] dark:text-slate-400 text-xs font-medium pt-1">11:40 도착</span>
+</div>
+<!-- Photo Carousel -->
+<div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
+<div class="min-w-[120px] h-[120px] rounded-lg bg-slate-200 overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Emerald ocean waves at beach" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVNEDplHYOhEjyX1hxyqryMkOWJc3SzpfUrgVxkI7oM9olaTlcXvAlULZlnMw7za9AYMIpRqVa_ceOU_ut2Xj1g3WhMCeCnBYNHRyuSbmj_jktkcRgAaiyq2yYRyDoLRVDtdinaszvfRXYPa85eAFTk5oazuj5ufA9SUawoajhyYxR-W5aZTjeLGDwjuITGWK9-1U4k4UPJh9TkUwC3uFFJNPNnZhDEBf_-oSBZJ-QLQ8ZFwF8oFLNBdtDnvV1xNt-XuhhBGF4Mrke"/>
+</div>
+<div class="min-w-[120px] h-[120px] rounded-lg bg-slate-200 overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="White sandy beach landscape" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCO7S656iWyizGGguLrHGQXwgKVcn0JLYfmFRCAOnSGxwtOFo7YN72ZFY8B2jY4CpiDpJf9-wkKKmkPgoqCtLFrj17X9sB_7J1aTyLMStSxk6q8j3nloKakoLhyl4T8rNjhLqjERUkCjoFYlAXOi0Gl989vShlLeCmOuarYU7JbiDkcEQ1KRHIrJpf0JJKqHOYs-SqBUmzwR4QmzNwqKy0WmWyI3X6F5wwSLkGK0ZO6GZCZC7l35zCb3d8Bb0Dc0dgZzcbVyIKZzl9i"/>
+</div>
+<div class="min-w-[120px] h-[120px] rounded-lg bg-slate-200 overflow-hidden shrink-0 relative">
+<img class="w-full h-full object-cover" data-alt="Cozy seaside cafe view" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsUcxasji9uDPz69DvsWrPpDVqAte5OV7FFml9XP2GEdicXPPclQJ75Gpw2TrJJZ35sPTmZoOq4HM1OX7YiTbbwX-a8E4paML9x_X-HQMU9RU3p6GbpeVqfk1COBdflOg9UN8vB3FJ_QpA9uTdjaW9N0qfah_XFyL9N61EnRFx4AYf1xRJx-ourgnf-5n8ETuQKQT4kE4jAtxMsIBMveCbWxAIl4BkEkEUBemQ7njT3b0G8HAbyt5rOk7CjOmc63Cziu-GTi5wifuS"/>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs font-bold">+5</div>
+</div>
+</div>
+</div>
+<div class="absolute left-[-16px] bottom-2 w-full flex justify-center z-20">
+<div class="bg-slate-100 dark:bg-slate-700 text-[#4e7f97] dark:text-slate-300 text-[10px] px-3 py-1 rounded-full border border-white dark:border-slate-800 font-bold shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">directions_car</span>
+                        15km · 25분
+                    </div>
+</div>
+</div>
+<!-- Day 2 Preview -->
+<div class="py-4">
+<h2 class="text-[#0e171b] dark:text-white text-xl font-extrabold tracking-tight opacity-50">Day 2</h2>
+</div>
+</div>
+<!-- Fixed Bottom Bar -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white/90 dark:bg-background-dark/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 p-4 pb-8 z-50 flex gap-3">
+<button class="flex-1 flex items-center justify-center gap-2 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 text-[#0e171b] dark:text-white font-bold text-base border border-slate-200 dark:border-slate-700">
+<span class="material-symbols-outlined text-xl">ios_share</span>
+                공유
+            </button>
+<button class="flex-[2] flex items-center justify-center gap-2 h-14 rounded-xl bg-primary text-white font-bold text-base shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-xl">diamond</span>
+                AI 스토리 생성
+            </button>
+</div>
+</div>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

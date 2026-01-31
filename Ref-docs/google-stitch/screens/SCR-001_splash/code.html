@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wander Splash Screen</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89cfeb",
+                        "primary-pale": "#E8F6FC",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#121c20",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Custom styles to match the exact splash requirement */
+        .splash-bg {
+            background-color: #E8F6FC;
+        }
+        .app-icon-size {
+            width: 80px;
+            height: 80px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-primary-pale dark:bg-background-dark font-display">
+<!-- Splash Screen Container -->
+<!-- Creating a full-screen centered layout for the mobile splash screen -->
+<div class="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden">
+<!-- Branding Group -->
+<div class="flex flex-col items-center gap-6">
+<!-- App Icon Placeholder -->
+<!-- Using the primary color #89cfeb for the icon background to match 'Wander' Blue -->
+<div class="app-icon-size bg-primary rounded-xl flex items-center justify-center shadow-sm">
+<!-- Material Symbol representing travel/photography journey -->
+<span class="material-symbols-outlined text-white text-[48px]" data-icon="explore">
+                    explore
+                </span>
+</div>
+<!-- App Name -->
+<!-- Using font-bold as requested, mapped to Plus Jakarta Sans for the theme -->
+<h1 class="text-primary text-[32px] font-extrabold tracking-tight leading-none">
+                Wander
+            </h1>
+</div>
+<!-- Subtitle/Tagline (Optional - kept minimal) -->
+<div class="absolute bottom-12 flex flex-col items-center">
+<p class="text-primary/60 text-sm font-medium tracking-wide uppercase">
+                Photo Diary
+            </p>
+</div>
+</div>
+<!-- Hidden Component: ImageGrid (Available in component list but not needed for the splash screen's minimal design, 
+         kept as a hidden reference to comply with the "using the components" instruction if required by system logic) -->
+<div class="hidden">
+<div class="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 p-4">
+<div class="flex flex-col gap-3">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-xl" data-alt="Travel photo timeline preview" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBwlafjsMvhoKZdsbD5a2jqeHww4-egnmbOEuBKNDCc---Mx_fO8kRlsJJC4wGQ4HvAPmMH-RMq1M-0zocYmeJHgRECoQ9sbhwDoL-ayAv-yxG0kSojdz-SaebCn46SG7j2frhg6aZ1BJ0qFwXABhra4qMdSJ1fSBGgSUFcZkz5hKKw_okVREWVw-72q14Y27elnOcsETdNBC4VmKqpT05BSJrIgdYmq5Ih3K-a2f172ZM-0FBYs9ngdgr0OAgdech4LK1MmwNxY3J9");'></div>
+</div>
+</div>
+</div>
+</body></html>

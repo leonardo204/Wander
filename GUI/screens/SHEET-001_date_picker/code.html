@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#42bff0",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101d22",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+        .ios-bottom-sheet {
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+        /* Custom scrollbar hide for the horizontal chips */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<!-- Screen Wrapper / Backdrop -->
+<div class="relative flex h-screen w-full flex-col overflow-hidden bg-gray-200">
+<!-- Mock Background Content (Photo Selection Screen) -->
+<div class="grid grid-cols-3 gap-1 p-1 opacity-50 grayscale">
+<div class="aspect-square bg-gray-300"></div>
+<div class="aspect-square bg-gray-400"></div>
+<div class="aspect-square bg-gray-300"></div>
+<div class="aspect-square bg-gray-400"></div>
+<div class="aspect-square bg-gray-300"></div>
+<div class="aspect-square bg-gray-400"></div>
+<div class="aspect-square bg-gray-300"></div>
+<div class="aspect-square bg-gray-400"></div>
+<div class="aspect-square bg-gray-300"></div>
+<div class="aspect-square bg-gray-400"></div>
+<div class="aspect-square bg-gray-300"></div>
+<div class="aspect-square bg-gray-400"></div>
+</div>
+<!-- Dimmed Overlay -->
+<div class="absolute inset-0 bg-black/40 z-10"></div>
+<!-- Bottom Sheet Wrapper -->
+<div class="absolute bottom-0 left-0 right-0 z-20 flex flex-col justify-end">
+<div class="ios-bottom-sheet bg-white dark:bg-slate-900 shadow-2xl flex flex-col w-full max-w-md mx-auto">
+<!-- BottomSheetHandle -->
+<div class="flex h-6 w-full items-center justify-center">
+<div class="h-1.5 w-10 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+</div>
+<!-- SectionHeader -->
+<div class="relative">
+<h4 class="text-gray-900 dark:text-white text-base font-bold leading-normal tracking-tight px-4 py-2 text-center">기간 선택</h4>
+</div>
+<!-- Horizontal Scrollable Chips -->
+<div class="flex gap-2 p-4 overflow-x-auto hide-scrollbar">
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary/10 px-5 border border-primary/20">
+<p class="text-primary text-sm font-semibold">이번 주</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-gray-100 dark:bg-gray-800 px-5">
+<p class="text-gray-600 dark:text-gray-300 text-sm font-medium">지난 주</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-gray-100 dark:bg-gray-800 px-5">
+<p class="text-gray-600 dark:text-gray-300 text-sm font-medium">최근 30일</p>
+</div>
+<div class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-gray-100 dark:bg-gray-800 px-5">
+<p class="text-gray-600 dark:text-gray-300 text-sm font-medium">직접 선택</p>
+</div>
+</div>
+<!-- CalendarPicker -->
+<div class="flex flex-col items-center justify-center px-4 pb-4">
+<div class="w-full max-w-[360px] flex flex-col gap-1">
+<!-- Calendar Header -->
+<div class="flex items-center p-1 justify-between mb-2">
+<button class="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<p class="text-gray-900 dark:text-white text-base font-bold leading-tight flex-1 text-center">2026년 1월</p>
+<button class="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<!-- Days of Week -->
+<div class="grid grid-cols-7 mb-1">
+<p class="text-gray-400 text-xs font-bold flex h-8 w-full items-center justify-center">S</p>
+<p class="text-gray-400 text-xs font-bold flex h-8 w-full items-center justify-center">M</p>
+<p class="text-gray-400 text-xs font-bold flex h-8 w-full items-center justify-center">T</p>
+<p class="text-gray-400 text-xs font-bold flex h-8 w-full items-center justify-center">W</p>
+<p class="text-gray-400 text-xs font-bold flex h-8 w-full items-center justify-center">T</p>
+<p class="text-gray-400 text-xs font-bold flex h-8 w-full items-center justify-center">F</p>
+<p class="text-gray-400 text-xs font-bold flex h-8 w-full items-center justify-center">S</p>
+</div>
+<!-- Grid -->
+<div class="grid grid-cols-7 text-sm">
+<!-- Empty spaces for previous month days -->
+<div class="h-12 w-full col-start-1 col-span-4"></div>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">1</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">2</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">3</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">4</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">5</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">6</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">7</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">8</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">9</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">10</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">11</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">12</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">13</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">14</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">15</button>
+<!-- Start Date -->
+<button class="h-12 w-full relative flex items-center justify-center">
+<div class="absolute right-0 h-full w-1/2 bg-primary/20"></div>
+<div class="relative z-10 flex size-10 items-center justify-center rounded-full bg-primary text-white font-bold">16</div>
+</button>
+<!-- Range -->
+<button class="h-12 w-full bg-primary/20 text-gray-900 dark:text-white font-medium flex items-center justify-center">17</button>
+<button class="h-12 w-full bg-primary/20 text-gray-900 dark:text-white font-medium flex items-center justify-center">18</button>
+<button class="h-12 w-full bg-primary/20 text-gray-900 dark:text-white font-medium flex items-center justify-center">19</button>
+<button class="h-12 w-full bg-primary/20 text-gray-900 dark:text-white font-medium flex items-center justify-center">20</button>
+<button class="h-12 w-full bg-primary/20 text-gray-900 dark:text-white font-medium flex items-center justify-center">21</button>
+<button class="h-12 w-full bg-primary/20 text-gray-900 dark:text-white font-medium flex items-center justify-center">22</button>
+<!-- End Date -->
+<button class="h-12 w-full relative flex items-center justify-center">
+<div class="absolute left-0 h-full w-1/2 bg-primary/20"></div>
+<div class="relative z-10 flex size-10 items-center justify-center rounded-full bg-primary text-white font-bold">23</div>
+</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">24</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">25</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">26</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">27</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">28</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">29</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">30</button>
+<button class="h-12 w-full text-gray-900 dark:text-white font-medium flex items-center justify-center">31</button>
+</div>
+</div>
+</div>
+<!-- Range Summary Text -->
+<div class="px-4 pt-2">
+<h2 class="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-tight text-center">
+                        1/16 ~ 1/23 (8일)
+                    </h2>
+</div>
+<!-- Footer Buttons -->
+<div class="flex gap-3 p-4 pb-8">
+<button class="flex-1 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-base font-semibold transition-colors active:bg-gray-200">
+                        초기화
+                    </button>
+<button class="flex-1 h-12 rounded-xl bg-primary text-white text-base font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+                        적용
+                    </button>
+</div>
+<!-- Home Indicator Placeholder -->
+<div class="h-2 w-full"></div>
+</div>
+</div>
+</div>
+</body></html>

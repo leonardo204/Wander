@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wander Place Detail Sheet</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5674eb",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#111421",
+                        "badge-blue": "#E0F4F8",
+                        "memo-blue": "#F8FBFD",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gray-400 font-display">
+<!-- Screen Mockup Container -->
+<div class="relative mx-auto h-[844px] w-[390px] overflow-hidden bg-gray-200 shadow-2xl">
+<!-- Background Mockup (Simulated Map or Gallery behind sheet) -->
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Scenic landscape of a beach with turquoise water" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCvZuH5hvqI-L06uBrgn7-yDSxf10dIPnqjdxy_AJ-rZ3QbjOeju8yjW0HsP2WW68wVLOuClK7DjSHk7BN1ehoIyR7_ixh5nhJLjmO99cXQ_3e88MBuMoXJSFNnsTSfjgtuLTSD_tAWa48JN9twJslXIPghXS-lmRlSs37ylivbPctZ1KNwsJjneUXAUPrvVCscWTGISdxCIv9weGH_0zJz0gcDXXa5Out4hqQxEBl5-2qE6IiDX3FtLKJD-VovEhxxtzfFkMiwZ45t')">
+<div class="absolute inset-0 bg-black/30"></div>
+</div>
+<!-- Dimmed Overlay -->
+<div class="absolute inset-0 bg-black/40"></div>
+<!-- Bottom Sheet Container -->
+<div class="absolute inset-x-0 bottom-0 flex flex-col h-auto max-h-[92%] bg-white dark:bg-background-dark rounded-t-xl shadow-2xl transition-all">
+<!-- BottomSheetHandle -->
+<div class="flex h-6 w-full items-center justify-center shrink-0">
+<div class="h-1.5 w-10 rounded-full bg-[#dcdde5] dark:bg-gray-700"></div>
+</div>
+<!-- Content Area (Scrollable) -->
+<div class="flex-1 overflow-y-auto pb-10 hide-scrollbar">
+<!-- Place Header Section -->
+<div class="px-5 pt-2">
+<div class="flex items-center justify-between">
+<h1 class="text-[#111218] dark:text-white text-[24px] font-bold leading-tight tracking-tight">📍 협재해수욕장</h1>
+</div>
+<!-- Activity Badge -->
+<div class="flex gap-2 mt-3 mb-2">
+<div class="flex h-7 items-center justify-center gap-x-1 rounded-lg bg-badge-blue px-3">
+<span class="text-[13px] leading-none">🏖️</span>
+<p class="text-[#111218] text-xs font-semibold leading-normal">해변</p>
+</div>
+</div>
+<!-- Address & Time -->
+<div class="space-y-1 mt-3">
+<div class="flex items-start gap-2">
+<p class="text-[#636a88] dark:text-gray-400 text-sm font-normal leading-relaxed">제주특별자치도 제주시 한림읍 협재리 2497-1</p>
+</div>
+<div class="flex items-center gap-2">
+<p class="text-[#8e94a8] dark:text-gray-500 text-[13px] font-normal leading-normal">🕐 13:00 ~ 15:30 (2시간 30분)</p>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex gap-3 px-5 mt-6">
+<button class="flex-1 flex h-12 items-center justify-center gap-2 rounded-xl bg-background-light dark:bg-gray-800 border border-gray-100 dark:border-gray-700 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-[20px]">map</span>
+<span class="text-[#111218] dark:text-white text-sm font-semibold">지도에서 보기</span>
+</button>
+<button class="flex-1 flex h-12 items-center justify-center gap-2 rounded-xl bg-background-light dark:bg-gray-800 border border-gray-100 dark:border-gray-700 transition-colors active:scale-95">
+<span class="material-symbols-outlined text-gray-700 dark:text-gray-300 text-[20px]">edit_note</span>
+<span class="text-[#111218] dark:text-white text-sm font-semibold">메모 추가</span>
+</button>
+</div>
+<!-- Photo Gallery Section -->
+<div class="mt-8">
+<div class="px-5 mb-3 flex items-center justify-between">
+<h3 class="text-[#111218] dark:text-white text-sm font-bold">사진 8장</h3>
+</div>
+<!-- Main Large Photo -->
+<div class="px-5">
+<div class="aspect-video w-full overflow-hidden rounded-xl bg-gray-100 shadow-sm">
+<img alt="Main place photo" class="h-full w-full object-cover" data-alt="Beautiful white sand beach with emerald water and blue sky" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjWGyC4pPCyFjDYsYR2w-D70-dhNuCIzzvwoSdJll6EdWwDs28z-k5EoT0exjWsjuJH-DJ4xWSt8yLyppiPROVx9zXDigFQr9zM2e_4uO8Uy0BN0HBDT3VKByLWvtKCL70TDXePLFvxWWB4mO-AFqZkzKiurG4Z6Wj6tWZozlFemEs7pv1nPCEDScUsGm2hRXah2wmLoFsmQ2Kqs1FKEr8-yZv8_QncysqE_gJFuyxnCz1EIFJDNGr7omOzL3JNTnZtqI_6s6cMMU_"/>
+</div>
+</div>
+<!-- Thumbnails Scrolling -->
+<div class="mt-3 flex gap-3 px-5 overflow-x-auto hide-scrollbar">
+<div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+<img class="h-full w-full object-cover" data-alt="Close up of sea shells on sand" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxA16uqeH5dME5h5H1bADZ96mV9c8ewiJWCt53yFksxvDaDbPoDsnXAsKuVC5lA-YU-UseI7hPp1moZYLLyWR4yorx1KKg188SofaSS3o54L2OOVYv51_dCgxSRXl88j1mHoy80p-Owh4hki-49lEHnrXB-wWYbpm_96LwVaRhTPG_VOCZ-xqCcwh8EIuJKu7cIOR72lmif0zkc3JFbVSEakGyuPYLx6b9TacQ2XOQVx18YevaFqhWk6Go3ha0MH8NW47M328VLci2"/>
+</div>
+<div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+<img class="h-full w-full object-cover" data-alt="Clear blue waves washing on the shore" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChB6Z3ISWvaPl8iwi4H1MJs8HCCjJYEc2DtNo42orQTJl2Su8FiQBkEWUI_JLq-KtlplmA22w64SuOcMGQG-w5W_6mPiG7x_sOds9LMZHowoQdkB6SVphuOCLQEJEXc5bjwh5bYDHBWlW5n3cU3tqQ9ffb3RA2r5utVEADtvEQF-xEOowK-LpuxMfRA1D3Bbqh0xMp15nSlTuwKD2UUxfRzUpTyX3V_m0_qqyCFRYKvFSQYSFvRO9trkVkoJrvv7Eo03Hdp2NJpg5o"/>
+</div>
+<div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+<img class="h-full w-full object-cover" data-alt="Spring flowers by the coast" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcWYY9RbPStDLqgQLp_cbO4EDjAUC0s7gPC2lwjEtOFYkTUQyjWuT7z9nRu0SHcdg7LvcP-ttPyglont2TutZYm3ojQDVbAbnQQlEeXGsnjuT_Ccl-LINudQ-hfNuggCo8875xml3qpZYELuhYiFzLYQR-x7ntKtaMMwsjHz1RdoVhXEcDx9mPaJ86eW-kc2GEz0lBxQzpm7DsP66MnZiDLztC5P-gAFep5BUIjcr93vpndASvqJFooJzC5CXwteYQhk3PSFe7pWxk"/>
+</div>
+<div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+<img class="h-full w-full object-cover" data-alt="Beach umbrella and chair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBvl5GBeEdTXNGZ1-wXcvJuatfZ8pgI7PAjoUgjE5n2xtWjP4Rpub6z4hpfXqU5z3bOfPlqV2-T29FMfBsJIpsKK9LAAPUfMLPEI66Ifiq_lvaTZJ4n21L_hGR6erbDxfOMEsPt9sINtSQPXp1q-DxUmAVpR_PLlS-2xKqdufvnmhlkAM7FIkS4UOL2jPxBFHWDYyHQc3bBKnod77j2AuB4eALDfZgs8mnbHafbCLDW7woFgu5Q25-itMyYIWmUYm-JfPsfhhjibBM"/>
+</div>
+<!-- Overflow Badge -->
+<div class="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+<img class="h-full w-full object-cover" data-alt="Landscape overview of the beach" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjRY9GqZ-wVlXzjxPWXeJD9mYnmMDEjXiDeop6xWjLkQcj_h8H86S3GcQOOEtyAokJ56Smgnc5mYi6WRYneXTeVezygHmhfkowzPzpLUOzEL7f79vT--cPjTIYfh4vH7elURNRVYpai4WkV-K8IeUh_v46uFtW0dktKOfmAk9QOgj-OtDJH3LUolC1U9zF4rQWJ8Vytt65P_q2eGZnBmYRrGD1bBNjzO0VUsPCe-UExqTcjXhovlCh7kdYtZ0NN4ja-0-KtdHg0vc9"/>
+<div class="absolute inset-0 flex items-center justify-center bg-primary/80 backdrop-blur-[1px]">
+<span class="text-white text-sm font-bold">+3</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Memo Section -->
+<div class="mt-8 px-5">
+<h3 class="text-[#111218] dark:text-white text-sm font-bold mb-3 flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">chat_bubble</span>
+                        메모
+                    </h3>
+<div class="rounded-xl bg-memo-blue dark:bg-primary/10 p-4 border border-primary/5">
+<p class="text-[#111218] dark:text-gray-200 text-sm font-normal leading-relaxed">
+                            물이 정말 맑고 예뻤다. 다음에 또 오고 싶은 곳! 🌊
+                        </p>
+<div class="mt-3 flex justify-end">
+<span class="text-[11px] text-[#8e94a8] dark:text-gray-500 font-medium">2023. 11. 14 작성됨</span>
+</div>
+</div>
+</div>
+<!-- Spacer for home indicator -->
+<div class="h-8"></div>
+</div>
+</div>
+</div>
+</body></html>

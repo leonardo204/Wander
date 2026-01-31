@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wander AI Provider Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89d0ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#121c20",
+                        "card-blue": "#E8F6FC",
+                        "row-blue": "#F8FBFD",
+                        "info-blue": "#E3F2FD",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .status-dot-active {
+            font-variation-settings: 'FILL' 1, 'wght' 400;
+            color: #4ade80; /* Success green */
+        }
+        .status-dot-inactive {
+            font-variation-settings: 'FILL' 1, 'wght' 400;
+            color: #94a3b8; /* Slate 400 */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen">
+<div class="max-w-md mx-auto min-h-screen flex flex-col pb-12">
+<!-- Navigation Header -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="flex items-center p-4 justify-between">
+<div class="flex items-center text-primary cursor-pointer">
+<span class="material-symbols-outlined text-[28px]">chevron_left</span>
+</div>
+<h2 class="text-[#121617] dark:text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center">AI 설정</h2>
+<div class="w-7"></div> <!-- Placeholder for balancing title -->
+</div>
+</header>
+<!-- Info Card Section -->
+<div class="px-4 py-2">
+<div class="bg-card-blue dark:bg-primary/10 rounded-xl p-4 flex gap-3 items-start border border-primary/20">
+<span class="text-xl">💡</span>
+<p class="text-[#121617] dark:text-gray-200 text-sm font-medium leading-relaxed">
+                    본인의 API 키로 AI 기능을 무료로 이용할 수 있어요. 비용은 각 프로바이더 정책에 따릅니다.
+                </p>
+</div>
+</div>
+<!-- Section Header -->
+<div class="px-4 pb-2 pt-6">
+<h3 class="text-[#121617] dark:text-white text-base font-bold leading-tight tracking-tight">AI 프로바이더 선택 (BYOK)</h3>
+</div>
+<!-- Provider List Group -->
+<div class="px-4">
+<div class="bg-white dark:bg-white/5 rounded-xl overflow-hidden border border-gray-100 dark:border-white/10 shadow-sm">
+<!-- OpenAI -->
+<div class="flex items-center gap-4 px-4 h-[72px] justify-between border-b border-gray-50 dark:border-white/5 hover:bg-row-blue dark:hover:bg-white/5 transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined status-dot-active text-xs">circle</span>
+<div class="flex flex-col justify-center">
+<p class="text-[#121617] dark:text-white text-[15px] font-semibold leading-tight">OpenAI</p>
+<p class="text-[#657c86] dark:text-gray-400 text-xs font-normal mt-0.5">GPT-4o, GPT-4 Turbo</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</div>
+<!-- Anthropic -->
+<div class="flex items-center gap-4 px-4 h-[72px] justify-between border-b border-gray-50 dark:border-white/5 hover:bg-row-blue dark:hover:bg-white/5 transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined status-dot-inactive text-xs">circle</span>
+<div class="flex flex-col justify-center">
+<p class="text-[#121617] dark:text-white text-[15px] font-semibold leading-tight">Anthropic</p>
+<p class="text-[#657c86] dark:text-gray-400 text-xs font-normal mt-0.5">Claude 3.5 Sonnet, Opus</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</div>
+<!-- Google Gemini -->
+<div class="flex items-center gap-4 px-4 h-[72px] justify-between border-b border-gray-50 dark:border-white/5 hover:bg-row-blue dark:hover:bg-white/5 transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined status-dot-inactive text-xs">circle</span>
+<div class="flex flex-col justify-center">
+<p class="text-[#121617] dark:text-white text-[15px] font-semibold leading-tight">Google Gemini</p>
+<p class="text-[#657c86] dark:text-gray-400 text-xs font-normal mt-0.5">Gemini 1.5 Pro, Flash</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</div>
+<!-- Azure OpenAI -->
+<div class="flex items-center gap-4 px-4 h-[72px] justify-between border-b border-gray-50 dark:border-white/5 hover:bg-row-blue dark:hover:bg-white/5 transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined status-dot-inactive text-xs">circle</span>
+<div class="flex flex-col justify-center">
+<p class="text-[#121617] dark:text-white text-[15px] font-semibold leading-tight">Azure OpenAI</p>
+<p class="text-[#657c86] dark:text-gray-400 text-xs font-normal mt-0.5">Enterprise GPT Instances</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</div>
+<!-- xAI -->
+<div class="flex items-center gap-4 px-4 h-[72px] justify-between border-b border-gray-50 dark:border-white/5 hover:bg-row-blue dark:hover:bg-white/5 transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined status-dot-inactive text-xs">circle</span>
+<div class="flex flex-col justify-center">
+<p class="text-[#121617] dark:text-white text-[15px] font-semibold leading-tight">xAI</p>
+<p class="text-[#657c86] dark:text-gray-400 text-xs font-normal mt-0.5">Grok-1</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</div>
+<!-- AWS Bedrock -->
+<div class="flex items-center gap-4 px-4 h-[72px] justify-between hover:bg-row-blue dark:hover:bg-white/5 transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined status-dot-inactive text-xs">circle</span>
+<div class="flex flex-col justify-center">
+<p class="text-[#121617] dark:text-white text-[15px] font-semibold leading-tight">AWS Bedrock</p>
+<p class="text-[#657c86] dark:text-gray-400 text-xs font-normal mt-0.5">Claude, Llama 3 on AWS</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Security Notice Footer -->
+<div class="mt-auto px-4 pt-10 pb-6">
+<div class="bg-info-blue dark:bg-white/5 rounded-xl p-4 flex gap-3 items-center border border-blue-100 dark:border-white/10">
+<span class="material-symbols-outlined text-primary text-xl">info</span>
+<p class="text-[#4b5563] dark:text-gray-300 text-[13px] font-medium leading-snug">
+                    API 키는 기기 내에 안전하게 저장되며 서버로 전송되지 않습니다.
+                </p>
+</div>
+</div>
+<!-- Decorative Illustration Element (Subtle Gradient Background) -->
+<div class="fixed -z-10 bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-primary/10 to-transparent pointer-events-none"></div>
+</div>
+</body></html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89cfeb",
+                        "background-light": "#f8fbfd",
+                        "background-dark": "#121c20",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .selected-overlay {
+            background-color: rgba(137, 207, 235, 0.4);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#0f171a] dark:text-white antialiased">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- TopAppBar -->
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-30 border-b border-gray-100 dark:border-gray-800">
+<div class="text-[#0f171a] dark:text-white flex size-12 shrink-0 items-center cursor-pointer">
+<span class="material-symbols-outlined">close</span>
+</div>
+<h2 class="text-[#0f171a] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">사진 선택</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] shrink-0 px-4 py-2 rounded-full">완료(12)</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-32 hide-scrollbar">
+<!-- SearchBar -->
+<div class="px-4 py-3">
+<label class="flex flex-col min-w-40 h-12 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-full h-full">
+<div class="text-[#538193] flex border-none bg-[#e8eff2] dark:bg-gray-800 items-center justify-center pl-4 rounded-l-full" data-icon="MagnifyingGlass">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-full text-[#0f171a] dark:text-white focus:outline-0 focus:ring-0 border-none bg-[#e8eff2] dark:bg-gray-800 focus:border-none h-full placeholder:text-[#538193] px-4 rounded-l-none pl-2 text-base font-normal leading-normal" placeholder="날짜 또는 장소로 검색" value=""/>
+</div>
+</label>
+</div>
+<!-- Chips -->
+<div class="flex gap-3 px-4 py-1 flex-wrap">
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-[#e8eff2] dark:bg-gray-800 px-4">
+<p class="text-[#0f171a] dark:text-white text-sm font-medium leading-normal">기간 선택</p>
+<span class="material-symbols-outlined text-[20px]">keyboard_arrow_down</span>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-[#e8eff2] dark:bg-gray-800 px-4">
+<p class="text-[#0f171a] dark:text-white text-sm font-medium leading-normal">위치 필터</p>
+<span class="material-symbols-outlined text-[20px]">keyboard_arrow_down</span>
+</button>
+</div>
+<!-- Sticky SectionHeader -->
+<div class="sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md">
+<h3 class="text-[#0f171a] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 py-4">2026년 1월</h3>
+</div>
+<!-- ImageGrid -->
+<div class="grid grid-cols-4 gap-1 p-1">
+<!-- Selected Image 1 -->
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Snowy mountain peaks at sunrise" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD403EKV-jllNSHbUkl7nigMcbO7ve7c-dRYbt5SEPMFZ7WwAODv_aEsXY8OpOQJIRhbJB1tMm2z3HvSlkajH4u9t_CkOQV38CyrYzF6G1g5CrsxkJVKuipFott8NAMyNhODwsQrbRcLPYU-CuE4dV7vz8_Ueoae69YtBMxuQbduhM7L-Cm0Bbu_Wye2xBNFAKrrBAVALJ6CtB951dKq5SViz_tdUEZnyV3HVGLpU-Fsk6hjMOHSGIKP817olCGmJLdidfEsll7S39i");'></div>
+<div class="absolute inset-0 selected-overlay flex items-center justify-center">
+<div class="absolute top-2 right-2 bg-primary text-white size-6 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white">1</div>
+</div>
+</div>
+<!-- Selected Image 2 -->
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Clear blue lake in a valley" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBxv_zRcRS7W-aZCUOi2b76OqASXD_Dw2LdnjjBIBrlkWzLava3eOenf749DVzgyraf-URi45RzhRE57UeS4yHIVPAfM8zjL1ql6b9akqtez08qFPT4DTCZs-WKxiPoCHkG51F2_7qF_DAqFdAGRMRvsm6sig7ESAS2HP69rCb7lpXwgEfuJZXXNNcFONbVak4IY0lEbeVZB9qZm1aExgbEhkyNyzgTx_ZYCY3iFzLJ938JDIDteVRsGFksPUmrHCWCalSxMchpuyoZ");'></div>
+<div class="absolute inset-0 selected-overlay flex items-center justify-center">
+<div class="absolute top-2 right-2 bg-primary text-white size-6 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white">2</div>
+</div>
+</div>
+<!-- Normal Images -->
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Forest path with sunlight" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAFNIK8mO1Ld8yQFF5OR0nzBgc8VG-7TwFboavd-MmSJP5TvYCJ6xgFSmhfahoTqyC0fo4s-k_7VM3Sl1KTUekrO7PHzooeCWMkzIRdD5jjONhcAiGcQWhWJDUeM5uee5mbVzpLpb0W3u-BPct2_vStw1aoc8YC6pAyg-K4OvKQnHEwjD553AkJx-CvAsOL4OHYaeoZbVpFI1F7PpjhWguwkTs6CHxCrZLs-tv7EozgZa0AZU1E4gSwDVjdBAZuYrYUAf55_hokZAdD");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Modern city skyline at night" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCVJcduupaoqak7Tnl6cJDYY7YCfj9Jb05ktd4l-N8J3KbAsBDo77PfIGA_0uFNVfE_tZVg2wmbRDfSTApcba7gCZl5Ezhc_ct7Hht1J8uATcPoDJ2TOx2iynIlyE9dkJ0qz80iln6ZUZ6eRpylEElNo8SLxSuRJmunZ_g9VOjLcXPgJWSJxqtkyZ3e7FcMOPDp2bgG2NcbZisdCLTumy52Qj-j66rtCdWUjm_1qFX-KHN9XexI_O-yEz_4AQ0qOQUTQ78JE4hmDNQc");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<!-- Row 2 -->
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Palm trees on beach" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBz4O4gjsTu0yTaK5Y-q1xACH_lpsGJ_AeVTYviHRDZmz--aweGpxcyBuYn_1f3yeTplHPLsGCNqtlkSeLlSSlPJ8L8Srai40pFxu8PJXUQpHNUTb1UBWgFuMLnBRcmB0dWeSlNtEoYQVbeuK1SCaTFKLCg0Dbt-FmHVxcBSypdVxPZoTrTprBvbw3FKX11oND3B3Om-dnROC623Z7h0E0ndKcADM-wV3XI2tu2ctpuTQJSfP25nLK2hA0AvJVdWaXS-Vb0Hg3cueG1");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Golden gate bridge in fog" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCQiGzRtk4OONciFvDLlRDSqATccIQuUBviUsMb5j6ZLjFuF8CSKxQCV4GBFOAe6JVVFFRAanaMB0eXuT_ixRpXUzRYKow6ffIpsxCa5odsewKFSqQwY9yXskxhdItJaCo8C5COCGIoaHdfDFz6TorO-FYMj0HumqJPxM1T2KDGw8KCNlBA9r6855kpdaKaJQUsBFMr4mUiE6brQ3eHjXz6up3kIIWbq6oNQLaap_tpfOC63-M5CCEO1sWbuFxNVBkZxUqHIvOYk1sx");'></div>
+<div class="absolute inset-0 selected-overlay flex items-center justify-center">
+<div class="absolute top-2 right-2 bg-primary text-white size-6 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white">3</div>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Italian street with flowers" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCrbzOkMvvHKbBO_4tHwxYAQ4i2sNEZZnHhQ2ZJgLsA1BVX6OEn3PHEln3PXDSG2-NwsO-kjaAzC3IhgKoUcY2LfqabOJIESczTTTOXppYjPllz0XbV4QzDO_WtD61iqyyuE_jIWKdmgYBFoX_VmpWlsUOx5DaksCsFIJvPM_cqvSeBb_mH9m8ObWx3kfgyGltt3ZCtMGWD6h1t8eMk3LxrfXvBZeaSKoE1_VX4WEgSiQopQylt12sV2mr_uXDtfFRjpDZZMWTgzNOO");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Eiffel tower at dusk" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDXQHFBus4hm7EaBmEM00fs0vev6xLMvGpMFZj6_gkoS93D-XML3F4HQWhaucx8s8B2mwBJIreUhZXC4ZyHv_G2tVTGNUWBJwMSvQdzP9USFifAh2KCfzKsBR_lbvmMKKkARrHXvRfT4a3WqI50B2ZzD8a5MzrRDyzzFK1XhoB-llDAMUulCfK2Lv3YqlLojJgWdpAP5Kx3uZ9ZXzU-hyia5mFZda0DUWoPmADqEXQYUL9ahsNX3SwKW2Ig0_QudH-s3GRjs3b_tX5W");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<!-- Row 3 -->
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Canyon with orange rocks" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAkIKqitpDLPuPCcO6SYy_DrC73thEvjr67nMrsy8UWWZX_mZvPrkI5vqtq2rGenkldjqHKqrFvTduaXsOjOWqJVE9rX-s0BoR0qgIRRTJm5P_GXdBDDpTfVNWr9pwvlY4kaH9dtsEl4wtvemCP3gvm_HlD5lBEHAhhmlMd7XBRB-AIWvJhNn-5XMNXjB8kauJPdCk30sRo-8M6zpq6Mbov10q9XlKheIeDE8btAKXuMfUKYL1_5iKqwRYKYMlzLK-KkzDV6d9r8Pri");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Waterfall in lush jungle" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAfAlz9wApP-8tDQ-kpu1Nx0Ikcyx0sKj_YWq1yivUDkBbKQEHAbQCaUTl-bLZc4YKuKPuYGp9f5LfdDkdAfXJiHn3SUYkWWI-czuNjhqj2sMTQBwwLoGlybY9XXYsSUOdvq19Y2J0KW0dOn9Hq55lGfzkGVcyfqH9R1NozumvnH60fRFHdBiwVXvaOfcm87HQlG9EQ2n0p4l9dbnzwDri3c0JldkrxApMRyAVpbz5JuFj8VcG9nVT3gbd8qN2fzirTVgygp5suo3Jt");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Night sky with stars" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDaYcVXAP_PWozhVFkHvaEXCYCWAEcMICfleO7KVjB7QX9FJM1WE-YnkqbNnd8pUWUKhyT_KYFltK5fgNza91PEn0ZMYVoCn-MaxgB8RnEg8fhVCBZ-jhljDhEedgUsnBIDJOKSYwz8rbbZtsMpIU1sc1_XFTMaIuVtFCfwxXCViuQ1GweMtJakKFcTqe0NWgJu4_EmSHYUzkcePGIQRg4_jyDBC5eXe6ctA3Ebrn6OajPGp2HpiRKU4CYhT0-2jXJSgawaQK0Ogwl5");'></div>
+<div class="absolute inset-0 selected-overlay flex items-center justify-center">
+<div class="absolute top-2 right-2 bg-primary text-white size-6 rounded-full flex items-center justify-center text-xs font-bold border-2 border-white">4</div>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Snowy cabin in woods" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBQQgBbuG_snM1vILW6h7tIrRvKkRQILTfK1lb_CByDA-Ls5X2VYLXa9HPqCJ2sajg2DXWAK15afs5UYS2sWg7KLzC4pEz3E6tMznpaiuJehlxQb1zEoVVwZ63U9TpD75x3VK8tAokqKUBwN_4vETcNGP38PH1OaNYbLvrZAfpshhp568P_qnPQsiJiwraRTEaKz2Um2Ng4WjLYgIJLqDekIgMVWiBPOJ76cB9KEEDM4kNl0WlXs_8K_HRfVsGz_b_-XjwDwkI445Su");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<!-- More Rows for Scrollability -->
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Red bridge over water" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAV_iwfHJPRRsA7IqnHlF_ZzJu5UjmOHkQTxHYuMofB7VyJ_k4FRDZRQaWIh1u-mLnU-7emO4vu-iaWcJuxnWi8nYmIUaQGySyDuwkITAvfwGMAuBrIaE6RaIcFWu36IVxDL3tqHCYDU5VEm0bMQwj3vc71pH4L_a3-hRdRkKCJI09y5-YTDrmYGIZc5867AgCZlbrsdcINJ7Por0scPAz_D4xv1xsC_bJSEfMtMxNOIiTwvq0vhknUGGkUqwxm9yMfzPZvhs1Nys2m");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Desert road disappearing" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDLR6DoWY3gv7RB7R6akDPW9gnjMKfSSCmA1Xk1x0uutGTtqZxjbH_HZ4Vll-SMn3i4eaoVUqOkO9lpzxdU_RUrgWorbWVsEDqlWcZO2Ek39KKg0Jbr5t3BOyWdGaxc80i7d7HmZbQsFPsjYrtdqJjjtZOJnCINdkOv1KOIHkSt_qz6sF-z-iSGrP9MLboI_sImmZndONRujJ22APO6r1rEWrlyonKpaKrp65hbKXFjFE8Ue591ZCnC8QqRrBbOwzRrvJU1dbp8aikN");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Ancient Greek ruins" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuACnHaU_e7Fgt55Py-IkA6rDxIKqPsGU-PJSXDqVtaI_BzrJM3e9EqzT-_2mcN8CM72gunUeSoC7TV3STV6UW4hHa1z8iTO7uIiW5JGLr63RSY2JHklWLrsre-fiiJ-9vfLDYAfaVh0r4DRkK1Km6HXXq4KxrGngegOBYkH1oWL22is1QOZr0COK-OJhPqMycb46CnYMuZDl86K2Un8AkOuL0-tS9BCSSsVaKxPMv5sRLx_pYcrOrlvfTgG7XduyQAKfCs3SzpDWM6G");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Vibrant hot air balloons" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAYrO0A5vMFszTWZIQL8H_i63WXpgV_6uohG0Xo1nx5tdpqqouj8oHqASB5kBLNy5CzBTCoOq0j_6unMGp8-FxtkDTptHzDZz86ND8qr3WI5TesV5FJXmx_KG65qh9AFCd1v0gQngiam00qP6YXsixlkreCOxilnb3WEl6zsbMF9pUgDZDAlff9SDt4qpCYgfSzzlnOnP3Wu2J9HqySbiXJAKLmyCACAn_oS_FYp2NPxXqtzd2pcUDVBIRPRkqeUXrrlIHwayX53VWg");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+</div>
+<!-- Next Month Header -->
+<div class="bg-background-light dark:bg-background-dark">
+<h3 class="text-[#0f171a] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 py-4">2025년 12월</h3>
+</div>
+<div class="grid grid-cols-4 gap-1 p-1">
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Lush green tea fields" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBcfhI48OA16Hvuk6bGwRkHs_28wXUeOX_FnJngVLrpNNVSwhf92icBcuiUdhNG2_4TnTJJGTFNUGAXkHcZUAQr67EDbYOCIiqAHRe2oGF6cfQFg3QphXrt1PjipZLoes8aGJpAuObymgkejy9ycUd-jr4h61OoxQEJVl4REFX8gU2070C63ijZK3MNp2rdEHXX7Dn5u1vrpCPORuDG79HRAwvt3fQhwL27BjvHPdHJFPMhv6kiHeIa4FY4S8GWf7v2QEpbirXB-jVH");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Old library interior" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAml5HQcLYoJmJMuz0VMnK3zqWoNyAJvfHkZJ4T0UlE58SweHRdLakKBZURwpuHsFaCVYXB4YmhyUSlqoAAdZlqzcLsEpPYsgZt9FTNFm-d89Vd2f_d8SEa57JNeho9oudX16Xxkx3Mv6Nv1Qh8-8o2K7MqIJsfYZKzStCb-Vq2fkEBI90ITO6YkrmsLAF8tbRSdc_X0VXKO0MWmoFG_5HAGNyNKe1HL47m-L5LIwajEte1hCFg0uuEgIIHXRu89oEJFLNo1vNrJpK0");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Cozy coffee cup on table" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD9wFq2T7YHdPCbO4qCYi-Pu8-QdLGA_LpzFBlyf7XNlET2-lP9lCgqyjTprHAdiZJph0shnGXp_aL3O9XqWWFbgeNMVFnTITx3vgtcpKz1gX44L2lWamYLcMbZ9q4drX6DyBBNwJxF7F1tWX40zmC1ykxL_6K0rTkf65pBcbyveaLtmoB0fg3cGxxerHDEtX3sQWk4h2WkcpeDNCFqD16wYLXWaF-eWUuQO2zxejDP5bZstHVFHKd7Ziu9E-Iv-d7oQu7DS065bzsJ");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover" data-alt="Cat sleeping in sun" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCCdp6gwW97jmQzr2nZFEzuZ9mNNkGpW9EG5ixzirsWUR7BiDDKMzGj80g7W4vmBZK70moEef9nrAYUjVHTTYbWouhrae_kK0VKu4z0egy0PdYms7BU6cDOd6LY3_G2uLyVeUrS3LQSfRYJgJoQpG_Z8O1qMZ4TipRoFOYUX4a8gioIbl3A9DFDfihyWTcJBXPGqQTKjFMMERWycovEtg1M8hJC4CXccaJxriZzYyux6hpEAyFeHZyHNsyjF1vQcRbKRomaOSf5Sx1Y");'></div>
+<div class="absolute top-2 right-2 size-6 rounded-full border-2 border-white/50 bg-black/10"></div>
+</div>
+</div>
+</main>
+<!-- Fixed Preview Bar -->
+<footer class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 p-4 pb-8 z-40">
+<div class="flex items-center gap-3 overflow-x-auto hide-scrollbar">
+<!-- Selected items in tray -->
+<div class="relative flex-shrink-0">
+<div class="size-16 bg-center bg-no-repeat bg-cover rounded-lg" data-alt="Selected mountain photo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCGtklvFfTtLmfQq0pu2KPnTBVt_gbCKiajKgEQhOEgt8hdyFpxnqdpqUHgI3eUzoEVv9lq1HIBwf-UBwY77aCUdniOQK0b4kw5-NcH3NZf1f5ztBXa4mrmmqwaaKpYFVa0Gel9vOr-s9KACmnS_2sFOnrob9VpY4i4KpOIQhij8xAzmAdF7jjyyJ8NuXmfJTct2U8jgNKcfsWtpTPhPxCkaoELY5_-P0itxRn-DHXV7OsFySjickPVTzzAP_ilXTZ1ctasIl9s0Tuw");'></div>
+<div class="absolute -top-1 -right-1 bg-black/60 text-white rounded-full size-5 flex items-center justify-center cursor-pointer">
+<span class="material-symbols-outlined text-xs">close</span>
+</div>
+</div>
+<div class="relative flex-shrink-0">
+<div class="size-16 bg-center bg-no-repeat bg-cover rounded-lg" data-alt="Selected lake photo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCEVZTIl29heaP0ZkXQNaqDhYja82d0PUYdEMWZtHJ8VfgE5iOj6PasOTCTf-e2LJtWWw-Q6yBjZtr-sn9vTvlQS_oN6tbd9SJ7PjGwwWBfVFDopplh_irJEE2nENKDhZY0KD5mqujU0Q2NSFrO2ANO4U0rDV0g9w_OCKstVxx0Xb3OLtijblqTd80ybe4aRofPNW-iyzaNZ9Z5lelczQDRu_iUr592p0hc3E4R3c5mC02p5WWQQeqBXTU8vUVG4NU085qd1-EBkq4C");'></div>
+<div class="absolute -top-1 -right-1 bg-black/60 text-white rounded-full size-5 flex items-center justify-center cursor-pointer">
+<span class="material-symbols-outlined text-xs">close</span>
+</div>
+</div>
+<div class="relative flex-shrink-0">
+<div class="size-16 bg-center bg-no-repeat bg-cover rounded-lg" data-alt="Selected bridge photo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBOSB5DelO3jepqCvTe5vpXuQVlbkhkoVpX_Htk3ApDrEbppVIDp0qLur-lXQqiRApgLF8BR5KdGNL9ws3QzP0s90vx0fiBSMcd3WEmS9UtFXCvknb2dhVB5sxI5ZSwfMZ3Cxgn0t9tSJ0MpVdk2SVw3qbmo6j8VJJ8QdIKhQVgO2yQU6nRG9bF3SGxNEt30OUprabfOJjhcHps3eMQhWejrhfMatgaYbej1aQDILSYyOGFhRKgOqOec6z0tMI_l2Klk8sXQor4Xm7m");'></div>
+<div class="absolute -top-1 -right-1 bg-black/60 text-white rounded-full size-5 flex items-center justify-center cursor-pointer">
+<span class="material-symbols-outlined text-xs">close</span>
+</div>
+</div>
+<div class="relative flex-shrink-0">
+<div class="size-16 bg-center bg-no-repeat bg-cover rounded-lg" data-alt="Selected star photo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAqX7jTHIKa_gwcKZDDi3CiffmdW0uZjNwtuo-dlbIj3stx4Jfnc7Bk-okF8cXDXAsrzFf3IlAg0kCudJjGuEKCpeB-fM2RSsFUyJdfjqPOaqQzXUeqbxeXqgGfEVIFOSUH1yfSDAlNpQf8oU3wps8eZpvlOv8J9ZOhBzuBihsOS1bHJHqiKHfGvngpaQzmbr1sAAJSVSZfsBibsogdOKInQtYUFff9LtNhFOqkEpjwKchZbER8hEDrtdWlZ_hczeZrjI_XSCDPmDlC");'></div>
+<div class="absolute -top-1 -right-1 bg-black/60 text-white rounded-full size-5 flex items-center justify-center cursor-pointer">
+<span class="material-symbols-outlined text-xs">close</span>
+</div>
+</div>
+<!-- Placeholder for more items -->
+<div class="flex-shrink-0 size-16 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600">
+<span class="material-symbols-outlined text-gray-400">add</span>
+</div>
+<div class="flex-shrink-0 size-16 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600">
+<span class="material-symbols-outlined text-gray-400">add</span>
+</div>
+</div>
+</footer>
+</div>
+</body></html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wander Records Library</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89d0ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#121c20",
+                        "surface": "#F8FBFD"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans KR", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#F8FBFD] dark:bg-background-dark font-display text-[#121617] dark:text-white min-h-screen pb-24">
+<!-- Top App Bar (iOS Large Title Style) -->
+<header class="sticky top-0 z-10 bg-[#F8FBFD]/80 dark:bg-background-dark/80 backdrop-blur-md px-4 pt-12 pb-4">
+<div class="flex items-center justify-between">
+<h1 class="text-[32px] font-bold tracking-tight">기록</h1>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm">
+<span class="material-symbols-outlined text-[24px]">search</span>
+</button>
+</div>
+</header>
+<!-- Filter Chips -->
+<div class="flex gap-2 px-4 py-3 overflow-x-auto hide-scrollbar">
+<div class="flex h-10 shrink-0 items-center justify-center rounded-full bg-primary px-5 shadow-sm">
+<p class="text-white text-sm font-semibold">전체</p>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center rounded-full bg-white dark:bg-gray-800 px-5 shadow-sm">
+<p class="text-[#121617] dark:text-gray-300 text-sm font-medium">최근 여행</p>
+</div>
+<div class="flex h-10 shrink-0 items-center justify-center rounded-full bg-white dark:bg-gray-800 px-5 shadow-sm">
+<p class="text-[#121617] dark:text-gray-300 text-sm font-medium">일상 기록</p>
+</div>
+</div>
+<!-- Section: Recent Trips (Carousel) -->
+<section class="mt-4">
+<div class="flex items-center justify-between px-4 mb-3">
+<h2 class="text-[20px] font-bold">최근 여행</h2>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</div>
+<div class="flex overflow-x-auto gap-4 px-4 hide-scrollbar">
+<!-- Card 1 -->
+<div class="min-w-[260px] flex flex-col gap-3 group">
+<div class="w-full aspect-[3/4] rounded-lg overflow-hidden bg-gray-200 shadow-md">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Beautiful sunset over the ocean at Yeosu bridge" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlXT8voYsHXotE4pXTFTXT-UtzVlqQFe-WJRHrLPavbM46-tZhle_98r4yiaw8uSw3xC58Gsea4HSNAkyzU7oA1CNyf7hFuxtuHWHUdVu3WhdLiZCYjx4f1X0YgXkHtfu6P_gpi7Ey23p1XUypG7W1jBmAQVbz_EPtjGT0IcG25e4buD2Ez8h4-Oyqtw9oKdSYQ3REL__JVsRJXqzcC-axPc5TUqKm7uCssRH214ODdjfMETXi57uYgn4hES-Y6jLp6Cd9GUgKs1FI"/>
+</div>
+<div>
+<p class="text-[17px] font-bold">여수 밤바다 여행</p>
+<p class="text-[#657c86] text-sm mt-0.5">2023.10.12 • 10곳 방문</p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="min-w-[260px] flex flex-col gap-3 group">
+<div class="w-full aspect-[3/4] rounded-lg overflow-hidden bg-gray-200 shadow-md">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Lush green forest path in Jeju island" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC8gL50VzBXrhTL3sC0cCWBj8GHDLiLkESVojxBdqXSApgCXoRWQfxu35Py8zh1hooWYlqhQIARnAaouC-dipeTN2yfgf6uFpCGl2RZlXK1Q0Ql4t93jzmbQUvC09oO4_8TgBpS_z4NzYfChtOBHK8an0ZN56hSoMYNUJ7OnUJI707PDQ1v0wYeUIdIsqGTrWMe1Fpqgq1TdPN5BmX2l6vmrUwP1FGeUIbqpbLlGdOZMsGUFOYkh4piusNDIwz6q-ZyDfHizRklSYdZ"/>
+</div>
+<div>
+<p class="text-[17px] font-bold">제주 감성 투어</p>
+<p class="text-[#657c86] text-sm mt-0.5">2023.09.20 • 15곳 방문</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Recent Daily Records (Vertical List) -->
+<section class="mt-8 px-4">
+<h2 class="text-[20px] font-bold mb-4">최근 일상 기록</h2>
+<div class="flex flex-col gap-3">
+<!-- List Item 1 -->
+<div class="flex items-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+<div class="w-14 h-14 rounded-md overflow-hidden bg-gray-100 mr-4">
+<img class="w-full h-full object-cover" data-alt="A cozy cafe interior with a latte on the table" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8viP6sCwTZgDBI1uHOgQKG8dLdztPl-B32DTJVzekZghlD8V8YbEusbzVZP0ZEJMiZ6TM1M_1wj5aUQgEr_a52DHkSIR4DntyxCk8X81LwISwwadMoY8K_dGh3mkdQ-C-WZkGRQsTDvecZfokcSj9cSAeVfgyCJ9mR9CqX_Oh1Lzbh0-JVgXB14m7rtYB9mAh6URCf_LBVLJGWY1D-aRbX8aoSE_r3B2tAqtKMip9t14NGIJSdkqQqyr0b15vZaHHgYuEPGB51xyA"/>
+</div>
+<div class="flex-1">
+<p class="font-semibold text-[16px]">오늘의 카페</p>
+<p class="text-xs text-[#657c86] mt-1">오전 11:30 • 성수동</p>
+</div>
+<span class="material-symbols-outlined text-gray-300">more_vert</span>
+</div>
+<!-- List Item 2 -->
+<div class="flex items-center p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+<div class="w-14 h-14 rounded-md overflow-hidden bg-gray-100 mr-4">
+<img class="w-full h-full object-cover" data-alt="Sunlight filtering through trees in a park" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTB1QrXWN5Tdst2aXNsX51rLYgZUKakztuKsrNAnBBt-W2fW2Bted3DRhdzvwVQ5UCHE3ZfcGcE7n37rZK4BlCZHE4HYVcfHOHe5UgbI-wu4wFbvlsn7k9VleOGx9ZRGu7KPFGU4cZzLwPqihG4lXDLsZAOEEuxRaKNHM5VDpDnijTJ8uMCsElJ4fcQZAos0QJsjHjqnw2bBIpLQRJ0AcHHpryAVs8F-YIeaMVdGngUg_z7NVB2GG9_b62H9Hhwc4o5H5xxGTKRQyv"/>
+</div>
+<div class="flex-1">
+<p class="font-semibold text-[16px]">남산 산책로</p>
+<p class="text-xs text-[#657c86] mt-1">오후 04:20 • 서울</p>
+</div>
+<span class="material-symbols-outlined text-gray-300">more_vert</span>
+</div>
+</div>
+</section>
+<!-- Section: My Travel Footprints (Map View) -->
+<section class="mt-8 px-4">
+<h2 class="text-[20px] font-bold mb-4">나의 여행 발자취</h2>
+<div class="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-100 shadow-sm border border-gray-100 dark:border-gray-700">
+<!-- Map Placeholder -->
+<img class="w-full h-full object-cover opacity-60" data-alt="A stylized overhead map of South Korea with pins" data-location="South Korea" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBc-EcK4W5xDA9iod2ZVNO3AKn-nVQh6_G2qtn0kL7kz-OFPxvPVRRuYuaG5W4N8OdiMs6nvOEYWazOuK70IVvFpVa02XPo60WPNj7TDj1qv1KdtfxHOgwS1JHcycxsYiCrnxzltO6m5jh2r6ZCHAX7Tdm_nEefxPmFv5aTbNXJtN5XagUPdApvGGqPhs7gLCrdOKdKQLbQb1V8CBfrtKZ8smBV5eEz8oSwDeHIPP8Yx_7HX8Nm0E-ZfOpWejscDImoYbCKQ8uJhN2s"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="flex flex-col items-center">
+<div class="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg mb-2">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<p class="text-xs font-bold text-gray-700 bg-white/80 px-2 py-1 rounded-full">32곳 기록됨</p>
+</div>
+</div>
+<div class="absolute bottom-4 left-4 right-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-3 rounded-lg flex items-center justify-between">
+<span class="text-sm font-semibold text-gray-800 dark:text-gray-100">모든 여행지 모아보기</span>
+<div class="flex items-center text-primary font-bold text-sm">
+                    지도에서 보기
+                    <span class="material-symbols-outlined text-[18px] ml-1">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Floating Action Button (Optional for Wander context) -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</button>
+<!-- Bottom Tab Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-background-dark/90 backdrop-blur-lg border-t border-gray-100 dark:border-gray-800 px-8 py-3 flex justify-between items-center z-20">
+<button class="flex flex-col items-center gap-1 group">
+<span class="material-symbols-outlined text-[28px] text-gray-400 group-hover:text-primary transition-colors">home</span>
+<span class="text-[10px] text-gray-500 font-medium">홈</span>
+</button>
+<button class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-[28px] text-primary fill-[1]">collections_bookmark</span>
+<span class="text-[10px] text-primary font-bold">기록</span>
+</button>
+<button class="flex flex-col items-center gap-1 group">
+<span class="material-symbols-outlined text-[28px] text-gray-400 group-hover:text-primary transition-colors">settings</span>
+<span class="text-[10px] text-gray-500 font-medium">설정</span>
+</button>
+</nav>
+</body></html>

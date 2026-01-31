@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wander Share Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89c6ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#121b20",
+                        "accent-soft": "#e8f6fc",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans KR", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif;
+        }
+        .radio-dot-custom {
+            --radio-dot-svg: url('data:image/svg+xml,%3csvg viewBox=%270 0 16 16%27 fill=%27rgb(18,21,23)%27 xmlns=%27http://www.w3.org/2000/svg%27%3e%3ccircle cx=%278%27 cy=%278%27 r=%273%27/%3e%3c/svg%3e');
+        }
+        .dark .radio-dot-custom {
+             --radio-dot-svg: url('data:image/svg+xml,%3csvg viewBox=%270 0 16 16%27 fill=%27rgb(255,255,255)%27 xmlns=%27http://www.w3.org/2000/svg%27%3e%3ccircle cx=%278%27 cy=%278%27 r=%273%27/%3e%3c/svg%3e');
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-[#121517] dark:text-gray-100 min-h-screen">
+<div class="max-w-md mx-auto bg-white dark:bg-[#121b20] min-h-screen shadow-sm">
+<!-- Navigation Header -->
+<header class="sticky top-0 z-10 bg-white/80 dark:bg-[#121b20]/80 backdrop-blur-md flex items-center px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+<button class="text-[#121517] dark:text-white flex items-center justify-center p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back_ios</span>
+</button>
+<h1 class="flex-1 text-center text-lg font-bold leading-tight tracking-tight pr-10">공유 설정</h1>
+</header>
+<main class="pb-10">
+<!-- Section: Source Attribution -->
+<section class="mt-4">
+<h3 class="text-[#121517] dark:text-gray-200 text-lg font-bold px-4 pb-2 pt-4">출처 표기</h3>
+<div class="px-4">
+<div class="flex items-center gap-4 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl px-4 min-h-[88px] py-4 justify-between shadow-sm">
+<div class="flex flex-col justify-center flex-1 pr-2">
+<p class="text-[#121517] dark:text-white text-base font-semibold leading-normal">📍 공유 시 출처 포함</p>
+<p class="text-[#657986] dark:text-gray-400 text-sm font-normal leading-snug mt-1">공유하는 텍스트 끝에 앱 출처가 자동으로 추가됩니다. SNS에서 자유롭게 편집/삭제할 수 있어요.</p>
+</div>
+<div class="shrink-0">
+<label class="relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none bg-gray-200 dark:bg-gray-700 p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary transition-all">
+<div class="h-full w-[27px] rounded-full bg-white shadow-md"></div>
+<input checked="" class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Source Style Selection -->
+<section class="mt-6 radio-dot-custom">
+<h3 class="text-[#121517] dark:text-gray-200 text-lg font-bold px-4 pb-2 pt-4">출처 문구 스타일</h3>
+<div class="flex flex-col gap-3 px-4">
+<label class="flex items-center gap-4 rounded-xl border border-solid border-primary/40 bg-accent-soft dark:bg-primary/10 p-[15px] transition-colors cursor-pointer">
+<input checked="" class="h-5 w-5 border-2 border-primary bg-transparent text-transparent checked:border-primary checked:bg-[image:--radio-dot-svg] focus:outline-none focus:ring-0 focus:ring-offset-0" name="style-selection" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-[#121517] dark:text-white text-sm font-medium leading-normal">📍 Wander로 기록했어요</p>
+</div>
+</label>
+<label class="flex items-center gap-4 rounded-xl border border-solid border-gray-200 dark:border-gray-800 p-[15px] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+<input class="h-5 w-5 border-2 border-gray-300 dark:border-gray-600 bg-transparent text-transparent checked:border-primary checked:bg-[image:--radio-dot-svg] focus:outline-none focus:ring-0 focus:ring-offset-0" name="style-selection" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-[#121517] dark:text-white text-sm font-medium leading-normal">Made with Wander ✨</p>
+</div>
+</label>
+<label class="flex items-center gap-4 rounded-xl border border-solid border-gray-200 dark:border-gray-800 p-[15px] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+<input class="h-5 w-5 border-2 border-gray-300 dark:border-gray-600 bg-transparent text-transparent checked:border-primary checked:bg-[image:--radio-dot-svg] focus:outline-none focus:ring-0 focus:ring-offset-0" name="style-selection" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-[#121517] dark:text-white text-sm font-medium leading-normal">via Wander</p>
+</div>
+</label>
+<label class="flex items-center gap-4 rounded-xl border border-solid border-gray-200 dark:border-gray-800 p-[15px] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+<input class="h-5 w-5 border-2 border-gray-300 dark:border-gray-600 bg-transparent text-transparent checked:border-primary checked:bg-[image:--radio-dot-svg] focus:outline-none focus:ring-0 focus:ring-offset-0" name="style-selection" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-[#121517] dark:text-white text-sm font-medium leading-normal">#Wander</p>
+</div>
+</label>
+</div>
+</section>
+<!-- Section: Image Watermark Options -->
+<section class="mt-6 radio-dot-custom">
+<h3 class="text-[#121517] dark:text-gray-200 text-lg font-bold px-4 pb-2 pt-4">이미지 카드 출처</h3>
+<div class="flex flex-col gap-3 px-4">
+<label class="flex items-center gap-4 rounded-xl border border-solid border-gray-200 dark:border-gray-800 p-[15px] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+<input checked="" class="h-5 w-5 border-2 border-gray-300 dark:border-gray-600 bg-transparent text-transparent checked:border-primary checked:bg-[image:--radio-dot-svg] focus:outline-none focus:ring-0 focus:ring-offset-0" name="watermark-style" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-[#121517] dark:text-white text-sm font-medium leading-normal">워터마크 (이미지 내)</p>
+<p class="text-[#657986] dark:text-gray-400 text-xs font-normal">이미지 우하단에 작은 로고</p>
+</div>
+</label>
+<label class="flex items-center gap-4 rounded-xl border border-solid border-gray-200 dark:border-gray-800 p-[15px] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+<input class="h-5 w-5 border-2 border-gray-300 dark:border-gray-600 bg-transparent text-transparent checked:border-primary checked:bg-[image:--radio-dot-svg] focus:outline-none focus:ring-0 focus:ring-offset-0" name="watermark-style" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-[#121517] dark:text-white text-sm font-medium leading-normal">캡션으로 (편집 가능)</p>
+<p class="text-[#657986] dark:text-gray-400 text-xs font-normal">이미지와 별도의 텍스트로 추가</p>
+</div>
+</label>
+<label class="flex items-center gap-4 rounded-xl border border-solid border-gray-200 dark:border-gray-800 p-[15px] hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+<input class="h-5 w-5 border-2 border-gray-300 dark:border-gray-600 bg-transparent text-transparent checked:border-primary checked:bg-[image:--radio-dot-svg] focus:outline-none focus:ring-0 focus:ring-offset-0" name="watermark-style" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-[#121517] dark:text-white text-sm font-medium leading-normal">표시 안 함</p>
+<p class="text-[#657986] dark:text-gray-400 text-xs font-normal">출처 없이 이미지만</p>
+</div>
+</label>
+</div>
+</section>
+<!-- Section: Preview -->
+<section class="mt-8 px-4">
+<h3 class="text-[#121517] dark:text-gray-200 text-lg font-bold pb-3">미리보기</h3>
+<div class="bg-gray-50 dark:bg-gray-800/50 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-5">
+<div class="text-[#121517] dark:text-gray-300 font-display text-sm space-y-2 leading-relaxed">
+<p class="font-bold text-base">🏝️ 제주도 3박 4일 여행</p>
+<p>📅 Day 1 (1/15)</p>
+<p>📍 제주공항 → 협재해수욕장</p>
+<div class="border-t border-gray-200 dark:border-gray-700 my-4"></div>
+<p class="text-primary font-semibold">📍 Wander로 기록했어요</p>
+</div>
+</div>
+</section>
+<!-- Info Note -->
+<div class="mx-4 mt-8 p-4 bg-accent-soft dark:bg-primary/20 rounded-xl flex items-start gap-3 border border-primary/20">
+<span class="material-symbols-outlined text-primary text-xl">lightbulb</span>
+<p class="text-[#2c5282] dark:text-primary text-sm font-medium leading-normal">
+                    출처를 포함하면 더 많은 사람들이 Wander를 알게 돼요
+                </p>
+</div>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wander Export Options Sheet</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#87c6ee",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111b21",
+                        "pale-primary": "#e8f6fc",
+                        "handle": "#e5eef2",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans KR", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "2xl": "1.25rem", // close to 20pt
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif;
+        }
+        .bottom-sheet-shadow {
+            box-shadow: 0px -4px 20px rgba(0, 0, 0, 0.05);
+        }
+        .radio-dot-custom {
+            --radio-dot-svg: url('data:image/svg+xml,%3csvg viewBox=%270 0 16 16%27 fill=%27rgb(135,198,238)%27 xmlns=%27http://www.w3.org/2000/svg%27%3e%3ccircle cx=%278%27 cy=%278%27 r=%274%27/%3e%3c/svg%3e');
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gray-400 dark:bg-gray-900 flex items-end justify-center min-h-screen">
+<!-- Dimmed Background Overlay (Simulated) -->
+<div class="fixed inset-0 bg-black/40 z-0"></div>
+<!-- Bottom Sheet Container -->
+<div class="relative z-10 w-full max-w-md bg-background-light dark:bg-background-dark rounded-t-2xl bottom-sheet-shadow overflow-hidden flex flex-col">
+<!-- BottomSheetHandle -->
+<div class="flex flex-col items-center pt-3 pb-1">
+<div class="h-1 w-9 rounded-full bg-handle dark:bg-gray-700"></div>
+</div>
+<!-- TopAppBar (Header) -->
+<div class="flex items-center px-4 py-2 justify-between">
+<button class="text-[#111517] dark:text-white flex size-10 shrink-0 items-center justify-center">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h2 class="text-[#111517] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-10">내보내기</h2>
+</div>
+<div class="flex-1 overflow-y-auto px-4 pb-8">
+<!-- Format Selection Section -->
+<h3 class="text-[#111517] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] pt-6 pb-3">파일 형식</h3>
+<div class="flex flex-col gap-3 radio-dot-custom">
+<!-- Option 1: Markdown (Selected) -->
+<label class="flex items-center gap-4 rounded-xl border-2 border-primary bg-pale-primary dark:bg-primary/10 p-4 flex-row-reverse transition-all">
+<input checked="" class="h-5 w-5 border-2 border-primary bg-transparent text-transparent checked:border-primary checked:bg-[image:--radio-dot-svg] focus:outline-none focus:ring-0 focus:ring-offset-0 checked:focus:border-primary cursor-pointer" name="format" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-[#111517] dark:text-white text-sm font-semibold leading-normal">📝 Markdown (.md)</p>
+<p class="text-[#647987] dark:text-gray-400 text-xs font-normal leading-normal">블로그 포스팅에 적합</p>
+</div>
+</label>
+<!-- Option 2: HTML -->
+<label class="flex items-center gap-4 rounded-xl border border-solid border-[#dce1e5] dark:border-gray-700 p-4 flex-row-reverse hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
+<input class="h-5 w-5 border-2 border-[#dce1e5] dark:border-gray-600 bg-transparent text-transparent checked:border-primary checked:bg-[image:--radio-dot-svg] focus:outline-none focus:ring-0 focus:ring-offset-0 checked:focus:border-primary cursor-pointer" name="format" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-[#111517] dark:text-white text-sm font-medium leading-normal">🌐 HTML (.html)</p>
+<p class="text-[#647987] dark:text-gray-400 text-xs font-normal leading-normal">웹페이지 형식</p>
+</div>
+</label>
+<!-- Option 3: Text -->
+<label class="flex items-center gap-4 rounded-xl border border-solid border-[#dce1e5] dark:border-gray-700 p-4 flex-row-reverse hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
+<input class="h-5 w-5 border-2 border-[#dce1e5] dark:border-gray-600 bg-transparent text-transparent checked:border-primary checked:bg-[image:--radio-dot-svg] focus:outline-none focus:ring-0 focus:ring-offset-0 checked:focus:border-primary cursor-pointer" name="format" type="radio"/>
+<div class="flex grow flex-col">
+<p class="text-[#111517] dark:text-white text-sm font-medium leading-normal">📄 텍스트 (.txt)</p>
+<p class="text-[#647987] dark:text-gray-400 text-xs font-normal leading-normal">순수 텍스트</p>
+</div>
+</label>
+</div>
+<!-- Content Options Section -->
+<h3 class="text-[#111517] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] pt-8 pb-3">포함 내용</h3>
+<div class="flex flex-col space-y-1">
+<!-- Checkbox Item 1 -->
+<label class="flex items-center justify-between py-3 cursor-pointer group">
+<span class="text-[#111517] dark:text-gray-200 text-sm font-medium">☑️ 타임라인</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</div>
+</label>
+<!-- Checkbox Item 2 -->
+<label class="flex items-center justify-between py-3 cursor-pointer group">
+<span class="text-[#111517] dark:text-gray-200 text-sm font-medium">☑️ 통계 정보</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</div>
+</label>
+<!-- Checkbox Item 3 (Unchecked with Dependency Note) -->
+<label class="flex items-center justify-between py-3 cursor-pointer group">
+<div class="flex flex-col">
+<span class="text-[#111517] dark:text-gray-200 text-sm font-medium">☐ AI 스토리</span>
+<span class="text-[#647987] dark:text-gray-500 text-[10px] font-normal">BYOK 연결 필요</span>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</div>
+</label>
+<!-- Checkbox Item 4 -->
+<label class="flex items-center justify-between py-3 cursor-pointer group">
+<span class="text-[#111517] dark:text-gray-200 text-sm font-medium">☑️ 사진 파일명</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</div>
+</label>
+</div>
+<!-- Attribution Note -->
+<div class="pt-8 pb-4 text-center">
+<p class="text-[#647987] dark:text-gray-400 text-xs font-normal">📍 출처 표기가 파일 하단에 포함됩니다</p>
+</div>
+<!-- Action Button -->
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-6 rounded-xl text-base shadow-sm active:scale-[0.98] transition-all">
+                내보내기 시작
+            </button>
+</div>
+<!-- Safety spacing for iOS home indicator -->
+<div class="h-8 bg-background-light dark:bg-background-dark"></div>
+</div>
+</body></html>

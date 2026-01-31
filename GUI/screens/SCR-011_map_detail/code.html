@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400,100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#30abe8",
+              "background-light": "#f6f7f8",
+              "background-dark": "#111c21",
+            },
+            fontFamily: {
+              "display": ["Plus Jakarta Sans", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .map-mesh {
+            background-color: #e5e7eb;
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .dashed-route {
+            stroke-dasharray: 8 8;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark text-[#0e171b] dark:text-white">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- Full-Screen Map Background Mockup -->
+<div class="absolute inset-0 z-0 map-mesh bg-slate-100 dark:bg-slate-900" data-location="Jeju Island South Korea" style="">
+<!-- Simulated Map Elements (Routes and Pins) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none">
+<path class="dashed-route" d="M 100 600 Q 150 450 300 400 T 250 250 T 150 100" fill="transparent" stroke="#30abe8" stroke-width="3"></path>
+</svg>
+<!-- Pin 1 -->
+<div class="absolute left-[80px] top-[580px] flex flex-col items-center">
+<div class="flex size-8 items-center justify-center rounded-full bg-white dark:bg-background-dark shadow-lg border-2 border-primary text-primary font-bold text-sm">1</div>
+</div>
+<!-- Pin 2 (Active with Tooltip) -->
+<div class="absolute left-[280px] top-[380px] flex flex-col items-center">
+<!-- Tooltip Card -->
+<div class="mb-4 -translate-y-2 animate-bounce-subtle">
+<div class="w-64 flex flex-col gap-3 rounded-xl bg-white dark:bg-slate-800 p-4 shadow-xl ring-1 ring-black/5">
+<div class="flex items-start justify-between gap-2">
+<div class="flex flex-col gap-0.5">
+<p class="text-sm font-bold leading-tight">협재해수욕장</p>
+<p class="text-[11px] text-[#4e7f97] dark:text-slate-400 font-normal leading-normal">2시간 30분 • 사진 8장</p>
+</div>
+<div class="w-16 h-12 bg-center bg-cover rounded-lg shrink-0" data-alt="Beach with clear blue water and white sand" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCttWlMt_G6oYt7srsqi2gKBtVyCYTN4D48ovtPOzd2Dqv2KQW7lciMWIGZZ_5LNt6EEEmOFdEEA3l2FouTIk7mdxR8hl6rVYqa_88UCGu1JD8behJ62vP_0aNqjctl0zBnL_MiGLWfhl2WwQGlqBIL1lhJexcUPhGJwV5RI-2fmm-XYXanQiB0JIXd2gHE4WYF-P1nHNPw5H3AIiSn13pDlgdhBWbs3cLSW0-iEpUSBupK74j6phFbCcuV71CBdqMY0HGgjUsiPHa6");'></div>
+</div>
+<div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-700 pt-2">
+<button class="flex items-center gap-1 text-primary text-xs font-semibold">
+                                상세 보기
+                                <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Tooltip Arrow -->
+<div class="mx-auto w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-white dark:border-t-slate-800"></div>
+</div>
+<!-- Active Pin -->
+<div class="flex size-10 items-center justify-center rounded-full bg-primary shadow-[0_0_15px_rgba(48,171,232,0.5)] text-white font-bold text-base scale-110">2</div>
+</div>
+<!-- Pin 3 -->
+<div class="absolute left-[230px] top-[230px] flex flex-col items-center opacity-80">
+<div class="flex size-8 items-center justify-center rounded-full bg-white dark:bg-background-dark shadow-md border-2 border-primary/50 text-primary/80 font-bold text-sm">3</div>
+</div>
+<!-- Pin 4 -->
+<div class="absolute left-[130px] top-[80px] flex flex-col items-center opacity-80">
+<div class="flex size-8 items-center justify-center rounded-full bg-white dark:bg-background-dark shadow-md border-2 border-primary/50 text-primary/80 font-bold text-sm">4</div>
+</div>
+</div>
+<!-- Floating Top Bar (iOS Glassmorphism) -->
+<div class="fixed top-0 left-0 w-full z-20 px-4 pt-12 pb-4 bg-white/70 dark:bg-background-dark/70 backdrop-blur-md border-b border-white/20">
+<div class="flex items-center justify-between">
+<button class="flex size-10 items-center justify-center rounded-full bg-white/80 dark:bg-slate-800/80 shadow-sm text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h2 class="text-base font-bold leading-tight flex-1 text-center pr-10">지도</h2>
+</div>
+</div>
+<!-- Right Side Controls (Zoom & Location) -->
+<div class="fixed right-4 top-32 z-10 flex flex-col gap-3">
+<div class="flex flex-col overflow-hidden rounded-xl bg-white/90 dark:bg-slate-800/90 shadow-lg backdrop-blur-sm border border-white/20">
+<button class="flex size-11 items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700">
+<span class="material-symbols-outlined">add</span>
+</button>
+<div class="h-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+<button class="flex size-11 items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700">
+<span class="material-symbols-outlined">remove</span>
+</button>
+</div>
+<button class="flex size-11 items-center justify-center rounded-xl bg-white/90 dark:bg-slate-800/90 shadow-lg backdrop-blur-sm text-slate-700 dark:text-slate-200 border border-white/20">
+<span class="material-symbols-outlined">near_me</span>
+</button>
+</div>
+<!-- Bottom Control Panel (Floating) -->
+<div class="fixed bottom-10 left-0 w-full z-20 px-6">
+<div class="mx-auto max-w-sm rounded-2xl bg-white/90 dark:bg-slate-800/90 p-1 shadow-2xl backdrop-blur-lg border border-white/20 ring-1 ring-black/5">
+<div class="flex h-11 items-center justify-center">
+<label class="group flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-xl px-2 transition-all">
+<input class="hidden peer" name="view-toggle" type="radio" value="daily"/>
+<span class="truncate text-sm font-semibold text-slate-500 dark:text-slate-400 peer-checked:text-slate-900 dark:peer-checked:text-white transition-colors relative z-10">일자별 보기</span>
+<div class="absolute inset-y-1 w-[48%] rounded-lg transition-all peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:shadow-sm left-1"></div>
+</label>
+<label class="group flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-xl px-2 transition-all">
+<input checked="" class="hidden peer" name="view-toggle" type="radio" value="full"/>
+<span class="truncate text-sm font-semibold text-slate-500 dark:text-slate-400 peer-checked:text-slate-900 dark:peer-checked:text-white transition-colors relative z-10">전체 경로</span>
+<div class="absolute inset-y-1 w-[48%] rounded-lg transition-all peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:shadow-sm right-1"></div>
+</label>
+</div>
+</div>
+</div>
+</div>
+</body></html>
