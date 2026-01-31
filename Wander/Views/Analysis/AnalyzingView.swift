@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AnalyzingView: View {
     @ObservedObject var viewModel: PhotoSelectionViewModel
-    @StateObject private var engine = AnalysisEngine()
+    @State private var engine = AnalysisEngine()
     @State private var showResult = false
     @State private var analysisResult: AnalysisResult?
     @State private var errorMessage: String?

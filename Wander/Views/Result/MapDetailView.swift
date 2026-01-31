@@ -8,57 +8,72 @@ struct MapDetailView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Map
-            Map(position: $camera, selection: $selectedPlace) {
-                ForEach(Array(places.enumerated()), id: \.element.id) { index, place in
-                    Annotation(place.name, coordinate: place.coordinate, anchor: .bottom) {
+            mapView
+            selectedPlaceCard
+        }
+        .navigationTitle("지도")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            toolbarContent
+        }
+        .onAppear {
+            fitAllPlaces()
+        }
+    }
+
+    @ViewBuilder
+    private var mapView: some View {
+        Map(position: $camera) {
+            ForEach(Array(places.enumerated()), id: \.element.id) { index, place in
+                Annotation(place.name, coordinate: place.coordinate, anchor: .bottom) {
+                    Button {
+                        selectedPlace = place
+                    } label: {
                         PlaceAnnotationView(
                             number: index + 1,
                             activityType: place.activityType,
                             isSelected: selectedPlace?.id == place.id
                         )
                     }
-                    .tag(place)
-                }
-
-                // Route polyline
-                if places.count > 1 {
-                    MapPolyline(coordinates: places.map { $0.coordinate })
-                        .stroke(WanderColors.primary, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                    .buttonStyle(.plain)
                 }
             }
-            .mapStyle(.standard(elevation: .realistic))
-            .mapControls {
-                MapCompass()
-                MapScaleView()
-            }
 
-            // Selected Place Card
-            if let place = selectedPlace {
-                PlaceDetailCard(place: place)
-                    .padding(WanderSpacing.screenMargin)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            if places.count > 1 {
+                MapPolyline(coordinates: places.map { $0.coordinate })
+                    .stroke(WanderColors.primary, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
             }
         }
-        .navigationTitle("지도")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    Button(action: { fitAllPlaces() }) {
-                        Label("전체 보기", systemImage: "arrow.up.left.and.arrow.down.right")
-                    }
-
-                    Button(action: { resetToFirstPlace() }) {
-                        Label("시작점으로", systemImage: "arrow.uturn.backward")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                }
-            }
+        .mapStyle(.standard(elevation: .realistic))
+        .mapControls {
+            MapCompass()
+            MapScaleView()
         }
-        .onAppear {
-            fitAllPlaces()
+    }
+
+    @ViewBuilder
+    private var selectedPlaceCard: some View {
+        if let place = selectedPlace {
+            PlaceDetailCard(place: place)
+                .padding(WanderSpacing.screenMargin)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .primaryAction) {
+            Menu {
+                Button(action: { fitAllPlaces() }) {
+                    Label("전체 보기", systemImage: "arrow.up.left.and.arrow.down.right")
+                }
+
+                Button(action: { resetToFirstPlace() }) {
+                    Label("시작점으로", systemImage: "arrow.uturn.backward")
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+            }
         }
     }
 

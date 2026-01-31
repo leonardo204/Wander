@@ -519,8 +519,10 @@ struct ShareSettingsView: View {
                 .pickerStyle(.segmented)
             }
 
-            Section("옵션") {
+            Section {
                 Toggle("워터마크 포함", isOn: $includeWatermark)
+            } header: {
+                Text("옵션")
             } footer: {
                 Text("공유 시 'Wander로 기록했어요' 문구가 포함됩니다.")
             }

@@ -152,7 +152,7 @@ struct AnalysisResult {
 }
 
 // MARK: - Place Cluster Model
-class PlaceCluster: Identifiable {
+class PlaceCluster: Identifiable, Hashable {
     let id = UUID()
     var name: String = ""
     var address: String = ""
@@ -181,6 +181,15 @@ class PlaceCluster: Identifiable {
                 endTime = creationDate
             }
         }
+    }
+
+    // MARK: - Hashable
+    static func == (lhs: PlaceCluster, rhs: PlaceCluster) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 
