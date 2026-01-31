@@ -1,4 +1,7 @@
 import SwiftUI
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "AnalyzingView")
 
 struct AnalyzingView: View {
     @ObservedObject var viewModel: PhotoSelectionViewModel
@@ -40,8 +43,27 @@ struct AnalyzingView: View {
             .fullScreenCover(isPresented: $showResult) {
                 if let result = analysisResult {
                     ResultView(result: result, selectedAssets: viewModel.selectedAssets)
+                        .onAppear {
+                            logger.info("📱 ResultView fullScreenCover 표시됨 - places: \(result.places.count), photos: \(result.photoCount)")
+                        }
+                } else {
+                    VStack {
+                        Text("결과를 불러올 수 없습니다")
+                    }
+                    .onAppear {
+                        logger.error("❌ analysisResult가 nil인데 showResult가 true")
+                    }
                 }
             }
+            .onChange(of: showResult) { oldValue, newValue in
+                logger.info("🔄 showResult 변경: \(oldValue) → \(newValue)")
+            }
+            .onChange(of: analysisResult?.places.count) { oldValue, newValue in
+                logger.info("🔄 analysisResult 변경: places \(oldValue ?? -1) → \(newValue ?? -1)")
+            }
+        }
+        .onAppear {
+            logger.info("📱 AnalyzingView 나타남 - 선택된 사진: \(viewModel.selectedAssets.count)장")
         }
     }
 
@@ -139,12 +161,29 @@ struct AnalyzingView: View {
 
     // MARK: - Start Analysis
     private func startAnalysis() async {
+        logger.info("🚀 분석 시작 - 사진 \(viewModel.selectedAssets.count)장")
+
         do {
             let result = try await engine.analyze(assets: viewModel.selectedAssets)
-            analysisResult = result
-            showResult = true
+
+            logger.info("✅ 분석 완료!")
+            logger.info("   - 제목: \(result.title)")
+            logger.info("   - 장소 수: \(result.places.count)")
+            logger.info("   - 사진 수: \(result.photoCount)")
+            logger.info("   - 총 거리: \(result.totalDistance)km")
+
+            await MainActor.run {
+                logger.info("📲 MainActor에서 결과 설정 중...")
+                analysisResult = result
+                logger.info("📲 analysisResult 설정 완료, showResult = true 설정")
+                showResult = true
+                logger.info("📲 showResult 설정 완료: \(showResult)")
+            }
         } catch {
-            errorMessage = error.localizedDescription
+            logger.error("❌ 분석 실패: \(error.localizedDescription)")
+            await MainActor.run {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 }

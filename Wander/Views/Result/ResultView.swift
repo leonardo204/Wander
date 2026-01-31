@@ -1,6 +1,9 @@
 import SwiftUI
 import MapKit
 import Photos
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "ResultView")
 
 struct ResultView: View {
     let result: AnalysisResult
@@ -10,6 +13,12 @@ struct ResultView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showShareSheet = false
     @State private var isSaved = false
+
+    init(result: AnalysisResult, selectedAssets: [PHAsset]) {
+        self.result = result
+        self.selectedAssets = selectedAssets
+        logger.info("📊 [ResultView] init - 제목: \(result.title), 장소: \(result.places.count)개")
+    }
 
     var body: some View {
         NavigationStack {
@@ -36,6 +45,7 @@ struct ResultView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("닫기") {
+                        logger.info("📊 [ResultView] 닫기 버튼 클릭")
                         dismiss()
                     }
                 }
@@ -49,6 +59,12 @@ struct ResultView: View {
             .sheet(isPresented: $showShareSheet) {
                 ShareSheetView(result: result)
                     .presentationDetents([.medium])
+            }
+            .onAppear {
+                logger.info("📊 [ResultView] onAppear - 화면 표시됨")
+                logger.info("📊 [ResultView] result.title: \(result.title)")
+                logger.info("📊 [ResultView] result.places.count: \(result.places.count)")
+                logger.info("📊 [ResultView] result.photoCount: \(result.photoCount)")
             }
         }
     }
