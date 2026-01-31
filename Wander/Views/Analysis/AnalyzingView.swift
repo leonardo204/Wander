@@ -40,7 +40,11 @@ struct AnalyzingView: View {
             .task {
                 await startAnalysis()
             }
-            .fullScreenCover(isPresented: $showResult) {
+            .fullScreenCover(isPresented: $showResult, onDismiss: {
+                // ResultView가 닫히면 AnalyzingView도 닫기
+                logger.info("📱 ResultView 닫힘 → AnalyzingView도 dismiss")
+                dismiss()
+            }) {
                 if let result = analysisResult {
                     ResultView(result: result, selectedAssets: viewModel.selectedAssets)
                         .onAppear {
