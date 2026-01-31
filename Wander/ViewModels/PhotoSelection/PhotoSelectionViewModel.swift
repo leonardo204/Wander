@@ -1,5 +1,8 @@
 import SwiftUI
 import Photos
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "PhotoSelectionVM")
 
 enum QuickSelectRange {
     case today
@@ -38,11 +41,15 @@ class PhotoSelectionViewModel {
 
     // MARK: - Permission
     func checkPermission() {
+        logger.info("📷 [VM] checkPermission 호출")
         authorizationStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        logger.info("📷 [VM] 현재 권한 상태: \(String(describing: self.authorizationStatus))")
 
         if authorizationStatus == .notDetermined {
+            logger.info("📷 [VM] 권한 요청 중...")
             PHPhotoLibrary.requestAuthorization(for: .readWrite) { [weak self] status in
                 DispatchQueue.main.async {
+                    logger.info("📷 [VM] 권한 응답: \(String(describing: status))")
                     self?.authorizationStatus = status
                     if status == .authorized || status == .limited {
                         self?.fetchPhotos()
@@ -56,6 +63,7 @@ class PhotoSelectionViewModel {
 
     // MARK: - Fetch Photos
     func fetchPhotos() {
+        logger.info("📷 [VM] fetchPhotos 호출 - 기간: \(self.startDate) ~ \(self.endDate)")
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         fetchOptions.predicate = NSPredicate(
@@ -65,11 +73,17 @@ class PhotoSelectionViewModel {
         )
 
         let result = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+        logger.info("📷 [VM] fetch 결과: \(result.count)장")
 
         var assets: [PHAsset] = []
+        var withGPS = 0
         result.enumerateObjects { asset, _, _ in
             assets.append(asset)
+            if asset.location != nil {
+                withGPS += 1
+            }
         }
+        logger.info("📷 [VM] GPS 있는 사진: \(withGPS)장")
 
         DispatchQueue.main.async {
             self.photos = assets

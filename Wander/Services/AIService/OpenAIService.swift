@@ -1,4 +1,7 @@
 import Foundation
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "OpenAIService")
 
 /// OpenAI GPT API 서비스
 final class OpenAIService: AIServiceProtocol {
@@ -14,7 +17,9 @@ final class OpenAIService: AIServiceProtocol {
     // MARK: - Test Connection
 
     func testConnection() async throws -> Bool {
+        logger.info("🤖 [OpenAI] testConnection 시작")
         guard let apiKey = apiKey else {
+            logger.error("🤖 [OpenAI] API 키 없음")
             throw AIServiceError.noAPIKey
         }
 
@@ -32,17 +37,22 @@ final class OpenAIService: AIServiceProtocol {
 
             switch httpResponse.statusCode {
             case 200:
+                logger.info("🤖 [OpenAI] 연결 테스트 성공")
                 return true
             case 401:
+                logger.error("🤖 [OpenAI] 401 - 잘못된 API 키")
                 throw AIServiceError.invalidAPIKey
             case 429:
+                logger.error("🤖 [OpenAI] 429 - Rate limit")
                 throw AIServiceError.rateLimitExceeded
             default:
+                logger.error("🤖 [OpenAI] 서버 오류: \(httpResponse.statusCode)")
                 throw AIServiceError.serverError(httpResponse.statusCode)
             }
         } catch let error as AIServiceError {
             throw error
         } catch {
+            logger.error("🤖 [OpenAI] 네트워크 오류: \(error.localizedDescription)")
             throw AIServiceError.networkError(error)
         }
     }
@@ -50,7 +60,9 @@ final class OpenAIService: AIServiceProtocol {
     // MARK: - Generate Story
 
     func generateStory(from travelData: TravelStoryInput) async throws -> String {
+        logger.info("🤖 [OpenAI] generateStory 시작 - places: \(travelData.places.count)개")
         guard let apiKey = apiKey else {
+            logger.error("🤖 [OpenAI] API 키 없음")
             throw AIServiceError.noAPIKey
         }
 
@@ -83,8 +95,10 @@ final class OpenAIService: AIServiceProtocol {
             case 200:
                 let result = try JSONDecoder().decode(OpenAIResponse.self, from: data)
                 guard let content = result.choices.first?.message.content else {
+                    logger.error("🤖 [OpenAI] 응답 파싱 실패 - content 없음")
                     throw AIServiceError.invalidResponse
                 }
+                logger.info("🤖 [OpenAI] 스토리 생성 성공 - length: \(content.count)자")
                 return content
 
             case 401:

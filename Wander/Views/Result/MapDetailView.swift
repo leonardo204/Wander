@@ -1,5 +1,8 @@
 import SwiftUI
 import MapKit
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "MapDetailView")
 
 struct MapDetailView: View {
     let places: [PlaceCluster]
@@ -17,6 +20,7 @@ struct MapDetailView: View {
             toolbarContent
         }
         .onAppear {
+            logger.info("🗺️ [MapDetailView] 지도 화면 나타남 - places: \(self.places.count)개")
             fitAllPlaces()
         }
     }
@@ -78,16 +82,24 @@ struct MapDetailView: View {
     }
 
     private func fitAllPlaces() {
-        guard !places.isEmpty else { return }
+        guard !places.isEmpty else {
+            logger.warning("🗺️ [MapDetailView] fitAllPlaces - 장소 없음")
+            return
+        }
 
         let coordinates = places.map { $0.coordinate }
         let region = MKCoordinateRegion(coordinates: coordinates)
+        logger.info("🗺️ [MapDetailView] 전체 장소 표시 - coordinates: \(coordinates.count)개")
 
         camera = .region(region)
     }
 
     private func resetToFirstPlace() {
-        guard let first = places.first else { return }
+        guard let first = places.first else {
+            logger.warning("🗺️ [MapDetailView] resetToFirstPlace - 첫 장소 없음")
+            return
+        }
+        logger.info("🗺️ [MapDetailView] 시작점으로 이동 - \(first.name)")
 
         camera = .region(MKCoordinateRegion(
             center: first.coordinate,

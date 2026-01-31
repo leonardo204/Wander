@@ -1,5 +1,8 @@
 import SwiftUI
 import CoreLocation
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "OnboardingLocation")
 
 struct OnboardingLocationView: View {
     @Binding var isOnboardingCompleted: Bool
@@ -69,6 +72,7 @@ struct OnboardingLocationView: View {
     }
 
     private func completeOnboarding() {
+        logger.info("📍 [OnboardingLocation] 온보딩 완료")
         withAnimation {
             isOnboardingCompleted = true
         }
@@ -87,11 +91,13 @@ class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDe
     }
 
     func requestPermission() {
+        logger.info("📍 [LocationManager] 위치 권한 요청")
         locationManager.requestWhenInUseAuthorization()
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
+        logger.info("📍 [LocationManager] 권한 변경: \(String(describing: manager.authorizationStatus))")
     }
 }
 

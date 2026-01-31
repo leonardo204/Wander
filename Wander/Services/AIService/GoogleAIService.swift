@@ -1,4 +1,7 @@
 import Foundation
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "GoogleAIService")
 
 /// Google Gemini API 서비스
 final class GoogleAIService: AIServiceProtocol {
@@ -17,7 +20,9 @@ final class GoogleAIService: AIServiceProtocol {
     // MARK: - Test Connection
 
     func testConnection() async throws -> Bool {
+        logger.info("💎 [Google] testConnection 시작")
         guard let apiKey = apiKey else {
+            logger.error("💎 [Google] API 키 없음")
             throw AIServiceError.noAPIKey
         }
 
@@ -44,17 +49,22 @@ final class GoogleAIService: AIServiceProtocol {
 
             switch httpResponse.statusCode {
             case 200:
+                logger.info("💎 [Google] 연결 테스트 성공")
                 return true
             case 400, 403:
+                logger.error("💎 [Google] 400/403 - 잘못된 API 키")
                 throw AIServiceError.invalidAPIKey
             case 429:
+                logger.error("💎 [Google] 429 - Rate limit")
                 throw AIServiceError.rateLimitExceeded
             default:
+                logger.error("💎 [Google] 서버 오류: \(httpResponse.statusCode)")
                 throw AIServiceError.serverError(httpResponse.statusCode)
             }
         } catch let error as AIServiceError {
             throw error
         } catch {
+            logger.error("💎 [Google] 네트워크 오류: \(error.localizedDescription)")
             throw AIServiceError.networkError(error)
         }
     }
@@ -62,7 +72,9 @@ final class GoogleAIService: AIServiceProtocol {
     // MARK: - Generate Story
 
     func generateStory(from travelData: TravelStoryInput) async throws -> String {
+        logger.info("💎 [Google] generateStory 시작 - places: \(travelData.places.count)개")
         guard let apiKey = apiKey else {
+            logger.error("💎 [Google] API 키 없음")
             throw AIServiceError.noAPIKey
         }
 
@@ -97,8 +109,10 @@ final class GoogleAIService: AIServiceProtocol {
             case 200:
                 let result = try JSONDecoder().decode(GeminiResponse.self, from: data)
                 guard let text = result.candidates?.first?.content.parts.first?.text else {
+                    logger.error("💎 [Google] 응답 파싱 실패 - text 없음")
                     throw AIServiceError.invalidResponse
                 }
+                logger.info("💎 [Google] 스토리 생성 성공 - length: \(text.count)자")
                 return text
 
             case 400, 403:

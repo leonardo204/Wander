@@ -1,4 +1,7 @@
 import SwiftUI
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "AIStoryView")
 
 struct AIStoryView: View {
     let record: TravelRecord
@@ -60,6 +63,9 @@ struct AIStoryView: View {
                         }
                     }
                 }
+            }
+            .onAppear {
+                logger.info("✨ [AIStoryView] AI 스토리 화면 나타남 - hasConfiguredProvider: \(hasConfiguredProvider)")
             }
             .sheet(isPresented: $showProviderSelection) {
                 ProviderSelectionSheet(
@@ -357,8 +363,12 @@ struct AIStoryView: View {
     // MARK: - Actions
 
     private func generateStory() {
-        guard let provider = selectedProvider else { return }
+        guard let provider = selectedProvider else {
+            logger.warning("✨ [AIStoryView] 프로바이더 미선택")
+            return
+        }
 
+        logger.info("✨ [AIStoryView] 스토리 생성 시작 - provider: \(provider.displayName)")
         isGenerating = true
         errorMessage = nil
 
@@ -366,14 +376,17 @@ struct AIStoryView: View {
             do {
                 let service = AIServiceFactory.createService(for: provider)
                 let input = buildTravelStoryInput()
+                logger.info("✨ [AIStoryView] AI 서비스 호출 - places: \(input.places.count)개")
                 let story = try await service.generateStory(from: input)
 
                 await MainActor.run {
+                    logger.info("✨ [AIStoryView] 스토리 생성 성공 - length: \(story.count)자")
                     generatedStory = story
                     isGenerating = false
                 }
             } catch {
                 await MainActor.run {
+                    logger.error("✨ [AIStoryView] 스토리 생성 실패: \(error.localizedDescription)")
                     errorMessage = error.localizedDescription
                     isGenerating = false
                 }
@@ -382,6 +395,7 @@ struct AIStoryView: View {
     }
 
     private func regenerateStory() {
+        logger.info("✨ [AIStoryView] 스토리 재생성 요청")
         generatedStory = nil
         errorMessage = nil
         generateStory()
@@ -389,6 +403,7 @@ struct AIStoryView: View {
 
     private func saveStory() {
         guard let story = generatedStory else { return }
+        logger.info("✨ [AIStoryView] 스토리 저장")
         record.aiStory = story
         try? modelContext.save()
     }

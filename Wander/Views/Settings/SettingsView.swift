@@ -1,5 +1,8 @@
 import SwiftUI
 import Photos
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "SettingsView")
 
 struct SettingsView: View {
     @AppStorage("isOnboardingCompleted") private var isOnboardingCompleted = true
@@ -87,10 +90,14 @@ struct SettingsView: View {
             }
             .listStyle(.insetGrouped)
             .navigationTitle("설정")
+            .onAppear {
+                logger.info("⚙️ [SettingsView] 설정 화면 나타남")
+            }
         }
     }
 
     private func resetOnboarding() {
+        logger.info("⚙️ [SettingsView] 온보딩 리셋")
         isOnboardingCompleted = false
     }
 }
@@ -198,6 +205,9 @@ struct AIProviderSettingsView: View {
             }
         }
         .navigationTitle("AI 설정")
+        .onAppear {
+            logger.info("⚙️ [AIProviderSettingsView] AI 설정 화면 나타남 - 설정된 프로바이더: \(self.configuredProviders.count)개")
+        }
         .sheet(isPresented: $showAPIKeyInput) {
             if let provider = providerToEdit {
                 APIKeyInputView(provider: provider)
@@ -206,6 +216,7 @@ struct AIProviderSettingsView: View {
     }
 
     private func deleteAllKeys() {
+        logger.info("⚙️ [AIProviderSettingsView] 모든 API 키 삭제")
         KeychainManager.shared.deleteAllAPIKeys()
     }
 }
@@ -292,11 +303,13 @@ struct APIKeyInputView: View {
             }
             .onAppear {
                 hasExistingKey = KeychainManager.shared.hasAPIKey(for: provider.keychainType)
+                logger.info("🔑 [APIKeyInputView] 나타남 - provider: \(provider.displayName), hasExistingKey: \(hasExistingKey)")
             }
         }
     }
 
     private func testConnection() {
+        logger.info("🔑 [APIKeyInputView] 연결 테스트 시작 - provider: \(provider.displayName)")
         isTesting = true
         testResult = nil
         testError = nil
@@ -311,11 +324,13 @@ struct APIKeyInputView: View {
                     let result = try await service.testConnection()
 
                     await MainActor.run {
+                        logger.info("🔑 [APIKeyInputView] 연결 테스트 성공 - provider: \(provider.displayName)")
                         testResult = result
                         isTesting = false
                     }
                 } catch {
                     await MainActor.run {
+                        logger.error("🔑 [APIKeyInputView] 연결 테스트 실패 - provider: \(provider.displayName), error: \(error.localizedDescription)")
                         testResult = false
                         testError = error.localizedDescription
                         isTesting = false
@@ -328,6 +343,7 @@ struct APIKeyInputView: View {
                 }
             }
         } catch {
+            logger.error("🔑 [APIKeyInputView] 키 저장 실패 - provider: \(provider.displayName), error: \(error.localizedDescription)")
             testResult = false
             testError = "키 저장 실패: \(error.localizedDescription)"
             isTesting = false
@@ -337,12 +353,14 @@ struct APIKeyInputView: View {
     private func saveAPIKey() {
         do {
             try KeychainManager.shared.saveAPIKey(apiKey, for: provider.keychainType)
+            logger.info("🔑 [APIKeyInputView] API 키 저장 성공 - provider: \(provider.displayName)")
         } catch {
-            print("API 키 저장 실패: \(error)")
+            logger.error("🔑 [APIKeyInputView] API 키 저장 실패 - provider: \(provider.displayName), error: \(error.localizedDescription)")
         }
     }
 
     private func deleteKey() {
+        logger.info("🔑 [APIKeyInputView] 키 삭제 - provider: \(provider.displayName)")
         try? KeychainManager.shared.deleteAPIKey(for: provider.keychainType)
         hasExistingKey = false
         dismiss()
@@ -394,6 +412,7 @@ struct DataManagementView: View {
         }
         .navigationTitle("데이터 관리")
         .onAppear {
+            logger.info("📦 [DataManagementView] 데이터 관리 화면 나타남")
             calculateCacheSize()
         }
         .confirmationDialog(
@@ -417,11 +436,13 @@ struct DataManagementView: View {
     }
 
     private func clearCache() {
+        logger.info("📦 [DataManagementView] 캐시 삭제")
         // Clear cache
         cacheSize = "0 MB"
     }
 
     private func deleteAllRecords() {
+        logger.info("📦 [DataManagementView] 모든 기록 삭제")
         // Delete all records
         recordCount = 0
     }
@@ -468,6 +489,7 @@ struct PermissionSettingsView: View {
         }
         .navigationTitle("권한 설정")
         .onAppear {
+            logger.info("🔒 [PermissionSettingsView] 권한 설정 화면 나타남")
             checkPermissions()
         }
     }
@@ -494,6 +516,7 @@ struct PermissionSettingsView: View {
     private func checkPermissions() {
         photoStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         locationStatus = "허용됨"
+        logger.info("🔒 [PermissionSettingsView] 권한 확인 - 사진: \(photoStatusText), 위치: \(locationStatus)")
     }
 
     private func openSettings() {

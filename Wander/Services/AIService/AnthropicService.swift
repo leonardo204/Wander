@@ -1,4 +1,7 @@
 import Foundation
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "AnthropicService")
 
 /// Anthropic Claude API 서비스
 final class AnthropicService: AIServiceProtocol {
@@ -15,7 +18,9 @@ final class AnthropicService: AIServiceProtocol {
     // MARK: - Test Connection
 
     func testConnection() async throws -> Bool {
+        logger.info("🧠 [Anthropic] testConnection 시작")
         guard let apiKey = apiKey else {
+            logger.error("🧠 [Anthropic] API 키 없음")
             throw AIServiceError.noAPIKey
         }
 
@@ -45,17 +50,22 @@ final class AnthropicService: AIServiceProtocol {
 
             switch httpResponse.statusCode {
             case 200:
+                logger.info("🧠 [Anthropic] 연결 테스트 성공")
                 return true
             case 401:
+                logger.error("🧠 [Anthropic] 401 - 잘못된 API 키")
                 throw AIServiceError.invalidAPIKey
             case 429:
+                logger.error("🧠 [Anthropic] 429 - Rate limit")
                 throw AIServiceError.rateLimitExceeded
             default:
+                logger.error("🧠 [Anthropic] 서버 오류: \(httpResponse.statusCode)")
                 throw AIServiceError.serverError(httpResponse.statusCode)
             }
         } catch let error as AIServiceError {
             throw error
         } catch {
+            logger.error("🧠 [Anthropic] 네트워크 오류: \(error.localizedDescription)")
             throw AIServiceError.networkError(error)
         }
     }
@@ -63,7 +73,9 @@ final class AnthropicService: AIServiceProtocol {
     // MARK: - Generate Story
 
     func generateStory(from travelData: TravelStoryInput) async throws -> String {
+        logger.info("🧠 [Anthropic] generateStory 시작 - places: \(travelData.places.count)개")
         guard let apiKey = apiKey else {
+            logger.error("🧠 [Anthropic] API 키 없음")
             throw AIServiceError.noAPIKey
         }
 
@@ -97,8 +109,10 @@ final class AnthropicService: AIServiceProtocol {
                 let result = try JSONDecoder().decode(AnthropicResponse.self, from: data)
                 guard let textContent = result.content.first(where: { $0.type == "text" }),
                       let text = textContent.text else {
+                    logger.error("🧠 [Anthropic] 응답 파싱 실패 - text 없음")
                     throw AIServiceError.invalidResponse
                 }
+                logger.info("🧠 [Anthropic] 스토리 생성 성공 - length: \(text.count)자")
                 return text
 
             case 401:

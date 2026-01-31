@@ -1,4 +1,7 @@
 import SwiftUI
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "SplashView")
 
 struct SplashView: View {
     @State private var isAnimating = false
@@ -38,6 +41,7 @@ struct SplashView: View {
             }
         }
         .onAppear {
+            logger.info("🌟 [SplashView] 스플래시 화면 표시")
             withAnimation(.easeOut(duration: 0.6)) {
                 isAnimating = true
             }

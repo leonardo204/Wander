@@ -1,6 +1,9 @@
 import SwiftUI
 import Photos
 import PhotosUI
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "PhotoSelectionView")
 
 struct PhotoSelectionView: View {
     @Environment(\.dismiss) private var dismiss
@@ -49,7 +52,14 @@ struct PhotoSelectionView: View {
                 }
             }
             .onAppear {
+                logger.info("📷 [PhotoSelectionView] 나타남")
                 viewModel.checkPermission()
+            }
+            .onChange(of: viewModel.photos.count) { oldValue, newValue in
+                logger.info("📷 [PhotoSelectionView] 사진 로드됨: \(newValue)장")
+            }
+            .onChange(of: viewModel.selectedAssets.count) { oldValue, newValue in
+                logger.info("📷 [PhotoSelectionView] 선택된 사진: \(newValue)장")
             }
             .sheet(isPresented: $showDatePicker) {
                 DateRangePickerSheet(

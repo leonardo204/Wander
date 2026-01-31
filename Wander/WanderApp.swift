@@ -1,5 +1,8 @@
 import SwiftUI
 import SwiftData
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "WanderApp")
 
 @main
 struct WanderApp: App {
@@ -7,6 +10,7 @@ struct WanderApp: App {
     @State private var showSplash = true
 
     var sharedModelContainer: ModelContainer = {
+        logger.info("🚀 [WanderApp] ModelContainer 생성 시작")
         let schema = Schema([
             TravelRecord.self,
             TravelDay.self,
@@ -16,8 +20,11 @@ struct WanderApp: App {
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            logger.info("🚀 [WanderApp] ModelContainer 생성 성공")
+            return container
         } catch {
+            logger.error("🚀 [WanderApp] ModelContainer 생성 실패: \(error.localizedDescription)")
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
@@ -38,8 +45,10 @@ struct WanderApp: App {
                 }
             }
             .onAppear {
+                logger.info("🚀 [WanderApp] 앱 시작 - isOnboardingCompleted: \(self.isOnboardingCompleted)")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     withAnimation(.easeOut(duration: 0.5)) {
+                        logger.info("🚀 [WanderApp] 스플래시 종료")
                         showSplash = false
                     }
                 }

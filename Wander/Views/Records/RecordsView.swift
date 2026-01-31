@@ -1,5 +1,8 @@
 import SwiftUI
 import SwiftData
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "RecordsView")
 
 struct RecordsView: View {
     @Environment(\.modelContext) private var modelContext
@@ -49,6 +52,9 @@ struct RecordsView: View {
             .background(WanderColors.background)
             .navigationTitle("기록")
             .searchable(text: $searchText, prompt: "기록 검색")
+            .onAppear {
+                logger.info("📚 [RecordsView] 나타남 - 전체 기록: \(records.count)개")
+            }
             .confirmationDialog(
                 "이 기록을 삭제하시겠습니까?",
                 isPresented: $showDeleteConfirmation,
@@ -354,6 +360,11 @@ struct RecordDetailFullView: View {
                 // Timeline
                 if !record.days.isEmpty {
                     timelineSection
+                } else {
+                    Text("타임라인 데이터 없음")
+                        .font(WanderTypography.body)
+                        .foregroundColor(WanderColors.textTertiary)
+                        .padding()
                 }
 
                 // AI Story Section
@@ -365,6 +376,21 @@ struct RecordDetailFullView: View {
         .background(WanderColors.background)
         .navigationTitle(record.title)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            logger.info("📖 [RecordDetailFullView] 나타남")
+            logger.info("📖 [RecordDetailFullView] record.title: \(record.title)")
+            logger.info("📖 [RecordDetailFullView] record.days.count: \(record.days.count)")
+            logger.info("📖 [RecordDetailFullView] record.placeCount: \(record.placeCount)")
+            logger.info("📖 [RecordDetailFullView] record.photoCount: \(record.photoCount)")
+            logger.info("📖 [RecordDetailFullView] record.totalDistance: \(record.totalDistance)")
+            logger.info("📖 [RecordDetailFullView] record.aiStory: \(record.aiStory ?? "nil")")
+            for (dayIndex, day) in record.days.enumerated() {
+                logger.info("📖 [RecordDetailFullView] Day \(dayIndex): \(day.places.count) places")
+                for (placeIndex, place) in day.places.enumerated() {
+                    logger.info("📖 [RecordDetailFullView]   Place \(placeIndex): \(place.name)")
+                }
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {

@@ -1,5 +1,8 @@
 import Foundation
 import CoreLocation
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "GeocodingService")
 
 class GeocodingService {
     private let geocoder = CLGeocoder()
@@ -14,13 +17,17 @@ class GeocodingService {
     }
 
     func reverseGeocode(latitude: Double, longitude: Double) async throws -> GeocodingResult {
+        logger.info("🗺️ [Geocoding] reverseGeocode 호출: (\(latitude), \(longitude))")
         let location = CLLocation(latitude: latitude, longitude: longitude)
 
         let placemarks = try await geocoder.reverseGeocodeLocation(location)
+        logger.info("🗺️ [Geocoding] placemarks 개수: \(placemarks.count)")
 
         guard let placemark = placemarks.first else {
+            logger.warning("🗺️ [Geocoding] placemark 없음")
             throw GeocodingError.noResults
         }
+        logger.info("🗺️ [Geocoding] placemark.name: \(placemark.name ?? "nil")")
 
         // Build name
         var name = ""

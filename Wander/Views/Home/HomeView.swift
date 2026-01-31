@@ -1,5 +1,8 @@
 import SwiftUI
 import SwiftData
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "HomeView")
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
@@ -31,6 +34,12 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showPhotoSelection) {
                 PhotoSelectionView()
+            }
+            .onAppear {
+                logger.info("🏠 [HomeView] 나타남 - 저장된 기록: \(records.count)개")
+                for (index, record) in records.prefix(5).enumerated() {
+                    logger.info("🏠 [HomeView] 기록[\(index)]: \(record.title), days: \(record.days.count), places: \(record.placeCount)")
+                }
             }
         }
     }
@@ -118,10 +127,13 @@ struct HomeView: View {
     private var recentRecordsList: some View {
         LazyVStack(spacing: WanderSpacing.space4) {
             ForEach(records.prefix(5)) { record in
-                NavigationLink(destination: RecordDetailView(record: record)) {
+                NavigationLink(destination: RecordDetailFullView(record: record)) {
                     RecordCard(record: record)
                 }
                 .buttonStyle(.plain)
+                .onAppear {
+                    logger.info("🏠 [HomeView] RecordCard 표시: \(record.title)")
+                }
             }
         }
     }
@@ -244,16 +256,6 @@ struct RouteIllustration: View {
                     .position(x: width * 0.5, y: height * 0.25)
             }
         }
-    }
-}
-
-// MARK: - Record Detail View (Placeholder)
-struct RecordDetailView: View {
-    let record: TravelRecord
-
-    var body: some View {
-        Text("기록 상세: \(record.title)")
-            .navigationTitle(record.title)
     }
 }
 

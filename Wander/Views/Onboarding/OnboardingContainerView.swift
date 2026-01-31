@@ -1,4 +1,7 @@
 import SwiftUI
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "Onboarding")
 
 struct OnboardingContainerView: View {
     @AppStorage("isOnboardingCompleted") private var isOnboardingCompleted = false
@@ -18,6 +21,9 @@ struct OnboardingContainerView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .animation(.easeInOut, value: currentPage)
+            .onChange(of: currentPage) { oldValue, newValue in
+                logger.info("👋 [Onboarding] 페이지 변경: \(oldValue) → \(newValue)")
+            }
 
             // Page Indicator
             HStack(spacing: WanderSpacing.space2) {
@@ -30,6 +36,9 @@ struct OnboardingContainerView: View {
             .padding(.bottom, WanderSpacing.space6)
         }
         .background(WanderColors.background)
+        .onAppear {
+            logger.info("👋 [Onboarding] 온보딩 화면 나타남")
+        }
     }
 }
 

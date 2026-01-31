@@ -1,7 +1,11 @@
 import Foundation
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "ActivityInference")
 
 class ActivityInferenceService {
     func infer(placeType: String?, time: Date?) -> ActivityType {
+        logger.info("🎯 [ActivityInference] infer 호출 - placeType: \(placeType ?? "nil"), time: \(time?.description ?? "nil")")
         let hour = Calendar.current.component(.hour, from: time ?? Date())
 
         // First, try to infer from place type
@@ -28,10 +32,12 @@ class ActivityInferenceService {
                 return .shopping
             }
             if type.contains("tourist") || type.contains("park") || type.contains("temple") || type.contains("landmark") {
+                logger.info("🎯 [ActivityInference] placeType 기반 추론: tourist")
                 return .tourist
             }
         }
 
+        logger.info("🎯 [ActivityInference] placeType 매칭 없음, 시간 기반 추론 시작")
         // Fallback: infer from time of day
         switch hour {
         case 6...9:

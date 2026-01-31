@@ -1,4 +1,7 @@
 import SwiftUI
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "OnboardingIntro")
 
 struct OnboardingIntroView: View {
     @Binding var currentPage: Int
@@ -26,6 +29,7 @@ struct OnboardingIntroView: View {
 
             // Next Button
             Button(action: {
+                logger.info("👋 [OnboardingIntro] 다음 버튼 클릭")
                 withAnimation {
                     currentPage = 1
                 }

@@ -1,4 +1,7 @@
 import SwiftUI
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "ContentView")
 
 struct ContentView: View {
     @State private var selectedTab = 0
@@ -27,6 +30,13 @@ struct ContentView: View {
                 .tag(2)
         }
         .tint(WanderColors.primary)
+        .onAppear {
+            logger.info("🚀 [ContentView] 앱 메인 화면 나타남")
+        }
+        .onChange(of: selectedTab) { oldValue, newValue in
+            let tabNames = ["홈", "기록", "설정"]
+            logger.info("🚀 [ContentView] 탭 변경: \(tabNames[oldValue]) → \(tabNames[newValue])")
+        }
     }
 }
 

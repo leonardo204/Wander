@@ -1,5 +1,8 @@
 import SwiftUI
 import Photos
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "OnboardingPhoto")
 
 struct OnboardingPhotoView: View {
     @Binding var currentPage: Int
@@ -70,8 +73,10 @@ struct OnboardingPhotoView: View {
     }
 
     private func requestPhotoPermission() {
+        logger.info("📷 [OnboardingPhoto] 사진 권한 요청")
         PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
             DispatchQueue.main.async {
+                logger.info("📷 [OnboardingPhoto] 사진 권한 응답: \(String(describing: status))")
                 permissionStatus = status
                 withAnimation {
                     currentPage = 2
