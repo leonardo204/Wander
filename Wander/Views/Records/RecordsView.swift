@@ -409,9 +409,11 @@ struct StatBadge: View {
 struct RecordDetailFullView: View {
     let record: TravelRecord
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var showShareSheet = false
     @State private var showAIStorySheet = false
     @State private var showEditSheet = false
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         ScrollView {
@@ -468,10 +470,28 @@ struct RecordDetailFullView: View {
                     Button(action: { showEditSheet = true }) {
                         Label("편집", systemImage: "pencil")
                     }
+
+                    Divider()
+
+                    Button(role: .destructive, action: { showDeleteConfirmation = true }) {
+                        Label("삭제", systemImage: "trash")
+                    }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
             }
+        }
+        .confirmationDialog(
+            "이 기록을 삭제하시겠습니까?",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("삭제", role: .destructive) {
+                deleteRecord()
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text("삭제된 기록은 복구할 수 없습니다.")
         }
         .sheet(isPresented: $showShareSheet) {
             ExportOptionsView(record: record)
@@ -586,6 +606,13 @@ struct RecordDetailFullView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy년 M월 d일"
         return "\(formatter.string(from: record.startDate)) ~ \(formatter.string(from: record.endDate))"
+    }
+
+    private func deleteRecord() {
+        logger.info("🗑️ [RecordDetailFullView] 기록 삭제: \(record.title)")
+        modelContext.delete(record)
+        try? modelContext.save()
+        dismiss()
     }
 }
 
