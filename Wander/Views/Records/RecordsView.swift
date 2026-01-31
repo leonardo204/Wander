@@ -301,30 +301,31 @@ struct RecordListCard: View {
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: assetIds, options: nil)
 
         let options = PHImageRequestOptions()
-        options.deliveryMode = .opportunistic
+        // Use .fastFormat to ensure single callback (not .opportunistic which calls multiple times)
+        options.deliveryMode = .fastFormat
         options.resizeMode = .fast
         options.isSynchronous = false
 
         var loadedImages: [UIImage] = []
-        let group = DispatchGroup()
+        var pendingCount = fetchResult.count
 
         fetchResult.enumerateObjects { asset, _, _ in
-            group.enter()
             PHImageManager.default().requestImage(
                 for: asset,
                 targetSize: CGSize(width: 100, height: 100),
                 contentMode: .aspectFill,
                 options: options
             ) { image, _ in
-                if let image = image {
-                    loadedImages.append(image)
+                DispatchQueue.main.async {
+                    if let image = image {
+                        loadedImages.append(image)
+                    }
+                    pendingCount -= 1
+                    if pendingCount == 0 {
+                        self.thumbnails = loadedImages
+                    }
                 }
-                group.leave()
             }
-        }
-
-        group.notify(queue: .main) {
-            self.thumbnails = loadedImages
         }
     }
 }
@@ -414,6 +415,8 @@ struct RecordDetailFullView: View {
     @State private var showAIStorySheet = false
     @State private var showEditSheet = false
     @State private var showDeleteConfirmation = false
+    @State private var showMapDetail = false
+    @State private var showAllPhotos = false
 
     var body: some View {
         ScrollView {
@@ -503,6 +506,12 @@ struct RecordDetailFullView: View {
         .sheet(isPresented: $showEditSheet) {
             RecordEditView(record: record)
         }
+        .sheet(isPresented: $showMapDetail) {
+            RecordMapSheet(record: record)
+        }
+        .sheet(isPresented: $showAllPhotos) {
+            RecordPhotosSheet(record: record)
+        }
     }
 
     @ViewBuilder
@@ -565,9 +574,19 @@ struct RecordDetailFullView: View {
 
     private var statsSection: some View {
         HStack(spacing: WanderSpacing.space4) {
-            StatCard(icon: "mappin.circle.fill", value: "\(record.placeCount)", label: "장소")
+            // 장소 카드 - 클릭하면 지도 표시
+            Button(action: { showMapDetail = true }) {
+                StatCard(icon: "mappin.circle.fill", value: "\(record.placeCount)", label: "장소")
+            }
+            .buttonStyle(.plain)
+
             StatCard(icon: "car.fill", value: String(format: "%.1f", record.totalDistance), label: "km")
-            StatCard(icon: "photo.fill", value: "\(record.photoCount)", label: "사진")
+
+            // 사진 카드 - 클릭하면 전체 사진 표시
+            Button(action: { showAllPhotos = true }) {
+                StatCard(icon: "photo.fill", value: "\(record.photoCount)", label: "사진")
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -727,29 +746,30 @@ struct PlaceRow: View {
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: Array(assetIds), options: nil)
 
         let options = PHImageRequestOptions()
-        options.deliveryMode = .opportunistic
+        // Use .fastFormat to ensure single callback
+        options.deliveryMode = .fastFormat
         options.resizeMode = .fast
 
         var loadedImages: [UIImage] = []
-        let group = DispatchGroup()
+        var pendingCount = fetchResult.count
 
         fetchResult.enumerateObjects { asset, _, _ in
-            group.enter()
             PHImageManager.default().requestImage(
                 for: asset,
                 targetSize: CGSize(width: 88, height: 88),
                 contentMode: .aspectFill,
                 options: options
             ) { image, _ in
-                if let image = image {
-                    loadedImages.append(image)
+                DispatchQueue.main.async {
+                    if let image = image {
+                        loadedImages.append(image)
+                    }
+                    pendingCount -= 1
+                    if pendingCount == 0 {
+                        self.thumbnails = loadedImages
+                    }
                 }
-                group.leave()
             }
-        }
-
-        group.notify(queue: .main) {
-            self.thumbnails = loadedImages
         }
     }
 }
@@ -927,25 +947,25 @@ struct PlaceDetailSheet: View {
         options.resizeMode = .exact
 
         var loadedImages: [UIImage] = []
-        let group = DispatchGroup()
+        var pendingCount = fetchResult.count
 
         fetchResult.enumerateObjects { asset, _, _ in
-            group.enter()
             PHImageManager.default().requestImage(
                 for: asset,
                 targetSize: CGSize(width: 300, height: 300),
                 contentMode: .aspectFill,
                 options: options
             ) { image, _ in
-                if let image = image {
-                    loadedImages.append(image)
+                DispatchQueue.main.async {
+                    if let image = image {
+                        loadedImages.append(image)
+                    }
+                    pendingCount -= 1
+                    if pendingCount == 0 {
+                        self.photos = loadedImages
+                    }
                 }
-                group.leave()
             }
-        }
-
-        group.notify(queue: .main) {
-            self.photos = loadedImages
         }
     }
 }
@@ -1536,6 +1556,163 @@ struct PlaceEditView: View {
 
         try? modelContext.save()
         logger.info("📝 [PlaceEditView] 장소 저장됨: \(editedName)")
+    }
+}
+
+// MARK: - Record Map Sheet
+struct RecordMapSheet: View {
+    let record: TravelRecord
+    @Environment(\.dismiss) private var dismiss
+    @State private var camera: MapCameraPosition = .automatic
+
+    private var allPlaces: [Place] {
+        record.days
+            .sorted { $0.dayNumber < $1.dayNumber }
+            .flatMap { $0.places.sorted { $0.order < $1.order } }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Map(position: $camera) {
+                ForEach(Array(allPlaces.enumerated()), id: \.element.id) { index, place in
+                    Annotation(place.name, coordinate: place.coordinate) {
+                        ZStack {
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 32, height: 32)
+                                .shadow(color: .black.opacity(0.2), radius: 4)
+
+                            Circle()
+                                .fill(WanderColors.primary)
+                                .frame(width: 28, height: 28)
+
+                            Text("\(index + 1)")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                }
+
+                if allPlaces.count > 1 {
+                    MapPolyline(coordinates: allPlaces.map { $0.coordinate })
+                        .stroke(WanderColors.primary, lineWidth: 3)
+                }
+            }
+            .mapStyle(.standard)
+            .navigationTitle("여행 동선")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("닫기") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Record Photos Sheet
+struct RecordPhotosSheet: View {
+    let record: TravelRecord
+    @Environment(\.dismiss) private var dismiss
+    @State private var photos: [UIImage] = []
+    @State private var selectedPhotoIndex: Int?
+
+    private var allPhotoAssetIds: [String] {
+        record.allPhotoAssetIdentifiers
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                if photos.isEmpty && !allPhotoAssetIds.isEmpty {
+                    VStack(spacing: WanderSpacing.space4) {
+                        ProgressView()
+                        Text("사진 불러오는 중...")
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.top, 100)
+                } else if photos.isEmpty {
+                    VStack(spacing: WanderSpacing.space4) {
+                        Image(systemName: "photo.on.rectangle")
+                            .font(.system(size: 60))
+                            .foregroundColor(WanderColors.textTertiary)
+                        Text("사진이 없습니다")
+                            .font(WanderTypography.body)
+                            .foregroundColor(WanderColors.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.top, 100)
+                } else {
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), spacing: 2),
+                        GridItem(.flexible(), spacing: 2),
+                        GridItem(.flexible(), spacing: 2)
+                    ], spacing: 2) {
+                        ForEach(0..<photos.count, id: \.self) { index in
+                            Button(action: { selectedPhotoIndex = index }) {
+                                Image(uiImage: photos[index])
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(minWidth: 0, maxWidth: .infinity)
+                                    .aspectRatio(1, contentMode: .fit)
+                                    .clipped()
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("사진 \(record.photoCount)장")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("닫기") { dismiss() }
+                }
+            }
+            .onAppear {
+                loadPhotos()
+            }
+            .fullScreenCover(item: Binding(
+                get: { selectedPhotoIndex.map { PhotoViewerItem(index: $0) } },
+                set: { selectedPhotoIndex = $0?.index }
+            )) { item in
+                PhotoViewer(photos: photos, initialIndex: item.index)
+            }
+        }
+    }
+
+    private func loadPhotos() {
+        guard !allPhotoAssetIds.isEmpty else { return }
+
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: allPhotoAssetIds, options: nil)
+
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.resizeMode = .exact
+        options.isSynchronous = false
+
+        var loadedImages: [UIImage] = []
+        var pendingCount = fetchResult.count
+
+        fetchResult.enumerateObjects { asset, _, _ in
+            PHImageManager.default().requestImage(
+                for: asset,
+                targetSize: CGSize(width: 300, height: 300),
+                contentMode: .aspectFill,
+                options: options
+            ) { image, _ in
+                DispatchQueue.main.async {
+                    if let image = image {
+                        loadedImages.append(image)
+                    }
+                    pendingCount -= 1
+                    if pendingCount == 0 {
+                        self.photos = loadedImages
+                    }
+                }
+            }
+        }
     }
 }
 

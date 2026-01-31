@@ -45,8 +45,17 @@ struct ResultView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("닫기") {
-                        logger.info("📊 [ResultView] 닫기 버튼 클릭")
-                        dismiss()
+                        logger.info("📊 [ResultView] 닫기 버튼 클릭 - 저장됨: \(isSaved)")
+                        if isSaved {
+                            // 저장된 경우 애니메이션 없이 즉시 닫기
+                            var transaction = Transaction()
+                            transaction.disablesAnimations = true
+                            withTransaction(transaction) {
+                                dismiss()
+                            }
+                        } else {
+                            dismiss()
+                        }
                     }
                 }
 
@@ -195,12 +204,15 @@ struct ResultView: View {
         )
         record.totalDistance = result.totalDistance
         record.placeCount = result.placeCount
-        record.photoCount = result.photoCount
+        record.photoCount = selectedAssets.count // Use actual selected count
 
         // Create day
         let day = TravelDay(date: result.startDate, dayNumber: 1)
 
-        // Create places
+        // Collect photos that are in clusters
+        var savedPhotoIds = Set<String>()
+
+        // Create places from clusters
         for (index, cluster) in result.places.enumerated() {
             let place = Place(
                 name: cluster.name,
@@ -212,12 +224,58 @@ struct ResultView: View {
             place.placeType = cluster.placeType ?? "other"
             place.order = index
 
+            // Save photos to place
+            for (photoIndex, asset) in cluster.photos.enumerated() {
+                let photo = PhotoItem(
+                    assetIdentifier: asset.localIdentifier,
+                    capturedAt: asset.creationDate,
+                    latitude: asset.location?.coordinate.latitude,
+                    longitude: asset.location?.coordinate.longitude
+                )
+                photo.order = photoIndex
+                place.photos.append(photo)
+                savedPhotoIds.insert(asset.localIdentifier)
+            }
+
             day.places.append(place)
+        }
+
+        // Find photos not in any cluster (no GPS or filtered out)
+        let uncategorizedAssets = selectedAssets.filter { !savedPhotoIds.contains($0.localIdentifier) }
+
+        if !uncategorizedAssets.isEmpty {
+            // Create "미분류" place for uncategorized photos
+            let uncategorizedPlace = Place(
+                name: "미분류 사진",
+                address: "",
+                coordinate: CLLocationCoordinate2D(latitude: 0, longitude: 0),
+                startTime: uncategorizedAssets.first?.creationDate ?? Date()
+            )
+            uncategorizedPlace.activityLabel = "기타"
+            uncategorizedPlace.placeType = "other"
+            uncategorizedPlace.order = result.places.count
+
+            for (photoIndex, asset) in uncategorizedAssets.enumerated() {
+                let photo = PhotoItem(
+                    assetIdentifier: asset.localIdentifier,
+                    capturedAt: asset.creationDate,
+                    latitude: asset.location?.coordinate.latitude,
+                    longitude: asset.location?.coordinate.longitude
+                )
+                photo.order = photoIndex
+                uncategorizedPlace.photos.append(photo)
+            }
+
+            day.places.append(uncategorizedPlace)
+            record.placeCount += 1
+            logger.info("💾 [ResultView] 미분류 사진 \(uncategorizedAssets.count)장 추가")
         }
 
         record.days.append(day)
 
         modelContext.insert(record)
+
+        logger.info("💾 [ResultView] 저장 완료 - 장소: \(record.placeCount), 사진: \(selectedAssets.count)")
 
         withAnimation {
             isSaved = true

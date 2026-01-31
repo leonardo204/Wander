@@ -14,7 +14,7 @@ struct PhotoSelectionView: View {
     @State private var isDragging = false
     @State private var dragStartedOnSelected = false
     @State private var photosSelectedDuringDrag: Set<String> = []
-    @State private var isMultiSelectModeActive = false  // Long press activates drag selection
+    @State private var longPressActivated = false  // Long press activates drag selection
 
     var body: some View {
         NavigationStack {
@@ -84,7 +84,12 @@ struct PhotoSelectionView: View {
                 if shouldDismiss {
                     logger.info("📷 [PhotoSelectionView] 분석 완료 후 자동 닫기")
                     viewModel.shouldDismissPhotoSelection = false
-                    dismiss()
+                    // Dismiss without animation for instant closure
+                    var transaction = Transaction()
+                    transaction.disablesAnimations = true
+                    withTransaction(transaction) {
+                        dismiss()
+                    }
                 }
             }
         }
@@ -141,7 +146,7 @@ struct PhotoSelectionView: View {
     // MARK: - Photo Grid Section
     private var photoGridSection: some View {
         VStack(spacing: 0) {
-            // Multi-select mode toggle bar
+            // Info bar with hint
             HStack {
                 Text("\(viewModel.photos.count)장의 사진")
                     .font(WanderTypography.caption1)
@@ -149,23 +154,22 @@ struct PhotoSelectionView: View {
 
                 Spacer()
 
-                Button(action: {
-                    isMultiSelectModeActive.toggle()
-                    if !isMultiSelectModeActive {
-                        isDragging = false
-                    }
-                    logger.info("📷 [PhotoSelection] 다중 선택 모드: \(isMultiSelectModeActive)")
-                }) {
+                // Show hint when long press is active
+                if longPressActivated {
                     HStack(spacing: 4) {
-                        Image(systemName: isMultiSelectModeActive ? "hand.draw.fill" : "hand.draw")
-                        Text(isMultiSelectModeActive ? "드래그 선택 중" : "드래그 선택")
+                        Image(systemName: "hand.draw.fill")
+                        Text("드래그 선택 중")
                     }
                     .font(WanderTypography.caption1)
-                    .foregroundColor(isMultiSelectModeActive ? .white : WanderColors.primary)
+                    .foregroundColor(.white)
                     .padding(.horizontal, WanderSpacing.space3)
                     .padding(.vertical, WanderSpacing.space2)
-                    .background(isMultiSelectModeActive ? WanderColors.primary : WanderColors.primaryPale)
+                    .background(WanderColors.primary)
                     .cornerRadius(WanderSpacing.radiusFull)
+                } else {
+                    Text("길게 눌러 드래그 선택")
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textTertiary)
                 }
             }
             .padding(.horizontal, WanderSpacing.screenMargin)
@@ -185,12 +189,26 @@ struct PhotoSelectionView: View {
                                 asset: asset,
                                 isSelected: viewModel.selectedAssets.contains(asset),
                                 selectionOrder: viewModel.selectionOrder(for: asset),
-                                isDragging: isDragging
-                            ) {
-                                if !isDragging {
-                                    viewModel.toggleSelection(asset)
+                                isDragging: isDragging,
+                                onTap: {
+                                    if !isDragging && !longPressActivated {
+                                        viewModel.toggleSelection(asset)
+                                    }
+                                },
+                                onLongPress: {
+                                    // Long press activates drag selection mode
+                                    longPressActivated = true
+                                    logger.info("📷 [PhotoSelection] 길게 누름 - 드래그 선택 모드 활성화")
+                                    // Select/deselect this photo first
+                                    if viewModel.selectedAssets.contains(asset) {
+                                        dragStartedOnSelected = true
+                                    } else {
+                                        dragStartedOnSelected = false
+                                        viewModel.addToSelection(asset)
+                                    }
+                                    photosSelectedDuringDrag.insert(asset.localIdentifier)
                                 }
-                            }
+                            )
                             .background(
                                 GeometryReader { geometry in
                                     Color.clear
@@ -205,21 +223,19 @@ struct PhotoSelectionView: View {
                     .padding(.bottom, 100) // Extra padding for scroll
                 }
                 .coordinateSpace(name: "photoGrid")
-                .scrollDisabled(isMultiSelectModeActive) // Disable scroll during drag selection mode
+                .scrollDisabled(longPressActivated) // Disable scroll during drag selection mode
                 .onPreferenceChange(PhotoFramePreferenceKey.self) { frames in
                     photoFrames = frames
                 }
                 .simultaneousGesture(
-                    DragGesture(minimumDistance: 5)
+                    DragGesture(minimumDistance: 1)
                         .onChanged { value in
-                            if isMultiSelectModeActive {
+                            if longPressActivated {
                                 handleDragChanged(value: value, in: outerGeometry)
                             }
                         }
                         .onEnded { _ in
-                            if isMultiSelectModeActive {
-                                handleDragEnded()
-                            }
+                            handleDragEnded()
                         }
                 )
             }
@@ -233,18 +249,7 @@ struct PhotoSelectionView: View {
         if !isDragging {
             // Start dragging
             isDragging = true
-            photosSelectedDuringDrag.removeAll()
-
-            // Check if drag started on a selected photo
-            let startLocation = value.startLocation
-            if let assetId = findAsset(at: startLocation) {
-                let asset = viewModel.photos.first { $0.localIdentifier == assetId }
-                dragStartedOnSelected = asset != nil && viewModel.selectedAssets.contains(asset!)
-            } else {
-                dragStartedOnSelected = false
-            }
-
-            logger.info("📷 [PhotoSelection] 드래그 선택 시작 - deselect mode: \(dragStartedOnSelected)")
+            logger.info("📷 [PhotoSelection] 드래그 시작 - deselect mode: \(dragStartedOnSelected)")
         }
 
         // Find asset at current drag location
@@ -273,6 +278,7 @@ struct PhotoSelectionView: View {
     private func handleDragEnded() {
         logger.info("📷 [PhotoSelection] 드래그 선택 종료 - 선택된 사진: \(photosSelectedDuringDrag.count)장")
         isDragging = false
+        longPressActivated = false
         photosSelectedDuringDrag.removeAll()
     }
 
@@ -535,68 +541,83 @@ struct DraggablePhotoGridItem: View {
     let isSelected: Bool
     let selectionOrder: Int?
     let isDragging: Bool
-    let action: () -> Void
+    let onTap: () -> Void
+    let onLongPress: () -> Void
 
     @State private var thumbnail: UIImage?
+    @State private var isPressed = false
 
     var body: some View {
-        Button(action: action) {
-            GeometryReader { geometry in
-                ZStack(alignment: .topTrailing) {
-                    // Thumbnail
-                    if let thumbnail = thumbnail {
-                        Image(uiImage: thumbnail)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: geometry.size.width, height: geometry.size.width)
-                            .clipped()
-                    } else {
-                        Rectangle()
-                            .fill(WanderColors.surface)
-                    }
+        GeometryReader { geometry in
+            ZStack(alignment: .topTrailing) {
+                // Thumbnail
+                if let thumbnail = thumbnail {
+                    Image(uiImage: thumbnail)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geometry.size.width, height: geometry.size.width)
+                        .clipped()
+                } else {
+                    Rectangle()
+                        .fill(WanderColors.surface)
+                }
 
-                    // Selection Overlay
-                    if isSelected {
-                        Rectangle()
-                            .fill(WanderColors.primary.opacity(0.3))
+                // Selection Overlay
+                if isSelected {
+                    Rectangle()
+                        .fill(WanderColors.primary.opacity(0.3))
 
-                        // Selection Badge
-                        ZStack {
-                            Circle()
-                                .fill(WanderColors.primary)
-                                .frame(width: 24, height: 24)
+                    // Selection Badge
+                    ZStack {
+                        Circle()
+                            .fill(WanderColors.primary)
+                            .frame(width: 24, height: 24)
 
-                            if let order = selectionOrder {
-                                Text("\(order)")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
+                        if let order = selectionOrder {
+                            Text("\(order)")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
                         }
-                        .padding(6)
                     }
+                    .padding(6)
+                }
 
-                    // GPS Indicator
-                    if asset.location != nil {
-                        VStack {
+                // Press indicator
+                if isPressed {
+                    Rectangle()
+                        .fill(WanderColors.primary.opacity(0.2))
+                }
+
+                // GPS Indicator
+                if asset.location != nil {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Image(systemName: "location.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.white)
+                                .padding(4)
+                                .background(Color.black.opacity(0.5))
+                                .cornerRadius(4)
                             Spacer()
-                            HStack {
-                                Image(systemName: "location.fill")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.white)
-                                    .padding(4)
-                                    .background(Color.black.opacity(0.5))
-                                    .cornerRadius(4)
-                                Spacer()
-                            }
                         }
-                        .padding(4)
                     }
+                    .padding(4)
                 }
             }
-            .aspectRatio(1, contentMode: .fit)
         }
-        .buttonStyle(.plain)
-        .allowsHitTesting(!isDragging) // Disable tap during drag
+        .aspectRatio(1, contentMode: .fit)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if !isDragging {
+                onTap()
+            }
+        }
+        .onLongPressGesture(minimumDuration: 0.3, pressing: { pressing in
+            isPressed = pressing
+        }) {
+            onLongPress()
+        }
         .onAppear {
             loadThumbnail()
         }
