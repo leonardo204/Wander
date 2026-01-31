@@ -5,6 +5,23 @@ options:
     iOS: "17.0"
   xcodeVersion: "15.0"
   groupSortPosition: top
+  defaultConfig: Debug
+
+schemes:
+  Wander:
+    build:
+      targets:
+        Wander: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
 
 settings:
   base:
@@ -22,6 +39,7 @@ targets:
   Wander:
     type: application
     platform: iOS
+    supportedDestinations: [iOS]
     sources:
       - WanderApp.swift
       - ContentView.swift
@@ -35,6 +53,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zerolive.wander
+        SDKROOT: iphoneos
+        TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES

@@ -304,7 +304,7 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		"TEMP_FFE925BC-D5A3-42A2-8C29-8AFA368074BB" /* Common */ = {
+		"TEMP_E6351AB8-B076-4B77-8B21-E9C02B7D0942" /* Common */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -439,6 +439,10 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.zerolive.wander;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -598,6 +602,10 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.zerolive.wander;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
