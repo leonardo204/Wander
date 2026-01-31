@@ -255,32 +255,102 @@ enum ActivityType: String, Codable {
 
 ---
 
-## 개발 우선순위
+## 구현 상태 (2026-01-31)
 
-### Phase 1: 기본 구조 (필수)
-1. Xcode 프로젝트 생성
-2. 디자인 시스템 (Colors, Typography, Spacing)
-3. 앱 구조 (탭바, 네비게이션)
-4. 스플래시 & 온보딩
-5. 권한 요청 (사진, 위치)
+### ✅ Phase 1: 기본 구조 - 완료
+- [x] Xcode 프로젝트 생성 (xcodegen)
+- [x] 디자인 시스템 (WanderColors, WanderTypography, WanderSpacing)
+- [x] 앱 구조 (3탭 TabView)
+- [x] 스플래시 & 온보딩 (3단계)
+- [x] 권한 요청 (사진, 위치)
 
-### Phase 2: 핵심 기능
-1. 홈 화면 (빈 상태 / 기록 있음)
-2. 사진 선택 & 메타데이터 추출
-3. 분석 로직 (GPS → 장소 클러스터링)
-4. 결과 화면 (타임라인, 지도)
-5. 기록 저장 (SwiftData)
+### ✅ Phase 2: 핵심 기능 - 완료
+- [x] 홈 화면 (빈 상태 / 기록 있음)
+- [x] 사진 선택 & 메타데이터 추출
+- [x] 분석 로직 (GPS 클러스터링, Reverse Geocoding)
+- [x] 결과 화면 (타임라인, 지도)
+- [x] 기록 저장 (SwiftData)
 
-### Phase 3: 부가 기능
-1. 기록 목록 & 상세
-2. 공유 기능
-3. 내보내기 (Markdown, HTML)
-4. 설정 화면들
+### ✅ Phase 3: 부가 기능 - 완료
+- [x] 기록 목록 & 상세
+- [x] 설정 화면 (AI설정, 데이터관리, 권한, 공유, 앱정보)
+- [ ] 공유 기능 (플레이스홀더)
+- [ ] 내보내기 (플레이스홀더)
 
-### Phase 4: AI 기능 (BYOK)
-1. API Key 관리
-2. AI 스토리 생성
-3. 프로바이더별 연동
+### ✅ Phase 4: AI 기능 (BYOK) - 완료
+- [x] KeychainManager (API Key 저장)
+- [x] AI 서비스 프로토콜 및 구현체 (OpenAI, Anthropic, Google)
+- [x] AI 스토리 생성 화면
+
+---
+
+## 디버깅
+
+### 로그 확인 방법
+```swift
+import os.log
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "CategoryName")
+```
+
+**Console.app에서 확인:**
+1. Mac에서 Console.app 열기
+2. 연결된 디바이스 선택
+3. 검색창에 `com.zerolive.wander` 입력
+
+### 주요 로그 카테고리
+- `AnalyzingView`: 분석 UI 플로우
+- `AnalysisEngine`: 분석 엔진 각 단계
+- `ResultView`: 결과 화면 표시
+
+---
+
+## 프로젝트 구조 (실제 파일)
+
+```
+Wander/
+├── WanderApp.swift
+├── ContentView.swift
+├── project.yml                    # xcodegen 설정
+├── Core/
+│   ├── Design/
+│   │   ├── WanderColors.swift
+│   │   ├── WanderTypography.swift
+│   │   └── WanderSpacing.swift
+│   └── Utilities/
+│       └── KeychainManager.swift
+├── Models/SwiftData/
+│   ├── TravelRecord.swift
+│   ├── TravelDay.swift
+│   ├── Place.swift
+│   └── PhotoItem.swift
+├── Services/
+│   ├── AIService/
+│   │   ├── AIServiceProtocol.swift
+│   │   ├── OpenAIService.swift
+│   │   ├── AnthropicService.swift
+│   │   └── GoogleAIService.swift
+│   ├── AnalysisService/
+│   │   ├── AnalysisEngine.swift
+│   │   ├── ClusteringService.swift
+│   │   └── ActivityInferenceService.swift
+│   └── LocationService/
+│       └── GeocodingService.swift
+├── ViewModels/
+│   └── PhotoSelection/
+│       └── PhotoSelectionViewModel.swift
+└── Views/
+    ├── Launch/SplashView.swift
+    ├── Onboarding/
+    ├── Home/HomeView.swift
+    ├── PhotoSelection/PhotoSelectionView.swift
+    ├── Analysis/AnalyzingView.swift
+    ├── Result/
+    │   ├── ResultView.swift
+    │   ├── MapDetailView.swift
+    │   └── AIStoryView.swift
+    ├── Records/RecordsView.swift
+    └── Settings/SettingsView.swift
+```
 
 ---
 
