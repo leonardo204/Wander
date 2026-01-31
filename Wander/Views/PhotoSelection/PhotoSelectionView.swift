@@ -14,6 +14,7 @@ struct PhotoSelectionView: View {
     @State private var isDragging = false
     @State private var dragStartedOnSelected = false
     @State private var photosSelectedDuringDrag: Set<String> = []
+    @State private var isMultiSelectModeActive = false  // Long press activates drag selection
 
     var body: some View {
         NavigationStack {
@@ -79,6 +80,13 @@ struct PhotoSelectionView: View {
             .fullScreenCover(isPresented: $viewModel.showAnalysis) {
                 AnalyzingView(viewModel: viewModel)
             }
+            .onChange(of: viewModel.shouldDismissPhotoSelection) { _, shouldDismiss in
+                if shouldDismiss {
+                    logger.info("📷 [PhotoSelectionView] 분석 완료 후 자동 닫기")
+                    viewModel.shouldDismissPhotoSelection = false
+                    dismiss()
+                }
+            }
         }
     }
 
@@ -132,50 +140,89 @@ struct PhotoSelectionView: View {
 
     // MARK: - Photo Grid Section
     private var photoGridSection: some View {
-        GeometryReader { outerGeometry in
-            ScrollView {
-                LazyVGrid(columns: [
-                    GridItem(.flexible(), spacing: 2),
-                    GridItem(.flexible(), spacing: 2),
-                    GridItem(.flexible(), spacing: 2)
-                ], spacing: 2) {
-                    ForEach(viewModel.photos, id: \.localIdentifier) { asset in
-                        DraggablePhotoGridItem(
-                            asset: asset,
-                            isSelected: viewModel.selectedAssets.contains(asset),
-                            selectionOrder: viewModel.selectionOrder(for: asset),
-                            isDragging: isDragging
-                        ) {
-                            if !isDragging {
-                                viewModel.toggleSelection(asset)
+        VStack(spacing: 0) {
+            // Multi-select mode toggle bar
+            HStack {
+                Text("\(viewModel.photos.count)장의 사진")
+                    .font(WanderTypography.caption1)
+                    .foregroundColor(WanderColors.textSecondary)
+
+                Spacer()
+
+                Button(action: {
+                    isMultiSelectModeActive.toggle()
+                    if !isMultiSelectModeActive {
+                        isDragging = false
+                    }
+                    logger.info("📷 [PhotoSelection] 다중 선택 모드: \(isMultiSelectModeActive)")
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: isMultiSelectModeActive ? "hand.draw.fill" : "hand.draw")
+                        Text(isMultiSelectModeActive ? "드래그 선택 중" : "드래그 선택")
+                    }
+                    .font(WanderTypography.caption1)
+                    .foregroundColor(isMultiSelectModeActive ? .white : WanderColors.primary)
+                    .padding(.horizontal, WanderSpacing.space3)
+                    .padding(.vertical, WanderSpacing.space2)
+                    .background(isMultiSelectModeActive ? WanderColors.primary : WanderColors.primaryPale)
+                    .cornerRadius(WanderSpacing.radiusFull)
+                }
+            }
+            .padding(.horizontal, WanderSpacing.screenMargin)
+            .padding(.vertical, WanderSpacing.space2)
+            .background(WanderColors.surface)
+
+            // Photo grid
+            GeometryReader { outerGeometry in
+                ScrollView {
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), spacing: 2),
+                        GridItem(.flexible(), spacing: 2),
+                        GridItem(.flexible(), spacing: 2)
+                    ], spacing: 2) {
+                        ForEach(viewModel.photos, id: \.localIdentifier) { asset in
+                            DraggablePhotoGridItem(
+                                asset: asset,
+                                isSelected: viewModel.selectedAssets.contains(asset),
+                                selectionOrder: viewModel.selectionOrder(for: asset),
+                                isDragging: isDragging
+                            ) {
+                                if !isDragging {
+                                    viewModel.toggleSelection(asset)
+                                }
+                            }
+                            .background(
+                                GeometryReader { geometry in
+                                    Color.clear
+                                        .preference(
+                                            key: PhotoFramePreferenceKey.self,
+                                            value: [asset.localIdentifier: geometry.frame(in: .named("photoGrid"))]
+                                        )
+                                }
+                            )
+                        }
+                    }
+                    .padding(.bottom, 100) // Extra padding for scroll
+                }
+                .coordinateSpace(name: "photoGrid")
+                .scrollDisabled(isMultiSelectModeActive) // Disable scroll during drag selection mode
+                .onPreferenceChange(PhotoFramePreferenceKey.self) { frames in
+                    photoFrames = frames
+                }
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 5)
+                        .onChanged { value in
+                            if isMultiSelectModeActive {
+                                handleDragChanged(value: value, in: outerGeometry)
                             }
                         }
-                        .background(
-                            GeometryReader { geometry in
-                                Color.clear
-                                    .preference(
-                                        key: PhotoFramePreferenceKey.self,
-                                        value: [asset.localIdentifier: geometry.frame(in: .named("photoGrid"))]
-                                    )
+                        .onEnded { _ in
+                            if isMultiSelectModeActive {
+                                handleDragEnded()
                             }
-                        )
-                    }
-                }
-                .padding(.bottom, 100) // Extra padding for scroll
+                        }
+                )
             }
-            .coordinateSpace(name: "photoGrid")
-            .onPreferenceChange(PhotoFramePreferenceKey.self) { frames in
-                photoFrames = frames
-            }
-            .gesture(
-                DragGesture(minimumDistance: 20)
-                    .onChanged { value in
-                        handleDragChanged(value: value, in: outerGeometry)
-                    }
-                    .onEnded { _ in
-                        handleDragEnded()
-                    }
-            )
         }
     }
 

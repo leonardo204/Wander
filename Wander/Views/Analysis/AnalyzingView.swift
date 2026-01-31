@@ -43,6 +43,8 @@ struct AnalyzingView: View {
             .fullScreenCover(isPresented: $showResult, onDismiss: {
                 // ResultView가 닫히면 AnalyzingView도 닫기
                 logger.info("📱 ResultView 닫힘 → AnalyzingView도 dismiss")
+                // PhotoSelectionView도 닫도록 플래그 설정
+                viewModel.shouldDismissPhotoSelection = true
                 dismiss()
             }) {
                 if let result = analysisResult {

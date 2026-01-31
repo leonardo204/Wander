@@ -27,6 +27,9 @@ class PhotoSelectionViewModel {
     var showAnalysis = false
     var analysisResult: AnalysisResult?
 
+    /// 분석 완료 후 PhotoSelectionView도 닫아야 할 때 true로 설정
+    var shouldDismissPhotoSelection = false
+
     // MARK: - Computed Properties
     var dateRangeText: String {
         let formatter = DateFormatter()
