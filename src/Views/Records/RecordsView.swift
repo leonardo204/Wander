@@ -12,9 +12,20 @@ struct RecordsView: View {
     @State private var selectedFilter: RecordFilter = .all
     @State private var showDeleteConfirmation = false
     @State private var recordToDelete: TravelRecord?
+    @State private var showHiddenRecords = false
+
+    /// 숨기지 않은 기록만 반환
+    var visibleRecords: [TravelRecord] {
+        records.filter { !$0.isHidden }
+    }
+
+    /// 숨긴 기록 개수
+    var hiddenRecordsCount: Int {
+        records.filter { $0.isHidden }.count
+    }
 
     var filteredRecords: [TravelRecord] {
-        var result = records
+        var result = visibleRecords
 
         // Apply search filter
         if !searchText.isEmpty {
@@ -71,6 +82,9 @@ struct RecordsView: View {
                 Button("취소", role: .cancel) {}
             } message: {
                 Text("삭제된 기록은 복구할 수 없습니다.")
+            }
+            .sheet(isPresented: $showHiddenRecords) {
+                HiddenRecordsView()
             }
         }
     }
@@ -144,6 +158,12 @@ struct RecordsView: View {
                     }
                     .buttonStyle(.plain)
                     .contextMenu {
+                        Button {
+                            hideRecord(record)
+                        } label: {
+                            Label("숨기기", systemImage: "eye.slash")
+                        }
+
                         Button(role: .destructive) {
                             recordToDelete = record
                             showDeleteConfirmation = true
@@ -152,9 +172,64 @@ struct RecordsView: View {
                         }
                     }
                 }
+
+                // 숨긴 기록 섹션
+                if hiddenRecordsCount > 0 {
+                    hiddenRecordsSection
+                }
             }
             .padding(.horizontal, WanderSpacing.screenMargin)
             .padding(.vertical, WanderSpacing.space4)
+        }
+    }
+
+    // MARK: - Hidden Records Section
+    private var hiddenRecordsSection: some View {
+        VStack(spacing: 0) {
+            Divider()
+                .padding(.vertical, WanderSpacing.space4)
+
+            Button(action: { showHiddenRecords = true }) {
+                HStack(spacing: WanderSpacing.space3) {
+                    ZStack {
+                        Circle()
+                            .fill(WanderColors.surface)
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "eye.slash")
+                            .font(.system(size: 18))
+                            .foregroundColor(WanderColors.textSecondary)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("숨긴 기록")
+                            .font(WanderTypography.headline)
+                            .foregroundColor(WanderColors.textPrimary)
+
+                        Text("\(hiddenRecordsCount)개의 기록이 숨겨져 있습니다")
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.textSecondary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(WanderColors.textTertiary)
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14))
+                        .foregroundColor(WanderColors.textTertiary)
+                }
+                .padding(WanderSpacing.space4)
+                .background(WanderColors.surface)
+                .cornerRadius(WanderSpacing.radiusLarge)
+                .overlay(
+                    RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge)
+                        .stroke(WanderColors.border, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -162,16 +237,23 @@ struct RecordsView: View {
     private func countForFilter(_ filter: RecordFilter) -> Int {
         switch filter {
         case .all:
-            return records.count
+            return visibleRecords.count
         case .travel:
-            return records.filter { $0.recordType == "travel" }.count
+            return visibleRecords.filter { $0.recordType == "travel" }.count
         case .daily:
-            return records.filter { $0.recordType == "daily" }.count
+            return visibleRecords.filter { $0.recordType == "daily" }.count
         case .weekly:
-            return records.filter { $0.recordType == "weekly" }.count
+            return visibleRecords.filter { $0.recordType == "weekly" }.count
         case .business:
-            return records.filter { $0.recordType == "business" }.count
+            return visibleRecords.filter { $0.recordType == "business" }.count
         }
+    }
+
+    private func hideRecord(_ record: TravelRecord) {
+        record.isHidden = true
+        record.updatedAt = Date()
+        try? modelContext.save()
+        logger.info("🙈 [RecordsView] 기록 숨김: \(record.title)")
     }
 
     private func deleteRecord(_ record: TravelRecord) {
@@ -423,6 +505,7 @@ struct RecordDetailFullView: View {
     @State private var showDeleteConfirmation = false
     @State private var showMapDetail = false
     @State private var showAllPhotos = false
+    @State private var showHideConfirmation = false
 
     var body: some View {
         ScrollView {
@@ -482,6 +565,10 @@ struct RecordDetailFullView: View {
 
                     Divider()
 
+                    Button(action: { showHideConfirmation = true }) {
+                        Label(record.isHidden ? "숨김 해제" : "숨기기", systemImage: record.isHidden ? "eye" : "eye.slash")
+                    }
+
                     Button(role: .destructive, action: { showDeleteConfirmation = true }) {
                         Label("삭제", systemImage: "trash")
                     }
@@ -501,6 +588,18 @@ struct RecordDetailFullView: View {
             Button("취소", role: .cancel) {}
         } message: {
             Text("삭제된 기록은 복구할 수 없습니다.")
+        }
+        .confirmationDialog(
+            record.isHidden ? "이 기록을 다시 표시하시겠습니까?" : "이 기록을 숨기시겠습니까?",
+            isPresented: $showHideConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(record.isHidden ? "숨김 해제" : "숨기기") {
+                toggleHideRecord()
+            }
+            Button("취소", role: .cancel) {}
+        } message: {
+            Text(record.isHidden ? "기록 목록에 다시 표시됩니다." : "숨긴 기록은 별도 섹션에서 확인할 수 있습니다.")
         }
         .sheet(isPresented: $showShareSheet) {
             ExportOptionsView(record: record)
@@ -638,6 +737,16 @@ struct RecordDetailFullView: View {
         modelContext.delete(record)
         try? modelContext.save()
         dismiss()
+    }
+
+    private func toggleHideRecord() {
+        record.isHidden.toggle()
+        record.updatedAt = Date()
+        try? modelContext.save()
+        logger.info("🙈 [RecordDetailFullView] 기록 숨김 상태 변경: \(record.title) → \(record.isHidden ? "숨김" : "표시")")
+        if record.isHidden {
+            dismiss()
+        }
     }
 }
 

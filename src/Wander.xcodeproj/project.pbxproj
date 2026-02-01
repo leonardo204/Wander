@@ -19,6 +19,7 @@
 		571EEEDE259E9D468204DAAF /* PhotoSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6FCA8AF89107AA1A681BE8 /* PhotoSelectionView.swift */; };
 		5AE2A5F8D26942F3BD7358F1 /* OnboardingLocationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AADA581AA1B63216B34086C1 /* OnboardingLocationView.swift */; };
 		68296BEF19751744F2E96941 /* AnalysisEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68785E679F65AB40EAF888D /* AnalysisEngine.swift */; };
+		HIDDEN002A1B2C3D4E5F6789 /* HiddenRecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HIDDEN001A1B2C3D4E5F6789 /* HiddenRecordsView.swift */; };
 		68C9C4F8DBDD77FAF0329C54 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D159347FCDC44AD0120B147 /* HomeView.swift */; };
 		6A01487B492939612E6BDEDA /* AIStoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103DE727B96D53981C6197C4 /* AIStoryView.swift */; };
 		751A2972E76920FF3D6FB66B /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73183A726FDF526C78A4DEF7 /* KeychainManager.swift */; };
@@ -63,6 +64,7 @@
 		4F5C5BBA95CC778655ADDEE3 /* Place.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Place.swift; sourceTree = "<group>"; };
 		5989A12B232DB900FA252CF3 /* OnboardingIntroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingIntroView.swift; sourceTree = "<group>"; };
 		67FA4CD0C634E35AE8A56305 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		HIDDEN001A1B2C3D4E5F6789 /* HiddenRecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiddenRecordsView.swift; sourceTree = "<group>"; };
 		6F8D1BCB0B76A4B78253DAD2 /* ActivityInferenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityInferenceService.swift; sourceTree = "<group>"; };
 		714F818522502D4D1BA656B1 /* QuickModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickModeView.swift; sourceTree = "<group>"; };
 		73183A726FDF526C78A4DEF7 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
@@ -223,6 +225,7 @@
 		751B0D159D1A9B8A354EF868 /* Records */ = {
 			isa = PBXGroup;
 			children = (
+				HIDDEN001A1B2C3D4E5F6789 /* HiddenRecordsView.swift */,
 				D4BDB68CF4F57746D7AF6F6C /* RecordsView.swift */,
 			);
 			path = Records;
@@ -430,6 +433,7 @@
 				ADA3D6A857DA9EEC387D8F0B /* PhotoSelectionViewModel.swift in Sources */,
 				B88F11C8EC476D3DB4D26194 /* Place.swift in Sources */,
 				F53C6AFADF1BCE1C4B2CAC98 /* QuickModeView.swift in Sources */,
+				HIDDEN002A1B2C3D4E5F6789 /* HiddenRecordsView.swift in Sources */,
 				E55B852473000EF498F1B0EA /* RecordsView.swift in Sources */,
 				F053FEAC293BBEFDFA6F1A06 /* ResultView.swift in Sources */,
 				06D7B35EF39572C788EEA5E1 /* SettingsView.swift in Sources */,

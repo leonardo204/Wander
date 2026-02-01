@@ -14,6 +14,7 @@ final class TravelRecord {
     var aiStory: String?
     var createdAt: Date
     var updatedAt: Date
+    var isHidden: Bool
 
     @Relationship(deleteRule: .cascade, inverse: \TravelDay.record)
     var days: [TravelDay]
@@ -34,6 +35,7 @@ final class TravelRecord {
         self.photoCount = 0
         self.createdAt = Date()
         self.updatedAt = Date()
+        self.isHidden = false
         self.days = []
     }
 
