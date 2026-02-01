@@ -268,6 +268,8 @@ struct APIKeyInputView: View {
     @State private var testResult: Bool?
     @State private var testError: String?
     @State private var hasExistingKey = false
+    @State private var isEditingKey = false  // 키 수정 모드
+    @State private var maskedKey = ""  // 마스킹된 키 표시용
 
     // Azure specific settings
     @State private var azureEndpoint = ""
@@ -300,15 +302,43 @@ struct APIKeyInputView: View {
                 }
 
                 Section {
-                    SecureField("API 키 입력", text: $apiKey)
-                        .textContentType(.password)
-                        .autocapitalization(.none)
-                        .autocorrectionDisabled()
+                    if hasExistingKey && !isEditingKey {
+                        // 기존 키가 있고 편집 모드가 아닐 때 - 마스킹된 키 표시
+                        HStack {
+                            Text(maskedKey)
+                                .font(.system(.body, design: .monospaced))
+                                .foregroundColor(WanderColors.textSecondary)
+                            Spacer()
+                            Button("변경") {
+                                isEditingKey = true
+                                apiKey = ""
+                            }
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.primary)
+                        }
+                    } else {
+                        // 새 키 입력 또는 편집 모드
+                        SecureField("API 키 입력", text: $apiKey)
+                            .textContentType(.password)
+                            .autocapitalization(.none)
+                            .autocorrectionDisabled()
+
+                        if isEditingKey {
+                            Button("취소") {
+                                isEditingKey = false
+                                apiKey = ""
+                            }
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.textSecondary)
+                        }
+                    }
                 } header: {
                     Text("API 키")
                 } footer: {
-                    if hasExistingKey {
-                        Text("기존 키가 저장되어 있습니다. 새 키를 입력하면 덮어씁니다.")
+                    if hasExistingKey && !isEditingKey {
+                        Text("키가 안전하게 저장되어 있습니다.")
+                    } else if isEditingKey {
+                        Text("새 키를 입력하면 기존 키를 덮어씁니다.")
                     } else {
                         Text("API 키는 Keychain에 안전하게 저장됩니다.")
                     }
@@ -327,7 +357,8 @@ struct APIKeyInputView: View {
                             }
                         }
                     }
-                    .disabled(apiKey.isEmpty || isTesting || (provider == .azure && (azureEndpoint.isEmpty || azureDeployment.isEmpty)))
+                    // 기존 키가 있거나 새 키가 입력된 경우 테스트 가능
+                    .disabled((!hasExistingKey && apiKey.isEmpty) || isTesting || (provider == .azure && (azureEndpoint.isEmpty || azureDeployment.isEmpty)))
 
                     if let error = testError {
                         Text(error)
@@ -360,15 +391,35 @@ struct APIKeyInputView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("저장") {
-                        saveAPIKey()
+                        if !apiKey.isEmpty {
+                            saveAPIKey()
+                        }
                         dismiss()
                     }
-                    .disabled(apiKey.isEmpty || (provider == .azure && (azureEndpoint.isEmpty || azureDeployment.isEmpty)))
+                    .disabled(!hasExistingKey && apiKey.isEmpty || (provider == .azure && (azureEndpoint.isEmpty || azureDeployment.isEmpty)))
                 }
             }
             .onAppear {
                 hasExistingKey = KeychainManager.shared.hasAPIKey(for: provider.keychainType)
                 logger.info("🔑 [APIKeyInputView] 나타남 - provider: \(provider.displayName), hasExistingKey: \(hasExistingKey)")
+
+                // 기존 키가 있으면 마스킹된 표시 생성
+                if hasExistingKey {
+                    if let existingKey = try? KeychainManager.shared.getAPIKey(for: provider.keychainType) {
+                        // 앞 4자, 뒤 4자만 표시하고 나머지는 마스킹
+                        let keyLength = existingKey.count
+                        if keyLength > 8 {
+                            let prefix = String(existingKey.prefix(4))
+                            let suffix = String(existingKey.suffix(4))
+                            let masked = String(repeating: "•", count: min(keyLength - 8, 20))
+                            maskedKey = "\(prefix)\(masked)\(suffix)"
+                        } else {
+                            maskedKey = String(repeating: "•", count: keyLength)
+                        }
+                    } else {
+                        maskedKey = "••••••••••••"
+                    }
+                }
 
                 // Load Azure settings if exists
                 if provider == .azure {
@@ -396,39 +447,43 @@ struct APIKeyInputView: View {
             )
         }
 
-        // Temporarily save the key for testing
-        do {
-            try KeychainManager.shared.saveAPIKey(apiKey, for: provider.keychainType)
+        // 새 키가 입력된 경우에만 임시 저장
+        let needsTemporarySave = !apiKey.isEmpty
+        if needsTemporarySave {
+            do {
+                try KeychainManager.shared.saveAPIKey(apiKey, for: provider.keychainType)
+            } catch {
+                logger.error("🔑 [APIKeyInputView] 키 저장 실패 - provider: \(provider.displayName), error: \(error.localizedDescription)")
+                testResult = false
+                testError = "키 저장 실패: \(error.localizedDescription)"
+                isTesting = false
+                return
+            }
+        }
 
-            Task {
-                do {
-                    let service = AIServiceFactory.createService(for: provider)
-                    let result = try await service.testConnection()
+        Task {
+            do {
+                let service = AIServiceFactory.createService(for: provider)
+                let result = try await service.testConnection()
 
-                    await MainActor.run {
-                        logger.info("🔑 [APIKeyInputView] 연결 테스트 성공 - provider: \(provider.displayName)")
-                        testResult = result
-                        isTesting = false
-                    }
-                } catch {
-                    await MainActor.run {
-                        logger.error("🔑 [APIKeyInputView] 연결 테스트 실패 - provider: \(provider.displayName), error: \(error.localizedDescription)")
-                        testResult = false
-                        testError = error.localizedDescription
-                        isTesting = false
-                    }
+                await MainActor.run {
+                    logger.info("🔑 [APIKeyInputView] 연결 테스트 성공 - provider: \(provider.displayName)")
+                    testResult = result
+                    isTesting = false
+                }
+            } catch {
+                await MainActor.run {
+                    logger.error("🔑 [APIKeyInputView] 연결 테스트 실패 - provider: \(provider.displayName), error: \(error.localizedDescription)")
+                    testResult = false
+                    testError = error.localizedDescription
+                    isTesting = false
+                }
 
-                    // Remove the test key if test failed and there was no existing key
-                    if !hasExistingKey {
-                        try? KeychainManager.shared.deleteAPIKey(for: provider.keychainType)
-                    }
+                // Remove the test key if test failed and there was no existing key before
+                if needsTemporarySave && !hasExistingKey {
+                    try? KeychainManager.shared.deleteAPIKey(for: provider.keychainType)
                 }
             }
-        } catch {
-            logger.error("🔑 [APIKeyInputView] 키 저장 실패 - provider: \(provider.displayName), error: \(error.localizedDescription)")
-            testResult = false
-            testError = "키 저장 실패: \(error.localizedDescription)"
-            isTesting = false
         }
     }
 
