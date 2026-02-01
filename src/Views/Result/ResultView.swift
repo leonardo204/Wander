@@ -856,7 +856,13 @@ struct SharePreviewView: View {
                 items = [previewText]
             case .image:
                 if let image = previewImage {
-                    items = [image]
+                    // JPEG 압축으로 메모리 사용량 감소 (카카오톡 등 외부 앱 호환성 향상)
+                    if let jpegData = image.jpegData(compressionQuality: 0.85),
+                       let compressedImage = UIImage(data: jpegData) {
+                        items = [compressedImage]
+                    } else {
+                        items = [image]
+                    }
                 }
             }
 
