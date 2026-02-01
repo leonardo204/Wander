@@ -1572,6 +1572,13 @@ struct RecordSharePreviewView: View {
     }
 
     private func generateImageFromRecord() async -> UIImage? {
+        // Collect all asset identifiers and load thumbnails
+        let allAssetIds = record.days
+            .flatMap { $0.places }
+            .flatMap { $0.photos }
+            .compactMap { $0.assetIdentifier }
+        let thumbnails = await loadThumbnailsFromAssetIds(Array(allAssetIds.prefix(6)))
+
         let size = CGSize(width: 1080, height: 1920)
         let renderer = UIGraphicsImageRenderer(size: size)
 
@@ -1654,16 +1661,16 @@ struct RecordSharePreviewView: View {
             // Fonts and colors
             let dayHeaderFont = UIFont.systemFont(ofSize: 24, weight: .bold)
             let dayDateFont = UIFont.systemFont(ofSize: 18, weight: .regular)
-            let placeFont = UIFont.systemFont(ofSize: 24, weight: .semibold)
-            let timeFont = UIFont.systemFont(ofSize: 18, weight: .regular)
-            let addressFont = UIFont.systemFont(ofSize: 16, weight: .regular)
+            let placeFont = UIFont.systemFont(ofSize: 22, weight: .semibold)
+            let timeFont = UIFont.systemFont(ofSize: 16, weight: .regular)
+            let addressFont = UIFont.systemFont(ofSize: 14, weight: .regular)
             let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1)
             let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1)
             let timeColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
 
             let sortedDays = record.days.sorted { $0.dayNumber < $1.dayNumber }
             var totalPlacesDrawn = 0
-            let maxPlaces = 5
+            let maxPlaces = 4 // Reduced to make room for photos
 
             for day in sortedDays {
                 guard totalPlacesDrawn < maxPlaces else { break }
@@ -1691,7 +1698,7 @@ struct RecordSharePreviewView: View {
                 )
                 dayDateString.draw(at: CGPoint(x: 150, y: currentY + 6))
 
-                currentY += 50
+                currentY += 45
 
                 // Draw places for this day
                 let sortedPlaces = day.places.sorted { $0.order < $1.order }
@@ -1702,14 +1709,14 @@ struct RecordSharePreviewView: View {
                     let isLastOverall = totalPlacesDrawn == maxPlaces - 1
 
                     // Number circle
-                    let circleRect = CGRect(x: 60, y: currentY, width: 44, height: 44)
+                    let circleRect = CGRect(x: 60, y: currentY, width: 40, height: 40)
                     let circlePath = UIBezierPath(ovalIn: circleRect)
                     primaryColor.setFill()
                     circlePath.fill()
 
                     let numberString = NSAttributedString(
                         string: "\(placeIndex + 1)",
-                        attributes: [.font: UIFont.systemFont(ofSize: 20, weight: .bold), .foregroundColor: UIColor.white]
+                        attributes: [.font: UIFont.systemFont(ofSize: 18, weight: .bold), .foregroundColor: UIColor.white]
                     )
                     let numberSize = numberString.size()
                     numberString.draw(at: CGPoint(x: circleRect.midX - numberSize.width / 2, y: circleRect.midY - numberSize.height / 2))
@@ -1717,8 +1724,8 @@ struct RecordSharePreviewView: View {
                     // Connector line (if not last)
                     if !isLastInDay && !isLastOverall {
                         let linePath = UIBezierPath()
-                        linePath.move(to: CGPoint(x: 82, y: currentY + 44))
-                        linePath.addLine(to: CGPoint(x: 82, y: currentY + 130))
+                        linePath.move(to: CGPoint(x: 80, y: currentY + 40))
+                        linePath.addLine(to: CGPoint(x: 80, y: currentY + 100))
                         UIColor(red: 0.9, green: 0.93, blue: 0.95, alpha: 1).setStroke()
                         linePath.lineWidth = 2
                         linePath.stroke()
@@ -1729,33 +1736,33 @@ struct RecordSharePreviewView: View {
                         string: formatTime(place.startTime),
                         attributes: [.font: timeFont, .foregroundColor: timeColor]
                     )
-                    timeString.draw(at: CGPoint(x: 120, y: currentY - 2))
+                    timeString.draw(at: CGPoint(x: 115, y: currentY - 2))
 
                     // Place name (truncated if needed)
                     var displayName = place.name
-                    if displayName.count > 25 {
-                        displayName = String(displayName.prefix(25)) + "..."
+                    if displayName.count > 28 {
+                        displayName = String(displayName.prefix(28)) + "..."
                     }
                     let placeString = NSAttributedString(
                         string: displayName,
                         attributes: [.font: placeFont, .foregroundColor: titleColor]
                     )
-                    placeString.draw(at: CGPoint(x: 120, y: currentY + 20))
+                    placeString.draw(at: CGPoint(x: 115, y: currentY + 18))
 
                     // Activity
                     let activityString = NSAttributedString(
                         string: place.activityLabel,
                         attributes: [.font: addressFont, .foregroundColor: dateColor]
                     )
-                    activityString.draw(at: CGPoint(x: 120, y: currentY + 50))
+                    activityString.draw(at: CGPoint(x: 115, y: currentY + 45))
 
-                    currentY += 140
+                    currentY += 110
                     totalPlacesDrawn += 1
                 }
 
                 // Add spacing between days
                 if totalPlacesDrawn < maxPlaces {
-                    currentY += 20
+                    currentY += 15
                 }
             }
 
@@ -1766,8 +1773,12 @@ struct RecordSharePreviewView: View {
                     string: "... 외 \(totalPlaces - totalPlacesDrawn)곳",
                     attributes: [.font: addressFont, .foregroundColor: timeColor]
                 )
-                moreString.draw(at: CGPoint(x: 120, y: currentY))
+                moreString.draw(at: CGPoint(x: 115, y: currentY))
+                currentY += 30
             }
+
+            // Draw photos section
+            drawPhotosSection(thumbnails: thumbnails, startY: currentY + 40, size: size)
 
             // Watermark (always included)
             let watermarkFont = UIFont.systemFont(ofSize: 24, weight: .medium)
@@ -1779,6 +1790,153 @@ struct RecordSharePreviewView: View {
             let watermarkSize = watermarkString.size()
             watermarkString.draw(at: CGPoint(x: size.width - watermarkSize.width - 40, y: size.height - watermarkSize.height - 40))
         }
+    }
+
+    private func loadThumbnailsFromAssetIds(_ assetIds: [String]) async -> [UIImage] {
+        guard !assetIds.isEmpty else { return [] }
+
+        var thumbnails: [UIImage] = []
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: assetIds, options: nil)
+
+        let manager = PHImageManager.default()
+        let options = PHImageRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.resizeMode = .exact
+        options.isSynchronous = true
+        options.isNetworkAccessAllowed = true
+
+        let targetSize = CGSize(width: 400, height: 400)
+
+        fetchResult.enumerateObjects { asset, _, _ in
+            let semaphore = DispatchSemaphore(value: 0)
+            manager.requestImage(
+                for: asset,
+                targetSize: targetSize,
+                contentMode: .aspectFill,
+                options: options
+            ) { image, _ in
+                if let image = image {
+                    thumbnails.append(image)
+                }
+                semaphore.signal()
+            }
+            semaphore.wait()
+        }
+
+        return thumbnails
+    }
+
+    private func drawPhotosSection(thumbnails: [UIImage], startY: CGFloat, size: CGSize) {
+        guard !thumbnails.isEmpty else { return }
+
+        let titleFont = UIFont.systemFont(ofSize: 28, weight: .bold)
+        let titleColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
+
+        var currentY = startY
+
+        // Section title
+        let sectionTitle = NSAttributedString(
+            string: "📸 사진",
+            attributes: [.font: titleFont, .foregroundColor: titleColor]
+        )
+        sectionTitle.draw(at: CGPoint(x: 60, y: currentY))
+        currentY += 50
+
+        let margin: CGFloat = 60
+        let spacing: CGFloat = 12
+        let availableWidth = size.width - (margin * 2)
+        let cornerRadius: CGFloat = 16
+
+        switch thumbnails.count {
+        case 1:
+            // Single photo: Full width, larger height
+            let photoWidth = availableWidth
+            let photoHeight: CGFloat = 350
+            let photoRect = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
+            drawRoundedImage(thumbnails[0], in: photoRect, cornerRadius: cornerRadius)
+
+        case 2:
+            // Two photos: Side by side
+            let photoWidth = (availableWidth - spacing) / 2
+            let photoHeight: CGFloat = 280
+
+            let rect1 = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
+            let rect2 = CGRect(x: margin + photoWidth + spacing, y: currentY, width: photoWidth, height: photoHeight)
+
+            drawRoundedImage(thumbnails[0], in: rect1, cornerRadius: cornerRadius)
+            drawRoundedImage(thumbnails[1], in: rect2, cornerRadius: cornerRadius)
+
+        case 3:
+            // Three photos: One large on left, two stacked on right
+            let largeWidth = (availableWidth - spacing) * 0.6
+            let smallWidth = (availableWidth - spacing) * 0.4
+            let largeHeight: CGFloat = 280
+            let smallHeight = (largeHeight - spacing) / 2
+
+            let largeRect = CGRect(x: margin, y: currentY, width: largeWidth, height: largeHeight)
+            drawRoundedImage(thumbnails[0], in: largeRect, cornerRadius: cornerRadius)
+
+            let smallRect1 = CGRect(x: margin + largeWidth + spacing, y: currentY, width: smallWidth, height: smallHeight)
+            let smallRect2 = CGRect(x: margin + largeWidth + spacing, y: currentY + smallHeight + spacing, width: smallWidth, height: smallHeight)
+
+            drawRoundedImage(thumbnails[1], in: smallRect1, cornerRadius: cornerRadius)
+            drawRoundedImage(thumbnails[2], in: smallRect2, cornerRadius: cornerRadius)
+
+        default:
+            // 4+ photos: Grid layout (3 columns)
+            let columns = 3
+            let photoWidth = (availableWidth - spacing * CGFloat(columns - 1)) / CGFloat(columns)
+            let photoHeight = photoWidth // Square
+
+            for (index, thumbnail) in thumbnails.prefix(6).enumerated() {
+                let row = index / columns
+                let col = index % columns
+
+                let x = margin + CGFloat(col) * (photoWidth + spacing)
+                let y = currentY + CGFloat(row) * (photoHeight + spacing)
+
+                let rect = CGRect(x: x, y: y, width: photoWidth, height: photoHeight)
+                drawRoundedImage(thumbnail, in: rect, cornerRadius: cornerRadius)
+            }
+        }
+    }
+
+    private func drawRoundedImage(_ image: UIImage, in rect: CGRect, cornerRadius: CGFloat) {
+        let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
+
+        UIGraphicsGetCurrentContext()?.saveGState()
+        path.addClip()
+
+        // Calculate aspect fill
+        let imageAspect = image.size.width / image.size.height
+        let rectAspect = rect.width / rect.height
+
+        var drawRect = rect
+        if imageAspect > rectAspect {
+            let scaledWidth = rect.height * imageAspect
+            drawRect = CGRect(
+                x: rect.midX - scaledWidth / 2,
+                y: rect.minY,
+                width: scaledWidth,
+                height: rect.height
+            )
+        } else {
+            let scaledHeight = rect.width / imageAspect
+            drawRect = CGRect(
+                x: rect.minX,
+                y: rect.midY - scaledHeight / 2,
+                width: rect.width,
+                height: scaledHeight
+            )
+        }
+
+        image.draw(in: drawRect)
+        UIGraphicsGetCurrentContext()?.restoreGState()
+
+        // Draw subtle border
+        UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1).setStroke()
+        path.lineWidth = 1
+        path.stroke()
     }
 
     private func performShare() {
