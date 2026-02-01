@@ -28,14 +28,30 @@ final class ExportService {
 
         """
 
-        for (index, place) in result.places.enumerated() {
+        // Group places by date
+        let groupedByDate = groupPlacesByDate(result.places)
+        let sortedDates = groupedByDate.keys.sorted()
+
+        for (dayIndex, date) in sortedDates.enumerated() {
+            let dayNumber = dayIndex + 1
             text += """
-            [\(index + 1)] \(formatTime(place.startTime))
-            \(place.activityType.emoji) \(place.name)
-            📍 \(place.address)
-            📸 사진 \(place.photos.count)장
+
+            ━━━ Day \(dayNumber) · \(formatDateWithWeekday(date)) ━━━
 
             """
+
+            if let placesForDay = groupedByDate[date] {
+                let sortedPlaces = placesForDay.sorted { $0.startTime < $1.startTime }
+                for (placeIndex, place) in sortedPlaces.enumerated() {
+                    text += """
+                    [\(placeIndex + 1)] \(formatTime(place.startTime))
+                    \(place.activityType.emoji) \(place.name)
+                    📍 \(place.address)
+                    📸 사진 \(place.photos.count)장
+
+                    """
+                }
+            }
         }
 
         if includeWatermark {
@@ -211,93 +227,150 @@ final class ExportService {
         sectionTitle.draw(at: CGPoint(x: 60, y: currentY))
         currentY += 60
 
-        // Timeline items (max 6 to fit in image)
-        let placeFont = UIFont.systemFont(ofSize: 28, weight: .semibold)
-        let timeFont = UIFont.systemFont(ofSize: 22, weight: .regular)
-        let addressFont = UIFont.systemFont(ofSize: 20, weight: .regular)
+        // Fonts and colors
+        let dayHeaderFont = UIFont.systemFont(ofSize: 24, weight: .bold)
+        let dayDateFont = UIFont.systemFont(ofSize: 18, weight: .regular)
+        let placeFont = UIFont.systemFont(ofSize: 24, weight: .semibold)
+        let timeFont = UIFont.systemFont(ofSize: 18, weight: .regular)
+        let addressFont = UIFont.systemFont(ofSize: 16, weight: .regular)
 
         let placeColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
         let timeColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
         let addressColor = UIColor(red: 0.35, green: 0.42, blue: 0.45, alpha: 1)
-
         let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1) // #87CEEB
+        let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1) // #E8F6FC
 
-        let maxPlaces = min(result.places.count, 6)
-        for index in 0..<maxPlaces {
-            let place = result.places[index]
+        // Group places by date
+        let groupedByDate = groupPlacesByDate(result.places)
+        let sortedDates = groupedByDate.keys.sorted()
 
-            // Number circle
-            let circleRect = CGRect(x: 60, y: currentY, width: 50, height: 50)
-            let circlePath = UIBezierPath(ovalIn: circleRect)
-            primaryColor.setFill()
-            circlePath.fill()
+        var totalPlacesDrawn = 0
+        let maxPlaces = 5 // Slightly reduced to make room for day headers
 
-            // Number
-            let numberString = NSAttributedString(
-                string: "\(index + 1)",
-                attributes: [
-                    .font: UIFont.systemFont(ofSize: 24, weight: .bold),
-                    .foregroundColor: UIColor.white
-                ]
+        for (dayIndex, date) in sortedDates.enumerated() {
+            guard totalPlacesDrawn < maxPlaces else { break }
+
+            let dayNumber = dayIndex + 1
+
+            // Draw Day header
+            let dayHeaderRect = CGRect(x: 60, y: currentY, width: 80, height: 32)
+            let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 8)
+            primaryPaleColor.setFill()
+            dayHeaderPath.fill()
+
+            let dayString = NSAttributedString(
+                string: "Day \(dayNumber)",
+                attributes: [.font: dayHeaderFont, .foregroundColor: primaryColor]
             )
-            let numberSize = numberString.size()
-            numberString.draw(at: CGPoint(
-                x: circleRect.midX - numberSize.width / 2,
-                y: circleRect.midY - numberSize.height / 2
+            let dayStringSize = dayString.size()
+            dayString.draw(at: CGPoint(
+                x: dayHeaderRect.midX - dayStringSize.width / 2,
+                y: dayHeaderRect.midY - dayStringSize.height / 2
             ))
 
-            // Connector line
-            if index < maxPlaces - 1 {
-                let linePath = UIBezierPath()
-                linePath.move(to: CGPoint(x: 85, y: currentY + 50))
-                linePath.addLine(to: CGPoint(x: 85, y: currentY + 160))
-                UIColor(red: 0.9, green: 0.93, blue: 0.95, alpha: 1).setStroke()
-                linePath.lineWidth = 3
-                linePath.stroke()
+            // Draw date next to Day header
+            let dateString = NSAttributedString(
+                string: formatDateWithWeekday(date),
+                attributes: [.font: dayDateFont, .foregroundColor: timeColor]
+            )
+            dateString.draw(at: CGPoint(x: 150, y: currentY + 6))
+
+            currentY += 50
+
+            // Draw places for this day
+            if let placesForDay = groupedByDate[date] {
+                let sortedPlaces = placesForDay.sorted { $0.startTime < $1.startTime }
+
+                for (placeIndex, place) in sortedPlaces.enumerated() {
+                    guard totalPlacesDrawn < maxPlaces else { break }
+
+                    let isLastInDay = placeIndex == sortedPlaces.count - 1
+                    let isLastOverall = totalPlacesDrawn == maxPlaces - 1
+
+                    // Number circle
+                    let circleRect = CGRect(x: 60, y: currentY, width: 44, height: 44)
+                    let circlePath = UIBezierPath(ovalIn: circleRect)
+                    primaryColor.setFill()
+                    circlePath.fill()
+
+                    // Number
+                    let numberString = NSAttributedString(
+                        string: "\(placeIndex + 1)",
+                        attributes: [
+                            .font: UIFont.systemFont(ofSize: 20, weight: .bold),
+                            .foregroundColor: UIColor.white
+                        ]
+                    )
+                    let numberSize = numberString.size()
+                    numberString.draw(at: CGPoint(
+                        x: circleRect.midX - numberSize.width / 2,
+                        y: circleRect.midY - numberSize.height / 2
+                    ))
+
+                    // Connector line (if not last)
+                    if !isLastInDay && !isLastOverall {
+                        let linePath = UIBezierPath()
+                        linePath.move(to: CGPoint(x: 82, y: currentY + 44))
+                        linePath.addLine(to: CGPoint(x: 82, y: currentY + 130))
+                        UIColor(red: 0.9, green: 0.93, blue: 0.95, alpha: 1).setStroke()
+                        linePath.lineWidth = 2
+                        linePath.stroke()
+                    }
+
+                    // Time
+                    let timeString = NSAttributedString(
+                        string: formatTime(place.startTime),
+                        attributes: [.font: timeFont, .foregroundColor: timeColor]
+                    )
+                    timeString.draw(at: CGPoint(x: 120, y: currentY - 2))
+
+                    // Place name (truncated if needed)
+                    var displayName = "\(place.activityType.emoji) \(place.name)"
+                    if displayName.count > 25 {
+                        displayName = String(displayName.prefix(25)) + "..."
+                    }
+                    let placeString = NSAttributedString(
+                        string: displayName,
+                        attributes: [.font: placeFont, .foregroundColor: placeColor]
+                    )
+                    placeString.draw(at: CGPoint(x: 120, y: currentY + 20))
+
+                    // Address (truncated)
+                    var displayAddress = place.address
+                    if displayAddress.count > 35 {
+                        displayAddress = String(displayAddress.prefix(35)) + "..."
+                    }
+                    let addressString = NSAttributedString(
+                        string: "📍 \(displayAddress)",
+                        attributes: [.font: addressFont, .foregroundColor: addressColor]
+                    )
+                    addressString.draw(at: CGPoint(x: 120, y: currentY + 50))
+
+                    // Photo count
+                    let photoString = NSAttributedString(
+                        string: "📸 \(place.photos.count)장",
+                        attributes: [.font: addressFont, .foregroundColor: addressColor]
+                    )
+                    photoString.draw(at: CGPoint(x: 120, y: currentY + 75))
+
+                    currentY += 140
+                    totalPlacesDrawn += 1
+                }
             }
 
-            // Time
-            let timeString = NSAttributedString(
-                string: formatTime(place.startTime),
-                attributes: [.font: timeFont, .foregroundColor: timeColor]
-            )
-            timeString.draw(at: CGPoint(x: 130, y: currentY - 5))
-
-            // Place name
-            let placeString = NSAttributedString(
-                string: "\(place.activityType.emoji) \(place.name)",
-                attributes: [.font: placeFont, .foregroundColor: placeColor]
-            )
-            placeString.draw(at: CGPoint(x: 130, y: currentY + 25))
-
-            // Address (truncated)
-            var displayAddress = place.address
-            if displayAddress.count > 30 {
-                displayAddress = String(displayAddress.prefix(30)) + "..."
+            // Add spacing between days
+            if dayIndex < sortedDates.count - 1 && totalPlacesDrawn < maxPlaces {
+                currentY += 20
             }
-            let addressString = NSAttributedString(
-                string: "📍 \(displayAddress)",
-                attributes: [.font: addressFont, .foregroundColor: addressColor]
-            )
-            addressString.draw(at: CGPoint(x: 130, y: currentY + 65))
-
-            // Photo count
-            let photoString = NSAttributedString(
-                string: "📸 \(place.photos.count)장",
-                attributes: [.font: addressFont, .foregroundColor: addressColor]
-            )
-            photoString.draw(at: CGPoint(x: 130, y: currentY + 95))
-
-            currentY += 170
         }
 
         // "더보기" indicator if more places
-        if result.places.count > maxPlaces {
+        if result.places.count > totalPlacesDrawn {
             let moreString = NSAttributedString(
-                string: "... 외 \(result.places.count - maxPlaces)곳",
+                string: "... 외 \(result.places.count - totalPlacesDrawn)곳",
                 attributes: [.font: addressFont, .foregroundColor: timeColor]
             )
-            moreString.draw(at: CGPoint(x: 130, y: currentY))
+            moreString.draw(at: CGPoint(x: 120, y: currentY))
         }
     }
 
@@ -404,5 +477,28 @@ final class ExportService {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
+    }
+
+    private func formatDateWithWeekday(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M월 d일 (E)"
+        formatter.locale = Locale(identifier: "ko_KR")
+        return formatter.string(from: date)
+    }
+
+    /// 장소를 날짜별로 그룹화
+    private func groupPlacesByDate(_ places: [PlaceCluster]) -> [Date: [PlaceCluster]] {
+        let calendar = Calendar.current
+        var grouped: [Date: [PlaceCluster]] = [:]
+
+        for place in places {
+            let dateOnly = calendar.startOfDay(for: place.startTime)
+            if grouped[dateOnly] == nil {
+                grouped[dateOnly] = []
+            }
+            grouped[dateOnly]?.append(place)
+        }
+
+        return grouped
     }
 }
