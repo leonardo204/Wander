@@ -3,11 +3,41 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "GoogleAIService")
 
+/// Google Gemini 모델 목록
+enum GeminiModel: String, CaseIterable, Identifiable {
+    case gemini2Flash = "gemini-2.0-flash"
+    case gemini2FlashLite = "gemini-2.0-flash-lite"
+    case gemini15Pro = "gemini-1.5-pro"
+    case gemini15Flash = "gemini-1.5-flash"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .gemini2Flash: return "Gemini 2.0 Flash"
+        case .gemini2FlashLite: return "Gemini 2.0 Flash Lite"
+        case .gemini15Pro: return "Gemini 1.5 Pro"
+        case .gemini15Flash: return "Gemini 1.5 Flash"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .gemini2Flash: return "최신 모델, 빠르고 정확"
+        case .gemini2FlashLite: return "경량 모델, 더 빠른 응답"
+        case .gemini15Pro: return "고성능 모델"
+        case .gemini15Flash: return "균형잡힌 성능"
+        }
+    }
+}
+
 /// Google Gemini API 서비스
 final class GoogleAIService: AIServiceProtocol {
     let provider: AIProvider = .google
 
-    private let model = "gemini-1.5-flash"
+    private var model: String {
+        Self.getSelectedModel().rawValue
+    }
 
     private var apiKey: String? {
         try? KeychainManager.shared.getAPIKey(for: .google)
@@ -17,16 +47,32 @@ final class GoogleAIService: AIServiceProtocol {
         "https://generativelanguage.googleapis.com/v1beta/models/\(model)"
     }
 
+    // MARK: - Model Selection
+
+    private static let modelKey = "google_gemini_model"
+
+    static func getSelectedModel() -> GeminiModel {
+        if let rawValue = UserDefaults.standard.string(forKey: modelKey),
+           let model = GeminiModel(rawValue: rawValue) {
+            return model
+        }
+        return .gemini2Flash  // 기본값
+    }
+
+    static func setSelectedModel(_ model: GeminiModel) {
+        UserDefaults.standard.set(model.rawValue, forKey: modelKey)
+    }
+
     // MARK: - Test Connection
 
     func testConnection() async throws -> Bool {
-        logger.info("💎 [Google] testConnection 시작")
+        logger.info("💎 [Google] testConnection 시작 - model: \(self.model)")
         guard let apiKey = apiKey else {
             logger.error("💎 [Google] API 키 없음")
             throw AIServiceError.noAPIKey
         }
 
-        let url = URL(string: "\(baseURL):generateContent?key=\(apiKey)")!
+        let url = URL(string: "\(baseURL):generateContent")!
 
         let requestBody = GeminiRequest(
             contents: [
@@ -38,6 +84,7 @@ final class GoogleAIService: AIServiceProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.httpBody = try JSONEncoder().encode(requestBody)
 
         do {
@@ -72,7 +119,7 @@ final class GoogleAIService: AIServiceProtocol {
     // MARK: - Generate Story
 
     func generateStory(from travelData: TravelStoryInput) async throws -> String {
-        logger.info("💎 [Google] generateStory 시작 - places: \(travelData.places.count)개")
+        logger.info("💎 [Google] generateStory 시작 - model: \(self.model), places: \(travelData.places.count)개")
         guard let apiKey = apiKey else {
             logger.error("💎 [Google] API 키 없음")
             throw AIServiceError.noAPIKey
@@ -81,7 +128,7 @@ final class GoogleAIService: AIServiceProtocol {
         let prompt = buildPrompt(from: travelData)
         let fullPrompt = "\(systemPrompt)\n\n\(prompt)"
 
-        let url = URL(string: "\(baseURL):generateContent?key=\(apiKey)")!
+        let url = URL(string: "\(baseURL):generateContent")!
 
         let requestBody = GeminiRequest(
             contents: [
@@ -96,6 +143,7 @@ final class GoogleAIService: AIServiceProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.httpBody = try JSONEncoder().encode(requestBody)
 
         do {

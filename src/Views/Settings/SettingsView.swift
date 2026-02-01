@@ -276,9 +276,34 @@ struct APIKeyInputView: View {
     @State private var azureDeployment = ""
     @State private var azureApiVersion = "2024-02-15-preview"
 
+    // Google Gemini model selection
+    @State private var selectedGeminiModel: GeminiModel = .gemini2Flash
+
     var body: some View {
         NavigationStack {
             Form {
+                // Google Gemini model selection
+                if provider == .google {
+                    Section {
+                        Picker("모델", selection: $selectedGeminiModel) {
+                            ForEach(GeminiModel.allCases) { model in
+                                VStack(alignment: .leading) {
+                                    Text(model.displayName)
+                                    Text(model.description)
+                                        .font(WanderTypography.caption1)
+                                        .foregroundColor(WanderColors.textSecondary)
+                                }
+                                .tag(model)
+                            }
+                        }
+                        .pickerStyle(.navigationLink)
+                    } header: {
+                        Text("모델 선택")
+                    } footer: {
+                        Text("Gemini 2.0 Flash가 가장 최신 모델입니다.")
+                    }
+                }
+
                 // Azure specific configuration
                 if provider == .azure {
                     Section {
@@ -428,6 +453,11 @@ struct APIKeyInputView: View {
                     azureDeployment = settings.deploymentName
                     azureApiVersion = settings.apiVersion
                 }
+
+                // Load Google Gemini model
+                if provider == .google {
+                    selectedGeminiModel = GoogleAIService.getSelectedModel()
+                }
             }
         }
     }
@@ -445,6 +475,11 @@ struct APIKeyInputView: View {
                 deploymentName: azureDeployment,
                 apiVersion: azureApiVersion
             )
+        }
+
+        // Save Google Gemini model
+        if provider == .google {
+            GoogleAIService.setSelectedModel(selectedGeminiModel)
         }
 
         // 새 키가 입력된 경우에만 임시 저장
@@ -495,6 +530,11 @@ struct APIKeyInputView: View {
                 deploymentName: azureDeployment,
                 apiVersion: azureApiVersion
             )
+        }
+
+        // Save Google Gemini model
+        if provider == .google {
+            GoogleAIService.setSelectedModel(selectedGeminiModel)
         }
 
         do {
