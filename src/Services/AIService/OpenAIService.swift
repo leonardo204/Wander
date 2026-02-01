@@ -3,15 +3,70 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "OpenAIService")
 
+/// OpenAI 모델 목록
+enum OpenAIModel: String, CaseIterable, Identifiable {
+    case gpt4o = "gpt-4o"
+    case gpt4oMini = "gpt-4o-mini"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .gpt4o: return "GPT-4o"
+        case .gpt4oMini: return "GPT-4o Mini"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .gpt4o: return "최고 성능, 더 높은 비용"
+        case .gpt4oMini: return "균형잡힌 성능, 저렴한 비용"
+        }
+    }
+
+    var storyMaxTokens: Int {
+        switch self {
+        case .gpt4o: return 1024
+        case .gpt4oMini: return 800
+        }
+    }
+
+    var storyTemperature: Double {
+        switch self {
+        case .gpt4o: return 0.8
+        case .gpt4oMini: return 0.7
+        }
+    }
+}
+
 /// OpenAI GPT API 서비스
 final class OpenAIService: AIServiceProtocol {
     let provider: AIProvider = .openai
 
     private let baseURL = "https://api.openai.com/v1"
-    private let model = "gpt-4o-mini"
+
+    private var model: String {
+        Self.getSelectedModel().rawValue
+    }
 
     private var apiKey: String? {
         try? KeychainManager.shared.getAPIKey(for: .openai)
+    }
+
+    // MARK: - Model Selection
+
+    private static let modelKey = "openai_model"
+
+    static func getSelectedModel() -> OpenAIModel {
+        if let rawValue = UserDefaults.standard.string(forKey: modelKey),
+           let model = OpenAIModel(rawValue: rawValue) {
+            return model
+        }
+        return .gpt4oMini  // 기본값: 비용 효율적
+    }
+
+    static func setSelectedModel(_ model: OpenAIModel) {
+        UserDefaults.standard.set(model.rawValue, forKey: modelKey)
     }
 
     // MARK: - Test Connection
@@ -39,12 +94,13 @@ final class OpenAIService: AIServiceProtocol {
             case 200:
                 logger.info("🤖 [OpenAI] 연결 테스트 성공")
                 return true
+            case 429:
+                // Rate limit은 키가 유효함을 의미
+                logger.info("🤖 [OpenAI] 429 - Rate limit (키 유효)")
+                return true
             case 401:
                 logger.error("🤖 [OpenAI] 401 - 잘못된 API 키")
                 throw AIServiceError.invalidAPIKey
-            case 429:
-                logger.error("🤖 [OpenAI] 429 - Rate limit")
-                throw AIServiceError.rateLimitExceeded
             default:
                 logger.error("🤖 [OpenAI] 서버 오류: \(httpResponse.statusCode)")
                 throw AIServiceError.serverError(httpResponse.statusCode)
@@ -60,7 +116,9 @@ final class OpenAIService: AIServiceProtocol {
     // MARK: - Generate Story
 
     func generateStory(from travelData: TravelStoryInput) async throws -> String {
-        logger.info("🤖 [OpenAI] generateStory 시작 - places: \(travelData.places.count)개")
+        let selectedModel = Self.getSelectedModel()
+        logger.info("🤖 [OpenAI] generateStory 시작 - model: \(selectedModel.displayName), places: \(travelData.places.count)개")
+
         guard let apiKey = apiKey else {
             logger.error("🤖 [OpenAI] API 키 없음")
             throw AIServiceError.noAPIKey
@@ -73,8 +131,8 @@ final class OpenAIService: AIServiceProtocol {
                 Message(role: "system", content: systemPrompt),
                 Message(role: "user", content: prompt)
             ],
-            temperature: 0.7,
-            maxTokens: 1000
+            temperature: selectedModel.storyTemperature,
+            maxTokens: selectedModel.storyMaxTokens
         )
 
         let url = URL(string: "\(baseURL)/chat/completions")!

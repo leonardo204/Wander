@@ -276,13 +276,15 @@ struct APIKeyInputView: View {
     @State private var azureDeployment = ""
     @State private var azureApiVersion = "2024-02-15-preview"
 
-    // Google Gemini model selection
+    // Model selection for each provider
     @State private var selectedGeminiModel: GeminiModel = .gemini2Flash
+    @State private var selectedOpenAIModel: OpenAIModel = .gpt4oMini
+    @State private var selectedAnthropicModel: AnthropicModel = .claude35Sonnet
 
     var body: some View {
         NavigationStack {
             Form {
-                // Google Gemini model selection
+                // Model selection for each provider
                 if provider == .google {
                     Section {
                         Picker("모델", selection: $selectedGeminiModel) {
@@ -301,6 +303,48 @@ struct APIKeyInputView: View {
                         Text("모델 선택")
                     } footer: {
                         Text("Gemini 2.0 Flash가 가장 최신 모델입니다.")
+                    }
+                }
+
+                if provider == .openai {
+                    Section {
+                        Picker("모델", selection: $selectedOpenAIModel) {
+                            ForEach(OpenAIModel.allCases) { model in
+                                VStack(alignment: .leading) {
+                                    Text(model.displayName)
+                                    Text(model.description)
+                                        .font(WanderTypography.caption1)
+                                        .foregroundColor(WanderColors.textSecondary)
+                                }
+                                .tag(model)
+                            }
+                        }
+                        .pickerStyle(.navigationLink)
+                    } header: {
+                        Text("모델 선택")
+                    } footer: {
+                        Text("GPT-4o Mini가 비용 효율적입니다.")
+                    }
+                }
+
+                if provider == .anthropic {
+                    Section {
+                        Picker("모델", selection: $selectedAnthropicModel) {
+                            ForEach(AnthropicModel.allCases) { model in
+                                VStack(alignment: .leading) {
+                                    Text(model.displayName)
+                                    Text(model.description)
+                                        .font(WanderTypography.caption1)
+                                        .foregroundColor(WanderColors.textSecondary)
+                                }
+                                .tag(model)
+                            }
+                        }
+                        .pickerStyle(.navigationLink)
+                    } header: {
+                        Text("모델 선택")
+                    } footer: {
+                        Text("Claude 3.5 Sonnet이 최고 성능입니다.")
                     }
                 }
 
@@ -454,9 +498,15 @@ struct APIKeyInputView: View {
                     azureApiVersion = settings.apiVersion
                 }
 
-                // Load Google Gemini model
+                // Load saved model selection for each provider
                 if provider == .google {
                     selectedGeminiModel = GoogleAIService.getSelectedModel()
+                }
+                if provider == .openai {
+                    selectedOpenAIModel = OpenAIService.getSelectedModel()
+                }
+                if provider == .anthropic {
+                    selectedAnthropicModel = AnthropicService.getSelectedModel()
                 }
             }
         }
@@ -477,9 +527,15 @@ struct APIKeyInputView: View {
             )
         }
 
-        // Save Google Gemini model
+        // Save selected model for each provider
         if provider == .google {
             GoogleAIService.setSelectedModel(selectedGeminiModel)
+        }
+        if provider == .openai {
+            OpenAIService.setSelectedModel(selectedOpenAIModel)
+        }
+        if provider == .anthropic {
+            AnthropicService.setSelectedModel(selectedAnthropicModel)
         }
 
         // 새 키가 입력된 경우에만 임시 저장
@@ -532,9 +588,15 @@ struct APIKeyInputView: View {
             )
         }
 
-        // Save Google Gemini model
+        // Save selected model for each provider
         if provider == .google {
             GoogleAIService.setSelectedModel(selectedGeminiModel)
+        }
+        if provider == .openai {
+            OpenAIService.setSelectedModel(selectedOpenAIModel)
+        }
+        if provider == .anthropic {
+            AnthropicService.setSelectedModel(selectedAnthropicModel)
         }
 
         do {

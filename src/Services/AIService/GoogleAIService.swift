@@ -29,6 +29,26 @@ enum GeminiModel: String, CaseIterable, Identifiable {
         case .gemini15Flash: return "균형잡힌 성능"
         }
     }
+
+    /// 스토리 생성 시 권장 최대 출력 토큰
+    var storyMaxTokens: Int {
+        switch self {
+        case .gemini2Flash: return 1024      // 충분한 스토리 길이
+        case .gemini2FlashLite: return 512   // 경량 모델은 짧게
+        case .gemini15Pro: return 1024       // 고성능
+        case .gemini15Flash: return 800      // 균형
+        }
+    }
+
+    /// 스토리 생성 temperature (창의성 조절)
+    var storyTemperature: Double {
+        switch self {
+        case .gemini2Flash: return 0.7
+        case .gemini2FlashLite: return 0.6   // 경량 모델은 더 일관되게
+        case .gemini15Pro: return 0.8        // 고성능은 더 창의적으로
+        case .gemini15Flash: return 0.7
+        }
+    }
 }
 
 /// Google Gemini API 서비스
@@ -74,11 +94,12 @@ final class GoogleAIService: AIServiceProtocol {
 
         let url = URL(string: "\(baseURL):generateContent")!
 
+        // 연결 테스트는 최소 토큰만 사용 (비용/한도 절약)
         let requestBody = GeminiRequest(
             contents: [
-                GeminiContent(parts: [GeminiPart(text: "Hi")])
+                GeminiContent(parts: [GeminiPart(text: "1")])  // 최소 입력
             ],
-            generationConfig: GeminiGenerationConfig(maxOutputTokens: 10)
+            generationConfig: GeminiGenerationConfig(maxOutputTokens: 1)  // 최소 출력
         )
 
         var request = URLRequest(url: url)
@@ -123,7 +144,9 @@ final class GoogleAIService: AIServiceProtocol {
     // MARK: - Generate Story
 
     func generateStory(from travelData: TravelStoryInput) async throws -> String {
-        logger.info("💎 [Google] generateStory 시작 - model: \(self.model), places: \(travelData.places.count)개")
+        let selectedModel = Self.getSelectedModel()
+        logger.info("💎 [Google] generateStory 시작 - model: \(selectedModel.displayName), places: \(travelData.places.count)개, maxTokens: \(selectedModel.storyMaxTokens)")
+
         guard let apiKey = apiKey else {
             logger.error("💎 [Google] API 키 없음")
             throw AIServiceError.noAPIKey
@@ -134,13 +157,14 @@ final class GoogleAIService: AIServiceProtocol {
 
         let url = URL(string: "\(baseURL):generateContent")!
 
+        // 모델별 최적화된 설정 사용
         let requestBody = GeminiRequest(
             contents: [
                 GeminiContent(parts: [GeminiPart(text: fullPrompt)])
             ],
             generationConfig: GeminiGenerationConfig(
-                temperature: 0.7,
-                maxOutputTokens: 1000
+                temperature: selectedModel.storyTemperature,
+                maxOutputTokens: selectedModel.storyMaxTokens
             )
         )
 

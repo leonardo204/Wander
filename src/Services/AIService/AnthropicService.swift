@@ -3,33 +3,81 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "AnthropicService")
 
+/// Anthropic Claude 모델 목록
+enum AnthropicModel: String, CaseIterable, Identifiable {
+    case claude35Sonnet = "claude-3-5-sonnet-20241022"
+    case claude3Haiku = "claude-3-haiku-20240307"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .claude35Sonnet: return "Claude 3.5 Sonnet"
+        case .claude3Haiku: return "Claude 3 Haiku"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .claude35Sonnet: return "최고 성능, 뛰어난 글쓰기"
+        case .claude3Haiku: return "빠른 응답, 저렴한 비용"
+        }
+    }
+
+    var storyMaxTokens: Int {
+        switch self {
+        case .claude35Sonnet: return 1024
+        case .claude3Haiku: return 600
+        }
+    }
+}
+
 /// Anthropic Claude API 서비스
 final class AnthropicService: AIServiceProtocol {
     let provider: AIProvider = .anthropic
 
     private let baseURL = "https://api.anthropic.com/v1"
-    private let model = "claude-3-5-sonnet-20241022"
     private let apiVersion = "2023-06-01"
+
+    private var model: String {
+        Self.getSelectedModel().rawValue
+    }
 
     private var apiKey: String? {
         try? KeychainManager.shared.getAPIKey(for: .anthropic)
     }
 
+    // MARK: - Model Selection
+
+    private static let modelKey = "anthropic_model"
+
+    static func getSelectedModel() -> AnthropicModel {
+        if let rawValue = UserDefaults.standard.string(forKey: modelKey),
+           let model = AnthropicModel(rawValue: rawValue) {
+            return model
+        }
+        return .claude35Sonnet  // 기본값: 최고 성능
+    }
+
+    static func setSelectedModel(_ model: AnthropicModel) {
+        UserDefaults.standard.set(model.rawValue, forKey: modelKey)
+    }
+
     // MARK: - Test Connection
 
     func testConnection() async throws -> Bool {
-        logger.info("🧠 [Anthropic] testConnection 시작")
+        logger.info("🧠 [Anthropic] testConnection 시작 - model: \(self.model)")
         guard let apiKey = apiKey else {
             logger.error("🧠 [Anthropic] API 키 없음")
             throw AIServiceError.noAPIKey
         }
 
-        // Simple test with a minimal message
+        // 최소 토큰으로 연결 테스트 (비용 절약)
         let requestBody = AnthropicRequest(
             model: model,
-            maxTokens: 10,
+            maxTokens: 1,
             messages: [
-                AnthropicMessage(role: "user", content: "Hi")
+                AnthropicMessage(role: "user", content: "1")
             ]
         )
 
@@ -52,12 +100,13 @@ final class AnthropicService: AIServiceProtocol {
             case 200:
                 logger.info("🧠 [Anthropic] 연결 테스트 성공")
                 return true
+            case 429:
+                // Rate limit은 키가 유효함을 의미
+                logger.info("🧠 [Anthropic] 429 - Rate limit (키 유효)")
+                return true
             case 401:
                 logger.error("🧠 [Anthropic] 401 - 잘못된 API 키")
                 throw AIServiceError.invalidAPIKey
-            case 429:
-                logger.error("🧠 [Anthropic] 429 - Rate limit")
-                throw AIServiceError.rateLimitExceeded
             default:
                 logger.error("🧠 [Anthropic] 서버 오류: \(httpResponse.statusCode)")
                 throw AIServiceError.serverError(httpResponse.statusCode)
@@ -73,7 +122,9 @@ final class AnthropicService: AIServiceProtocol {
     // MARK: - Generate Story
 
     func generateStory(from travelData: TravelStoryInput) async throws -> String {
-        logger.info("🧠 [Anthropic] generateStory 시작 - places: \(travelData.places.count)개")
+        let selectedModel = Self.getSelectedModel()
+        logger.info("🧠 [Anthropic] generateStory 시작 - model: \(selectedModel.displayName), places: \(travelData.places.count)개")
+
         guard let apiKey = apiKey else {
             logger.error("🧠 [Anthropic] API 키 없음")
             throw AIServiceError.noAPIKey
@@ -82,7 +133,7 @@ final class AnthropicService: AIServiceProtocol {
         let prompt = buildPrompt(from: travelData)
         let requestBody = AnthropicRequest(
             model: model,
-            maxTokens: 1000,
+            maxTokens: selectedModel.storyMaxTokens,
             system: systemPrompt,
             messages: [
                 AnthropicMessage(role: "user", content: prompt)
