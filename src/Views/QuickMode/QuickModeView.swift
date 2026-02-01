@@ -46,11 +46,17 @@ struct QuickModeView: View {
                 QuickModeAnalyzingView(
                     selectedAssets: selectedAssets,
                     onComplete: { result in
+                        logger.info("💬 [QuickMode] 분석 완료 - 결과 수신")
                         self.analysisResult = result
                         self.showAnalyzing = false
-                        self.showResult = true
+                        // fullScreenCover 닫힌 후 sheet 열기 (딜레이 필요)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            logger.info("💬 [QuickMode] 결과 화면 표시")
+                            self.showResult = true
+                        }
                     },
                     onCancel: {
+                        logger.info("💬 [QuickMode] 분석 취소")
                         self.showAnalyzing = false
                     }
                 )
@@ -58,6 +64,13 @@ struct QuickModeView: View {
             .sheet(isPresented: $showResult) {
                 if let result = analysisResult {
                     QuickModeResultView(result: result)
+                } else {
+                    // Fallback: 결과가 없으면 닫기
+                    Text("결과를 불러올 수 없습니다")
+                        .onAppear {
+                            logger.error("💬 [QuickMode] 결과 없음 - sheet 닫기")
+                            showResult = false
+                        }
                 }
             }
         }
