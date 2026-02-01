@@ -23,28 +23,28 @@
 
 ## Phase 1: 홈 화면 & 네비게이션 개선
 
-### 1.1 홈 화면 FAB 도입
+### 1.1 홈 화면 FAB 도입 ✅
 - **파일**: `src/Views/Home/HomeView.swift`
 - **GUI**: `wander_home_screen_with_fab/screen.png`
 - **작업 내용**:
-  - [ ] 기존 "여행 기록 만들기" 큰 카드 제거
-  - [ ] FAB 컴포넌트 추가 (우하단, 56pt, Primary 색상)
-  - [ ] FAB 탭 시 PhotoSelectionView 표시
-  - [ ] 퀵 액션 카드 2열 레이아웃으로 변경
+  - [x] 기존 "여행 기록 만들기" 큰 카드 제거
+  - [x] FAB 컴포넌트 추가 (우하단, 56pt, Primary 색상)
+  - [x] FAB 탭 시 PhotoSelectionView 표시
+  - [x] 퀵 액션 카드 2열 레이아웃으로 변경
 
-### 1.2 "돌아보기" 기능 구현
+### 1.2 "돌아보기" 기능 구현 ✅
 - **파일**: `src/Views/Home/LookbackView.swift` (신규)
 - **GUI**: `lookback_selection_screen/screen.png`
 - **작업 내용**:
-  - [ ] 기간 선택 Segmented Control (이번 주/지난 주/이번 달/최근 30일)
-  - [ ] 기간별 사진 자동 로드 (GPS 있는 사진만)
-  - [ ] 사진 선택/해제 그리드
-  - [ ] "하이라이트 만들기" → 분석 플로우 연결
+  - [x] 기간 선택 Segmented Control (이번 주/지난 주/이번 달/최근 30일)
+  - [x] 기간별 사진 자동 로드 (GPS 있는 사진만)
+  - [x] 사진 선택/해제 그리드
+  - [x] "하이라이트 만들기" → 분석 플로우 연결
 
-### 1.3 탭 네비게이션 개선
+### 1.3 탭 네비게이션 개선 ✅
 - **파일**: `src/ContentView.swift`
 - **작업 내용**:
-  - [ ] 탭 클릭 시 NavigationPath 초기화 (루트로 이동)
+  - [x] 탭 클릭 시 NavigationPath 초기화 (루트로 이동)
   - [ ] (선택) 탭 간 스와이프 이동 검토
 
 ---
@@ -202,10 +202,10 @@
 
 ## 구현 우선순위 체크리스트
 
-### Phase 1 (단기) - 1주
-- [ ] 1.1 홈 화면 FAB 도입
-- [ ] 1.2 돌아보기 기능
-- [ ] 1.3 탭 네비게이션 개선
+### Phase 1 (단기) - 1주 ✅ 완료
+- [x] 1.1 홈 화면 FAB 도입
+- [x] 1.2 돌아보기 기능
+- [x] 1.3 탭 네비게이션 개선
 
 ### Phase 2 (중기) - 2주
 - [ ] 2.1 기록 숨기기
