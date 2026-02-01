@@ -98,12 +98,16 @@ final class GoogleAIService: AIServiceProtocol {
             case 200:
                 logger.info("💎 [Google] 연결 테스트 성공")
                 return true
-            case 400, 403:
-                logger.error("💎 [Google] 400/403 - 잘못된 API 키")
-                throw AIServiceError.invalidAPIKey
             case 429:
-                logger.error("💎 [Google] 429 - Rate limit")
-                throw AIServiceError.rateLimitExceeded
+                // Rate limit은 키가 유효함을 의미 - 성공으로 처리
+                logger.info("💎 [Google] 429 - Rate limit (키 유효, 요청 제한)")
+                return true
+            case 400:
+                logger.error("💎 [Google] 400 - 잘못된 요청")
+                throw AIServiceError.invalidAPIKey
+            case 403:
+                logger.error("💎 [Google] 403 - 권한 없음 또는 잘못된 API 키")
+                throw AIServiceError.invalidAPIKey
             default:
                 logger.error("💎 [Google] 서버 오류: \(httpResponse.statusCode)")
                 throw AIServiceError.serverError(httpResponse.statusCode)
