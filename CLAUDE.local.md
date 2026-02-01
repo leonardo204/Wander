@@ -20,7 +20,7 @@
 | UI 프레임워크 | **SwiftUI Only** |
 | 데이터 저장 | **SwiftData** |
 | 아키텍처 | **MVVM** |
-| 테마 | **Light Mode Only** (우선) |
+| 테마 | **Light Mode Only** |
 
 ### 필수 프레임워크
 ```swift
@@ -31,6 +31,7 @@ import Photos        // PhotoKit 메타데이터
 import CoreLocation  // GPS, CLGeocoder
 import MapKit        // 지도
 import Security      // Keychain (API Key 저장)
+import LocalAuthentication // Face ID/Touch ID
 ```
 
 ---
@@ -52,14 +53,15 @@ import Security      // Keychain (API Key 저장)
 ```
 Wander/
 ├── CLAUDE.local.md              ← 이 파일 (개발 가이드)
+├── README.md                    ← GitHub README
 ├── .gitignore
 │
 ├── src/                         ← 소스 코드 (Xcode 프로젝트)
 │   ├── WanderApp.swift
 │   ├── ContentView.swift
 │   ├── project.yml              ← xcodegen 설정
-│   ├── Wander.xcodeproj/        ← Xcode 프로젝트
-│   ├── App/
+│   ├── Wander.xcodeproj/
+│   │
 │   ├── Core/
 │   │   ├── Design/
 │   │   │   ├── WanderColors.swift
@@ -67,150 +69,138 @@ Wander/
 │   │   │   └── WanderSpacing.swift
 │   │   └── Utilities/
 │   │       └── KeychainManager.swift
+│   │
 │   ├── Models/SwiftData/
 │   │   ├── TravelRecord.swift
 │   │   ├── TravelDay.swift
 │   │   ├── Place.swift
-│   │   └── PhotoItem.swift
+│   │   ├── PhotoItem.swift
+│   │   ├── RecordCategory.swift
+│   │   └── UserPlace.swift
+│   │
 │   ├── Services/
 │   │   ├── AIService/
 │   │   │   ├── AIServiceProtocol.swift
 │   │   │   ├── OpenAIService.swift
 │   │   │   ├── AnthropicService.swift
-│   │   │   └── GoogleAIService.swift
+│   │   │   ├── GoogleAIService.swift
+│   │   │   └── AzureOpenAIService.swift
 │   │   ├── AnalysisService/
 │   │   │   ├── AnalysisEngine.swift
 │   │   │   ├── ClusteringService.swift
 │   │   │   └── ActivityInferenceService.swift
-│   │   └── LocationService/
-│   │       └── GeocodingService.swift
+│   │   ├── ExportService/
+│   │   │   └── ExportService.swift
+│   │   ├── LocationService/
+│   │   │   └── GeocodingService.swift
+│   │   └── AuthenticationManager.swift
+│   │
 │   ├── ViewModels/
 │   │   └── PhotoSelection/
 │   │       └── PhotoSelectionViewModel.swift
+│   │
 │   ├── Views/
 │   │   ├── Launch/SplashView.swift
 │   │   ├── Onboarding/
-│   │   ├── Home/HomeView.swift
+│   │   │   ├── OnboardingContainerView.swift
+│   │   │   ├── OnboardingIntroView.swift
+│   │   │   ├── OnboardingPhotoView.swift
+│   │   │   └── OnboardingLocationView.swift
+│   │   ├── Home/
+│   │   │   ├── HomeView.swift
+│   │   │   └── LookbackView.swift
 │   │   ├── PhotoSelection/PhotoSelectionView.swift
 │   │   ├── Analysis/AnalyzingView.swift
 │   │   ├── Result/
 │   │   │   ├── ResultView.swift
 │   │   │   ├── MapDetailView.swift
 │   │   │   └── AIStoryView.swift
-│   │   ├── Records/RecordsView.swift
+│   │   ├── Records/
+│   │   │   ├── RecordsView.swift
+│   │   │   └── HiddenRecordsView.swift
 │   │   ├── QuickMode/QuickModeView.swift
 │   │   ├── Weekly/WeeklyHighlightView.swift
-│   │   └── Settings/SettingsView.swift
+│   │   ├── Settings/
+│   │   │   ├── SettingsView.swift
+│   │   │   ├── SecuritySettingsView.swift
+│   │   │   ├── CategoryManagementView.swift
+│   │   │   └── UserPlacesView.swift
+│   │   ├── Auth/PINInputView.swift
+│   │   └── Shared/SharedRecordView.swift
+│   │
 │   ├── Resources/
 │   └── Preview Content/
 │
 ├── Ref-Concepts/                ← 기획/디자인 문서
-│   ├── wander_planning_report.md    ← 기획서
-│   ├── wander_ui_scenario.md        ← UI 시나리오
-│   └── wander_design_concept.md     ← 디자인 시스템
+│   ├── wander_planning_report.md
+│   ├── wander_ui_scenario.md
+│   └── wander_design_concept.md
 │
 ├── GUI/                         ← UI 목업 (개발 참조용)
-│   ├── index.md                 ← UI 목업 인덱스
-│   ├── screens/                 ← 32개 화면 PNG 목업
-│   └── prompts/                 ← Google Stitch 프롬프트 (개발 불필요)
+│   ├── index.md
+│   ├── screens/
+│   └── prompts/
 │
 └── Ref-docs/                    ← 구버전 참조 문서 (백업용)
-    ├── CLAUDE_CODE_HANDOFF.md
-    └── google-stitch/
 ```
 
 ---
 
-## 개발 시 참조 문서
+## 주요 기능
 
-| 파일 | 용도 | 참조 시점 |
+### 핵심 기능
+| 기능 | 설명 | 관련 파일 |
 |------|------|----------|
-| `Ref-Concepts/wander_planning_report.md` | 기획서, 기능 정의, 비즈니스 로직 | 기능 구현 전 |
-| `Ref-Concepts/wander_ui_scenario.md` | UI 시나리오, 플로우, 상태 정의 | 화면 구현 시 |
-| `Ref-Concepts/wander_design_concept.md` | 디자인 시스템 (컬러, 타이포, 컴포넌트) | UI 스타일링 시 |
-| `GUI/index.md` | UI 목업 인덱스 (32개 화면) | 디자인 참조 시 |
-| `GUI/screens/` | 화면별 PNG 목업 | 레이아웃 참조 시 |
+| 사진 분석 | GPS/시간 메타데이터 기반 타임라인 생성 | `AnalysisEngine.swift` |
+| 장소 클러스터링 | 거리/시간 기반 장소 그룹핑 | `ClusteringService.swift` |
+| 역지오코딩 | 좌표 → 주소 변환 | `GeocodingService.swift` |
+| 활동 추론 | 규칙 기반 활동 타입 추론 | `ActivityInferenceService.swift` |
+| AI 스토리 | BYOK AI로 여행 스토리 생성 | `AIStoryView.swift` |
+| 공유/내보내기 | 이미지/텍스트/Markdown 내보내기 | `ExportService.swift` |
 
-### 개발에 불필요한 파일
-
-| 폴더/파일 | 설명 |
-|-----------|------|
-| `GUI/prompts/` | Google Stitch 프롬프트 파일들 (UI 생성용) |
-| `Ref-docs/` | 구버전 참조 문서 (백업용) |
+### 부가 기능
+| 기능 | 설명 | 관련 파일 |
+|------|------|----------|
+| 지금 뭐해? | 오늘 촬영 사진 퀵 분석 | `QuickModeView.swift` |
+| 주간 하이라이트 | 이번 주 사진 자동 요약 | `WeeklyHighlightView.swift` |
+| 지난 추억 | N년 전 오늘 기록 보기 | `LookbackView.swift` |
+| 보안 잠금 | PIN/Face ID 앱 잠금 | `AuthenticationManager.swift` |
+| 카테고리 관리 | 기록 분류 (여행/일상/출장) | `CategoryManagementView.swift` |
+| 자주 가는 곳 | 사용자 정의 장소 | `UserPlacesView.swift` |
 
 ---
 
-## 디자인 시스템 요약
+## AI 서비스 (BYOK)
+
+### 지원 프로바이더
+| 프로바이더 | 서비스 파일 | 모델 |
+|-----------|------------|------|
+| OpenAI | `OpenAIService.swift` | GPT-4o, GPT-4o mini |
+| Anthropic | `AnthropicService.swift` | Claude 3.5 Sonnet, Haiku |
+| Google | `GoogleAIService.swift` | Gemini 1.5 Pro, Flash |
+| Azure OpenAI | `AzureOpenAIService.swift` | GPT-4o (Azure) |
+
+### API Key 저장
+- Keychain에 안전하게 저장 (`KeychainManager.swift`)
+- 앱 내에서만 접근 가능
+
+---
+
+## 디자인 시스템
 
 ### 컬러 (Light Mode)
-
 ```swift
-// Primary
-static let primary = Color(hex: "#87CEEB")        // Sky Blue
-static let primaryLight = Color(hex: "#B0E0F0")
+// Primary - Sky Blue
+static let primary = Color(hex: "#87CEEB")
 static let primaryPale = Color(hex: "#E8F6FC")
-static let primaryDark = Color(hex: "#5BA3C0")
-
-// Background & Surface
-static let background = Color.white               // #FFFFFF
-static let surface = Color(hex: "#F8FBFD")        // 약간 블루틴트
-static let border = Color(hex: "#E5EEF2")
 
 // Text
 static let textPrimary = Color(hex: "#1A2B33")
 static let textSecondary = Color(hex: "#5A6B73")
-static let textTertiary = Color(hex: "#8A9BA3")
 
 // Semantic
 static let success = Color(hex: "#4CAF50")
-static let warning = Color(hex: "#FF9800")
 static let error = Color(hex: "#F44336")
-static let info = Color(hex: "#2196F3")
-```
-
-### 타이포그래피
-
-```swift
-// SF Pro (시스템 폰트) 사용
-.font(.system(size: 34, weight: .bold))    // Display
-.font(.system(size: 28, weight: .bold))    // Title 1
-.font(.system(size: 22, weight: .bold))    // Title 2
-.font(.system(size: 20, weight: .semibold)) // Title 3
-.font(.system(size: 17, weight: .semibold)) // Headline
-.font(.system(size: 17, weight: .regular))  // Body
-.font(.system(size: 13, weight: .regular))  // Caption
-```
-
-### 스페이싱 (4pt 기반)
-
-```swift
-static let space2: CGFloat = 8
-static let space3: CGFloat = 12
-static let space4: CGFloat = 16
-static let space5: CGFloat = 20
-static let space6: CGFloat = 24
-static let screenMargin: CGFloat = 20
-```
-
-### Border Radius
-
-```swift
-static let radiusSmall: CGFloat = 4    // 태그
-static let radiusMedium: CGFloat = 8   // 버튼, 인풋
-static let radiusLarge: CGFloat = 12   // 카드
-static let radiusXL: CGFloat = 16      // 모달
-static let radiusXXL: CGFloat = 20     // 큰 카드
-```
-
----
-
-## 화면 구조 (32개)
-
-### 앱 플로우
-```
-앱 실행 → 스플래시 → 첫 실행? → 온보딩(3단계) → 홈
-                          ↓
-                     재실행 → 홈
 ```
 
 ### 탭바 구조
@@ -220,264 +210,95 @@ static let radiusXXL: CGFloat = 20     // 큰 카드
 │   홈          기록        설정       │
 └─────────────────────────────────────┘
 ```
-- 아이콘: SF Symbols (house.fill, book.fill, gearshape.fill)
-- Active: #87CEEB / Inactive: #8A9BA3
-- 높이: 49pt + SafeArea
-
-### 주요 화면 매핑
-
-| 화면 ID | 화면명 | SwiftUI View |
-|---------|--------|--------------|
-| SCR-001 | 스플래시 | `SplashView` |
-| SCR-002~004 | 온보딩 | `OnboardingView` |
-| SCR-005 | 홈 | `HomeView` |
-| SCR-006 | 기록 목록 | `RecordsView` |
-| SCR-007 | 설정 | `SettingsView` |
-| SCR-008 | 사진 선택 | `PhotoSelectionView` |
-| SCR-009 | 분석 중 | `AnalyzingView` |
-| SCR-010 | 분석 결과 | `ResultView` |
-| SCR-010B | 지금 뭐해? | `QuickModeView` |
-| SCR-011 | 지도 상세 | `MapDetailView` |
-| SCR-012 | 타임라인 편집 | `TimelineEditView` |
-| SCR-013 | AI 스토리 | `AIStoryView` |
-| SCR-022 | 주간 하이라이트 | `WeeklyHighlightView` |
 
 ---
 
 ## 데이터 모델 (SwiftData)
 
-### 핵심 모델
-
 ```swift
-@Model
-class TravelRecord {
-    var id: UUID
+@Model class TravelRecord {
     var title: String
     var startDate: Date
     var endDate: Date
     var days: [TravelDay]
     var totalDistance: Double
-    var placeCount: Int
-    var photoCount: Int
-    var createdAt: Date
     var aiStory: String?
+    var category: RecordCategory?
+    var isHidden: Bool
 }
 
-@Model
-class TravelDay {
-    var id: UUID
+@Model class TravelDay {
     var date: Date
     var dayNumber: Int
     var places: [Place]
 }
 
-@Model
-class Place {
-    var id: UUID
+@Model class Place {
     var name: String
     var address: String
     var latitude: Double
     var longitude: Double
     var startTime: Date
     var activityLabel: String
-    var placeType: String
     var photos: [PhotoItem]
-    var memo: String?
-    var order: Int
-}
-
-@Model
-class PhotoItem {
-    var id: UUID
-    var assetIdentifier: String
-    var capturedAt: Date?
-    var latitude: Double?
-    var longitude: Double?
-    var hasGPS: Bool
-    var order: Int
 }
 ```
 
 ---
 
-## 커밋 전략
+## 커밋 컨벤션
 
-### 규칙
-- **작은 단위, Feature 별로 커밋**
-- 기능 완료 시점마다 커밋
-- 의미 있는 커밋 메시지 작성
-
-### 커밋 메시지 형식
 ```
 [타입] 간단한 설명
 
-예시:
-[Init] Xcode 프로젝트 초기 설정
-[Feature] 스플래시 화면 구현
-[Feature] 온보딩 플로우 구현
-[UI] 홈 화면 레이아웃 완성
-[Fix] 사진 권한 요청 버그 수정
-[Refactor] 컬러 시스템 분리
+타입:
+- [Init] 초기 설정
+- [Feature] 새 기능
+- [UI] UI 작업
+- [Fix] 버그 수정
+- [Refactor] 리팩토링
+- [Docs] 문서
 ```
 
-### 타입
-- `[Init]` - 초기 설정
-- `[Feature]` - 새 기능
-- `[UI]` - UI 작업
-- `[Fix]` - 버그 수정
-- `[Refactor]` - 리팩토링
-- `[Docs]` - 문서
-
 ---
 
-## 구현 상태 (2026-02-01)
-
-### ✅ Phase 1: 기본 구조 - 완료
-- [x] Xcode 프로젝트 생성 (xcodegen)
-- [x] 디자인 시스템 (WanderColors, WanderTypography, WanderSpacing)
-- [x] 앱 구조 (3탭 TabView)
-- [x] 스플래시 & 온보딩 (3단계)
-- [x] 권한 요청 (사진, 위치)
-
-### ✅ Phase 2: 핵심 기능 - 완료
-- [x] 홈 화면 (빈 상태 / 기록 있음)
-- [x] 사진 선택 & 메타데이터 추출
-- [x] 분석 로직 (GPS 클러스터링, Reverse Geocoding)
-- [x] 결과 화면 (타임라인, 지도)
-- [x] 기록 저장 (SwiftData)
-
-### ✅ Phase 3: 부가 기능 - 완료
-- [x] 기록 목록 & 상세
-- [x] 설정 화면 (AI설정, 데이터관리, 권한, 공유, 앱정보)
-- [x] 공유 기능 (텍스트/이미지 공유)
-- [x] 내보내기 (Markdown, HTML)
-- [x] 지금 뭐해? 퀵 모드
-- [x] 주간 하이라이트
-
-### ✅ Phase 4: AI 기능 (BYOK) - 완료
-- [x] KeychainManager (API Key 저장)
-- [x] AI 서비스 프로토콜 및 구현체 (OpenAI, Anthropic, Google)
-- [x] AI 스토리 생성 화면
-
----
-
-## 로깅 가이드라인
-
-### 로깅 규칙 (필수)
-
-모든 새로운 코드에는 `os.log`를 사용한 로깅을 추가해야 합니다.
+## 로깅 컨벤션
 
 ```swift
 import os.log
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "CategoryName")
 
-// 파일 상단에 logger 선언 (private)
-private let logger = Logger(subsystem: "com.zerolive.wander", category: "카테고리명")
+// 이모지 컨벤션
+🚀 앱 시작    🏠 홈 화면    📷 사진 관련    📍 위치/클러스터링
+🗺️ 지도      🔬 분석      ✨ AI 스토리    ⚙️ 설정
+✅ 성공      ❌ 에러      ⚠️ 경고        💾 저장
 ```
-
-### 로깅 위치 (필수 추가)
-
-| 위치 | 로깅 내용 |
-|------|----------|
-| View의 `onAppear` | 화면 진입, 주요 상태값 |
-| 버튼/액션 핸들러 | 사용자 액션 |
-| 비동기 작업 시작/완료 | API 호출, 분석 시작/완료 |
-| 에러 발생 시 | 에러 메시지, 컨텍스트 |
-| 상태 변경 시 | `onChange`에서 중요 상태 변경 |
-| 권한 요청/응답 | 권한 상태 변화 |
-
-### 로깅 형식
-
-```swift
-// View 진입
-logger.info("🏠 [HomeView] 나타남 - records: \(records.count)개")
-
-// 사용자 액션
-logger.info("📷 [PhotoSelection] 사진 선택: \(asset.localIdentifier)")
-
-// 비동기 작업
-logger.info("🔬 [AnalysisEngine] 분석 시작 - photos: \(count)장")
-logger.info("✅ [AnalysisEngine] 분석 완료 - places: \(places.count)개")
-
-// 에러
-logger.error("❌ [GeocodingService] 실패: \(error.localizedDescription)")
-
-// 경고
-logger.warning("⚠️ [Clustering] GPS 없는 사진 스킵")
-```
-
-### 이모지 컨벤션
-
-| 이모지 | 용도 |
-|--------|------|
-| 🚀 | 앱 시작, 초기화 |
-| 🏠 | 홈 화면 |
-| 📷 | 사진 관련 |
-| 📍 | 위치/클러스터링 |
-| 🗺️ | 지도/지오코딩 |
-| 🔬 | 분석 엔진 |
-| ✨ | AI 스토리 |
-| ⚙️ | 설정 |
-| 🔐 | 키체인/보안 |
-| 🤖 | OpenAI |
-| 🧠 | Anthropic |
-| 💎 | Google AI |
-| ✅ | 성공 |
-| ❌ | 에러 |
-| ⚠️ | 경고 |
-| 📖 | 기록 상세 |
-| 👋 | 온보딩 |
-| 💾 | 저장 |
 
 ---
 
-## 주의사항
+## 유용한 명령어
 
-### 아키텍처
-- **MVVM 패턴** 준수
-- View는 순수 UI만, 비즈니스 로직은 ViewModel에
-- `@Observable` 매크로 활용 (iOS 17+)
-
-### 권한 처리
-- 사진 권한: `.readWrite` 또는 `.addOnly`
-- 위치 권한: `.whenInUse` (배터리 최적화)
-- 권한 거부 시 적절한 대체 UI 제공
-
-### 데이터 프라이버시
-- 모든 데이터 On-Device 처리
-- API Key는 Keychain에 저장
-- AI API 호출 시 최소 데이터만 전송 (사진 원본 X)
-
-### UI/UX
-- 모든 텍스트 **한국어**
-- 탭바 **3개** 고정 (홈, 기록, 설정)
-- 프로필/로그인 UI **없음**
-- 프리미엄/크레딧 UI **없음**
-
----
-
-## 유용한 참조
-
-### Xcode 프로젝트 재생성
 ```bash
+# Xcode 프로젝트 재생성
 cd src && xcodegen generate
-```
 
-### UI 목업 확인
-```bash
+# UI 목업 확인
 open GUI/screens/SCR-005_home_empty/screen.png
-```
 
-### 특정 화면 시나리오 검색
-```bash
+# 특정 화면 시나리오 검색
 grep -n "SCR-010" Ref-Concepts/wander_ui_scenario.md
 ```
 
-### 디자인 컬러 검색
-```bash
-grep -n "#87CEEB" Ref-Concepts/wander_design_concept.md
-```
+---
+
+## 구현 완료 상태
+
+- ✅ Phase 1: 기본 구조 (앱 구조, 온보딩, 권한)
+- ✅ Phase 2: 핵심 기능 (사진 분석, 타임라인, 지도)
+- ✅ Phase 3: 부가 기능 (공유, 내보내기, 퀵모드)
+- ✅ Phase 4: AI 기능 (BYOK, 스토리 생성)
+- ✅ 추가 기능: 보안 잠금, 카테고리, 숨김 기록, 자주 가는 곳
 
 ---
 
 *최종 업데이트: 2026-02-01*
-*작성: Claude Code*
