@@ -110,9 +110,9 @@ final class ExportService {
     func exportAsImage(result: AnalysisResult, includeWatermark: Bool = true) async -> UIImage? {
         logger.info("📤 [ExportService] 이미지 내보내기 시작")
 
-        // Group photos by day and load thumbnails
-        let photosByDay = await loadThumbnailsByDay(from: result.places)
-        logger.info("📤 [ExportService] 썸네일 로드 완료 - \(photosByDay.count)일")
+        // Load thumbnails grouped by date
+        let thumbnailsByDate = await loadThumbnailsByDate(from: result.places)
+        logger.info("📤 [ExportService] 썸네일 로드 완료 - \(thumbnailsByDate.count)일")
 
         let size = CGSize(width: 1080, height: 1920)
 
@@ -129,8 +129,7 @@ final class ExportService {
             // Draw content
             drawHeader(in: context.cgContext, result: result, size: size)
             drawStats(in: context.cgContext, result: result, size: size)
-            let timelineEndY = drawTimeline(in: context.cgContext, result: result, size: size)
-            drawPhotosByDay(photosByDay: photosByDay, startY: timelineEndY + 40, size: size)
+            drawTimelineWithPhotos(in: context.cgContext, result: result, thumbnailsByDate: thumbnailsByDate, size: size)
 
             if includeWatermark {
                 drawWatermark(in: context.cgContext, size: size)
@@ -141,25 +140,20 @@ final class ExportService {
         return image
     }
 
-    /// Day별로 PHAsset에서 썸네일 로드
-    private func loadThumbnailsByDay(from places: [PlaceCluster]) async -> [(dayNumber: Int, date: Date, thumbnails: [UIImage])] {
+    /// 날짜별로 PHAsset에서 썸네일 로드 (Dictionary 형태)
+    private func loadThumbnailsByDate(from places: [PlaceCluster]) async -> [Date: [UIImage]] {
         let calendar = Calendar.current
-        var dayGroups: [Date: (dayNumber: Int, assets: [PHAsset])] = [:]
+        var result: [Date: [UIImage]] = [:]
 
-        // Group places by date
-        let sortedDates = Set(places.map { calendar.startOfDay(for: $0.startTime) }).sorted()
-
-        for (dayIndex, date) in sortedDates.enumerated() {
-            let dayNumber = dayIndex + 1
-            let placesForDay = places.filter { calendar.startOfDay(for: $0.startTime) == date }
-            let assetsForDay = placesForDay.flatMap { $0.photos }
-            dayGroups[date] = (dayNumber, assetsForDay)
+        // Group assets by date
+        var assetsByDate: [Date: [PHAsset]] = [:]
+        for place in places {
+            let date = calendar.startOfDay(for: place.startTime)
+            if assetsByDate[date] == nil {
+                assetsByDate[date] = []
+            }
+            assetsByDate[date]?.append(contentsOf: place.photos)
         }
-
-        // Load thumbnails for each day (max 3 per day, max 2 days shown)
-        var result: [(dayNumber: Int, date: Date, thumbnails: [UIImage])] = []
-        let maxDays = 2
-        let maxPhotosPerDay = 3
 
         let manager = PHImageManager.default()
         let options = PHImageRequestOptions()
@@ -169,11 +163,11 @@ final class ExportService {
         options.isNetworkAccessAllowed = true
         let targetSize = CGSize(width: 400, height: 400)
 
-        for date in sortedDates.prefix(maxDays) {
-            guard let group = dayGroups[date] else { continue }
+        let maxPhotosPerDay = 3
 
+        for (date, assets) in assetsByDate {
             var thumbnails: [UIImage] = []
-            for asset in group.assets.prefix(maxPhotosPerDay) {
+            for asset in assets.prefix(maxPhotosPerDay) {
                 await withCheckedContinuation { continuation in
                     manager.requestImage(
                         for: asset,
@@ -188,9 +182,8 @@ final class ExportService {
                     }
                 }
             }
-
             if !thumbnails.isEmpty {
-                result.append((dayNumber: group.dayNumber, date: date, thumbnails: thumbnails))
+                result[date] = thumbnails
             }
         }
 
@@ -274,8 +267,7 @@ final class ExportService {
         }
     }
 
-    @discardableResult
-    private func drawTimeline(in context: CGContext, result: AnalysisResult, size: CGSize) -> CGFloat {
+    private func drawTimelineWithPhotos(in context: CGContext, result: AnalysisResult, thumbnailsByDate: [Date: [UIImage]], size: CGSize) {
         var currentY: CGFloat = 440
 
         let titleFont = UIFont.systemFont(ofSize: 32, weight: .bold)
@@ -290,32 +282,30 @@ final class ExportService {
         currentY += 60
 
         // Fonts and colors
-        let dayHeaderFont = UIFont.systemFont(ofSize: 24, weight: .bold)
-        let dayDateFont = UIFont.systemFont(ofSize: 18, weight: .regular)
-        let placeFont = UIFont.systemFont(ofSize: 22, weight: .semibold)
-        let timeFont = UIFont.systemFont(ofSize: 16, weight: .regular)
-        let addressFont = UIFont.systemFont(ofSize: 14, weight: .regular)
+        let dayHeaderFont = UIFont.systemFont(ofSize: 22, weight: .bold)
+        let dayDateFont = UIFont.systemFont(ofSize: 16, weight: .regular)
+        let placeFont = UIFont.systemFont(ofSize: 20, weight: .semibold)
+        let timeFont = UIFont.systemFont(ofSize: 14, weight: .regular)
+        let addressFont = UIFont.systemFont(ofSize: 13, weight: .regular)
 
         let placeColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
         let timeColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
         let addressColor = UIColor(red: 0.35, green: 0.42, blue: 0.45, alpha: 1)
-        let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1) // #87CEEB
-        let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1) // #E8F6FC
+        let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1)
+        let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1)
 
         // Group places by date
         let groupedByDate = groupPlacesByDate(result.places)
         let sortedDates = groupedByDate.keys.sorted()
 
-        var totalPlacesDrawn = 0
-        let maxPlaces = 4 // Reduced to make room for photos
+        let maxDays = 2
+        let maxPlacesPerDay = 2
 
-        for (dayIndex, date) in sortedDates.enumerated() {
-            guard totalPlacesDrawn < maxPlaces else { break }
-
+        for (dayIndex, date) in sortedDates.prefix(maxDays).enumerated() {
             let dayNumber = dayIndex + 1
 
             // Draw Day header
-            let dayHeaderRect = CGRect(x: 60, y: currentY, width: 80, height: 32)
+            let dayHeaderRect = CGRect(x: 60, y: currentY, width: 75, height: 30)
             let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 8)
             primaryPaleColor.setFill()
             dayHeaderPath.fill()
@@ -335,31 +325,27 @@ final class ExportService {
                 string: formatDateWithWeekday(date),
                 attributes: [.font: dayDateFont, .foregroundColor: timeColor]
             )
-            dateString.draw(at: CGPoint(x: 150, y: currentY + 6))
+            dateString.draw(at: CGPoint(x: 145, y: currentY + 5))
 
-            currentY += 45
+            currentY += 42
 
             // Draw places for this day
             if let placesForDay = groupedByDate[date] {
                 let sortedPlaces = placesForDay.sorted { $0.startTime < $1.startTime }
 
-                for (placeIndex, place) in sortedPlaces.enumerated() {
-                    guard totalPlacesDrawn < maxPlaces else { break }
-
-                    let isLastInDay = placeIndex == sortedPlaces.count - 1
-                    let isLastOverall = totalPlacesDrawn == maxPlaces - 1
+                for (placeIndex, place) in sortedPlaces.prefix(maxPlacesPerDay).enumerated() {
+                    let isLastInDay = placeIndex == min(sortedPlaces.count, maxPlacesPerDay) - 1
 
                     // Number circle
-                    let circleRect = CGRect(x: 60, y: currentY, width: 40, height: 40)
+                    let circleRect = CGRect(x: 60, y: currentY, width: 36, height: 36)
                     let circlePath = UIBezierPath(ovalIn: circleRect)
                     primaryColor.setFill()
                     circlePath.fill()
 
-                    // Number
                     let numberString = NSAttributedString(
                         string: "\(placeIndex + 1)",
                         attributes: [
-                            .font: UIFont.systemFont(ofSize: 18, weight: .bold),
+                            .font: UIFont.systemFont(ofSize: 16, weight: .bold),
                             .foregroundColor: UIColor.white
                         ]
                     )
@@ -369,11 +355,11 @@ final class ExportService {
                         y: circleRect.midY - numberSize.height / 2
                     ))
 
-                    // Connector line (if not last)
-                    if !isLastInDay && !isLastOverall {
+                    // Connector line (if not last place in day)
+                    if !isLastInDay {
                         let linePath = UIBezierPath()
-                        linePath.move(to: CGPoint(x: 80, y: currentY + 40))
-                        linePath.addLine(to: CGPoint(x: 80, y: currentY + 100))
+                        linePath.move(to: CGPoint(x: 78, y: currentY + 36))
+                        linePath.addLine(to: CGPoint(x: 78, y: currentY + 85))
                         UIColor(red: 0.9, green: 0.93, blue: 0.95, alpha: 1).setStroke()
                         linePath.lineWidth = 2
                         linePath.stroke()
@@ -384,138 +370,85 @@ final class ExportService {
                         string: formatTime(place.startTime),
                         attributes: [.font: timeFont, .foregroundColor: timeColor]
                     )
-                    timeString.draw(at: CGPoint(x: 115, y: currentY - 2))
+                    timeString.draw(at: CGPoint(x: 110, y: currentY - 2))
 
                     // Place name (truncated if needed)
                     var displayName = "\(place.activityType.emoji) \(place.name)"
-                    if displayName.count > 28 {
-                        displayName = String(displayName.prefix(28)) + "..."
+                    if displayName.count > 30 {
+                        displayName = String(displayName.prefix(30)) + "..."
                     }
                     let placeString = NSAttributedString(
                         string: displayName,
                         attributes: [.font: placeFont, .foregroundColor: placeColor]
                     )
-                    placeString.draw(at: CGPoint(x: 115, y: currentY + 18))
+                    placeString.draw(at: CGPoint(x: 110, y: currentY + 15))
 
                     // Address (truncated)
                     var displayAddress = place.address
-                    if displayAddress.count > 40 {
-                        displayAddress = String(displayAddress.prefix(40)) + "..."
+                    if displayAddress.count > 42 {
+                        displayAddress = String(displayAddress.prefix(42)) + "..."
                     }
                     let addressString = NSAttributedString(
                         string: "📍 \(displayAddress)",
                         attributes: [.font: addressFont, .foregroundColor: addressColor]
                     )
-                    addressString.draw(at: CGPoint(x: 115, y: currentY + 45))
+                    addressString.draw(at: CGPoint(x: 110, y: currentY + 40))
 
-                    // Photo count
-                    let photoString = NSAttributedString(
-                        string: "📸 \(place.photos.count)장",
-                        attributes: [.font: addressFont, .foregroundColor: addressColor]
+                    currentY += 95
+                }
+
+                // Show "more" if there are more places
+                if sortedPlaces.count > maxPlacesPerDay {
+                    let moreString = NSAttributedString(
+                        string: "외 \(sortedPlaces.count - maxPlacesPerDay)곳 더",
+                        attributes: [.font: addressFont, .foregroundColor: timeColor]
                     )
-                    photoString.draw(at: CGPoint(x: 115, y: currentY + 68))
-
-                    currentY += 110
-                    totalPlacesDrawn += 1
+                    moreString.draw(at: CGPoint(x: 110, y: currentY - 10))
                 }
             }
 
-            // Add spacing between days
-            if dayIndex < sortedDates.count - 1 && totalPlacesDrawn < maxPlaces {
-                currentY += 15
+            // Draw photos for this day
+            if let thumbnails = thumbnailsByDate[date], !thumbnails.isEmpty {
+                currentY += 5
+                currentY = drawDayPhotos(thumbnails: thumbnails, startY: currentY, size: size)
             }
-        }
 
-        // "더보기" indicator if more places
-        if result.places.count > totalPlacesDrawn {
-            let moreString = NSAttributedString(
-                string: "... 외 \(result.places.count - totalPlacesDrawn)곳",
-                attributes: [.font: addressFont, .foregroundColor: timeColor]
-            )
-            moreString.draw(at: CGPoint(x: 115, y: currentY))
-            currentY += 30
+            // Spacing between days
+            currentY += 25
         }
-
-        return currentY
     }
 
-    private func drawPhotosByDay(photosByDay: [(dayNumber: Int, date: Date, thumbnails: [UIImage])], startY: CGFloat, size: CGSize) {
-        guard !photosByDay.isEmpty else { return }
-
-        let titleFont = UIFont.systemFont(ofSize: 28, weight: .bold)
-        let titleColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
-        let dayHeaderFont = UIFont.systemFont(ofSize: 20, weight: .bold)
-        let dayDateFont = UIFont.systemFont(ofSize: 16, weight: .regular)
-        let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1)
-        let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1)
-        let timeColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
-
-        var currentY = startY
-
-        // Section title
-        let sectionTitle = NSAttributedString(
-            string: "📸 사진",
-            attributes: [.font: titleFont, .foregroundColor: titleColor]
-        )
-        sectionTitle.draw(at: CGPoint(x: 60, y: currentY))
-        currentY += 50
-
+    /// Draw photos for a single day (horizontal row)
+    private func drawDayPhotos(thumbnails: [UIImage], startY: CGFloat, size: CGSize) -> CGFloat {
         let margin: CGFloat = 60
         let spacing: CGFloat = 10
         let availableWidth = size.width - (margin * 2)
         let cornerRadius: CGFloat = 12
 
-        for dayData in photosByDay {
-            // Day header badge
-            let dayHeaderRect = CGRect(x: margin, y: currentY, width: 70, height: 28)
-            let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 6)
-            primaryPaleColor.setFill()
-            dayHeaderPath.fill()
+        var currentY = startY
+        let photoCount = thumbnails.count
 
-            let dayString = NSAttributedString(
-                string: "Day \(dayData.dayNumber)",
-                attributes: [.font: dayHeaderFont, .foregroundColor: primaryColor]
-            )
-            let dayStringSize = dayString.size()
-            dayString.draw(at: CGPoint(
-                x: dayHeaderRect.midX - dayStringSize.width / 2,
-                y: dayHeaderRect.midY - dayStringSize.height / 2
-            ))
+        if photoCount == 1 {
+            let photoWidth = availableWidth * 0.55
+            let photoHeight: CGFloat = 160
+            let photoRect = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
+            drawRoundedImage(thumbnails[0], in: photoRect, cornerRadius: cornerRadius)
+            currentY += photoHeight
+        } else {
+            let photoWidth = (availableWidth - spacing * CGFloat(photoCount - 1)) / CGFloat(photoCount)
+            let photoHeight: CGFloat = 150
 
-            // Date next to badge
-            let dateString = NSAttributedString(
-                string: formatDateWithWeekday(dayData.date),
-                attributes: [.font: dayDateFont, .foregroundColor: timeColor]
-            )
-            dateString.draw(at: CGPoint(x: margin + 80, y: currentY + 4))
-
-            currentY += 40
-
-            // Draw thumbnails for this day (horizontal row)
-            let thumbnails = dayData.thumbnails
-            let photoCount = thumbnails.count
-
-            if photoCount == 1 {
-                // Single photo: larger, but not full width
-                let photoWidth = availableWidth * 0.6
-                let photoHeight: CGFloat = 200
-                let photoRect = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
-                drawRoundedImage(thumbnails[0], in: photoRect, cornerRadius: cornerRadius)
-                currentY += photoHeight + 20
-            } else {
-                // Multiple photos: side by side
-                let photoWidth = (availableWidth - spacing * CGFloat(photoCount - 1)) / CGFloat(photoCount)
-                let photoHeight: CGFloat = 180
-
-                for (index, thumbnail) in thumbnails.enumerated() {
-                    let x = margin + CGFloat(index) * (photoWidth + spacing)
-                    let rect = CGRect(x: x, y: currentY, width: photoWidth, height: photoHeight)
-                    drawRoundedImage(thumbnail, in: rect, cornerRadius: cornerRadius)
-                }
-                currentY += photoHeight + 20
+            for (index, thumbnail) in thumbnails.enumerated() {
+                let x = margin + CGFloat(index) * (photoWidth + spacing)
+                let rect = CGRect(x: x, y: currentY, width: photoWidth, height: photoHeight)
+                drawRoundedImage(thumbnail, in: rect, cornerRadius: cornerRadius)
             }
+            currentY += photoHeight
         }
+
+        return currentY
     }
+
 
     private func drawRoundedImage(_ image: UIImage, in rect: CGRect, cornerRadius: CGFloat) {
         let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)

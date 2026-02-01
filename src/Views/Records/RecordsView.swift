@@ -1574,6 +1574,11 @@ struct RecordSharePreviewView: View {
     private func generateImageFromRecord() async -> UIImage? {
         // Load thumbnails grouped by day
         let photosByDay = await loadThumbnailsByDay()
+        // Convert to dictionary for easy lookup
+        var thumbnailsByDayNumber: [Int: [UIImage]] = [:]
+        for dayData in photosByDay {
+            thumbnailsByDayNumber[dayData.dayNumber] = dayData.thumbnails
+        }
 
         let size = CGSize(width: 1080, height: 1920)
         let renderer = UIGraphicsImageRenderer(size: size)
@@ -1644,7 +1649,7 @@ struct RecordSharePreviewView: View {
                 labelString.draw(at: CGPoint(x: centerX - labelSize.width / 2, y: statsY + 95))
             }
 
-            // Timeline
+            // Timeline with integrated photos
             var currentY: CGFloat = 440
             let sectionFont = UIFont.systemFont(ofSize: 32, weight: .bold)
             let sectionTitle = NSAttributedString(
@@ -1655,24 +1660,22 @@ struct RecordSharePreviewView: View {
             currentY += 60
 
             // Fonts and colors
-            let dayHeaderFont = UIFont.systemFont(ofSize: 24, weight: .bold)
-            let dayDateFont = UIFont.systemFont(ofSize: 18, weight: .regular)
-            let placeFont = UIFont.systemFont(ofSize: 22, weight: .semibold)
-            let timeFont = UIFont.systemFont(ofSize: 16, weight: .regular)
-            let addressFont = UIFont.systemFont(ofSize: 14, weight: .regular)
+            let dayHeaderFont = UIFont.systemFont(ofSize: 22, weight: .bold)
+            let dayDateFont = UIFont.systemFont(ofSize: 16, weight: .regular)
+            let placeFont = UIFont.systemFont(ofSize: 20, weight: .semibold)
+            let timeFont = UIFont.systemFont(ofSize: 14, weight: .regular)
+            let addressFont = UIFont.systemFont(ofSize: 13, weight: .regular)
             let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1)
             let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1)
             let timeColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
 
             let sortedDays = record.days.sorted { $0.dayNumber < $1.dayNumber }
-            var totalPlacesDrawn = 0
-            let maxPlaces = 4 // Reduced to make room for photos
+            let maxDays = 2
+            let maxPlacesPerDay = 2
 
-            for day in sortedDays {
-                guard totalPlacesDrawn < maxPlaces else { break }
-
+            for day in sortedDays.prefix(maxDays) {
                 // Draw Day header
-                let dayHeaderRect = CGRect(x: 60, y: currentY, width: 80, height: 32)
+                let dayHeaderRect = CGRect(x: 60, y: currentY, width: 75, height: 30)
                 let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 8)
                 primaryPaleColor.setFill()
                 dayHeaderPath.fill()
@@ -1692,36 +1695,33 @@ struct RecordSharePreviewView: View {
                     string: formatDateWithWeekday(day.date),
                     attributes: [.font: dayDateFont, .foregroundColor: timeColor]
                 )
-                dayDateString.draw(at: CGPoint(x: 150, y: currentY + 6))
+                dayDateString.draw(at: CGPoint(x: 145, y: currentY + 5))
 
-                currentY += 45
+                currentY += 42
 
                 // Draw places for this day
                 let sortedPlaces = day.places.sorted { $0.order < $1.order }
-                for (placeIndex, place) in sortedPlaces.enumerated() {
-                    guard totalPlacesDrawn < maxPlaces else { break }
-
-                    let isLastInDay = placeIndex == sortedPlaces.count - 1
-                    let isLastOverall = totalPlacesDrawn == maxPlaces - 1
+                for (placeIndex, place) in sortedPlaces.prefix(maxPlacesPerDay).enumerated() {
+                    let isLastInDay = placeIndex == min(sortedPlaces.count, maxPlacesPerDay) - 1
 
                     // Number circle
-                    let circleRect = CGRect(x: 60, y: currentY, width: 40, height: 40)
+                    let circleRect = CGRect(x: 60, y: currentY, width: 36, height: 36)
                     let circlePath = UIBezierPath(ovalIn: circleRect)
                     primaryColor.setFill()
                     circlePath.fill()
 
                     let numberString = NSAttributedString(
                         string: "\(placeIndex + 1)",
-                        attributes: [.font: UIFont.systemFont(ofSize: 18, weight: .bold), .foregroundColor: UIColor.white]
+                        attributes: [.font: UIFont.systemFont(ofSize: 16, weight: .bold), .foregroundColor: UIColor.white]
                     )
                     let numberSize = numberString.size()
                     numberString.draw(at: CGPoint(x: circleRect.midX - numberSize.width / 2, y: circleRect.midY - numberSize.height / 2))
 
-                    // Connector line (if not last)
-                    if !isLastInDay && !isLastOverall {
+                    // Connector line (if not last place in day)
+                    if !isLastInDay {
                         let linePath = UIBezierPath()
-                        linePath.move(to: CGPoint(x: 80, y: currentY + 40))
-                        linePath.addLine(to: CGPoint(x: 80, y: currentY + 100))
+                        linePath.move(to: CGPoint(x: 78, y: currentY + 36))
+                        linePath.addLine(to: CGPoint(x: 78, y: currentY + 85))
                         UIColor(red: 0.9, green: 0.93, blue: 0.95, alpha: 1).setStroke()
                         linePath.lineWidth = 2
                         linePath.stroke()
@@ -1732,49 +1732,51 @@ struct RecordSharePreviewView: View {
                         string: formatTime(place.startTime),
                         attributes: [.font: timeFont, .foregroundColor: timeColor]
                     )
-                    timeString.draw(at: CGPoint(x: 115, y: currentY - 2))
+                    timeString.draw(at: CGPoint(x: 110, y: currentY - 2))
 
-                    // Place name (truncated if needed)
-                    var displayName = place.name
-                    if displayName.count > 28 {
-                        displayName = String(displayName.prefix(28)) + "..."
+                    // Place name with activity emoji (truncated if needed)
+                    var displayName = "\(place.activityLabel) \(place.name)"
+                    if displayName.count > 30 {
+                        displayName = String(displayName.prefix(30)) + "..."
                     }
                     let placeString = NSAttributedString(
                         string: displayName,
                         attributes: [.font: placeFont, .foregroundColor: titleColor]
                     )
-                    placeString.draw(at: CGPoint(x: 115, y: currentY + 18))
+                    placeString.draw(at: CGPoint(x: 110, y: currentY + 15))
 
-                    // Activity
-                    let activityString = NSAttributedString(
-                        string: place.activityLabel,
+                    // Address (truncated)
+                    var displayAddress = place.address
+                    if displayAddress.count > 42 {
+                        displayAddress = String(displayAddress.prefix(42)) + "..."
+                    }
+                    let addressString = NSAttributedString(
+                        string: "📍 \(displayAddress)",
                         attributes: [.font: addressFont, .foregroundColor: dateColor]
                     )
-                    activityString.draw(at: CGPoint(x: 115, y: currentY + 45))
+                    addressString.draw(at: CGPoint(x: 110, y: currentY + 40))
 
-                    currentY += 110
-                    totalPlacesDrawn += 1
+                    currentY += 95
                 }
 
-                // Add spacing between days
-                if totalPlacesDrawn < maxPlaces {
-                    currentY += 15
+                // Show "more" if there are more places in this day
+                if sortedPlaces.count > maxPlacesPerDay {
+                    let moreString = NSAttributedString(
+                        string: "외 \(sortedPlaces.count - maxPlacesPerDay)곳 더",
+                        attributes: [.font: addressFont, .foregroundColor: timeColor]
+                    )
+                    moreString.draw(at: CGPoint(x: 110, y: currentY - 10))
                 }
-            }
 
-            // More indicator
-            let totalPlaces = record.days.reduce(0) { $0 + $1.places.count }
-            if totalPlaces > totalPlacesDrawn {
-                let moreString = NSAttributedString(
-                    string: "... 외 \(totalPlaces - totalPlacesDrawn)곳",
-                    attributes: [.font: addressFont, .foregroundColor: timeColor]
-                )
-                moreString.draw(at: CGPoint(x: 115, y: currentY))
-                currentY += 30
-            }
+                // Draw photos for this day (integrated under places)
+                if let thumbnails = thumbnailsByDayNumber[day.dayNumber], !thumbnails.isEmpty {
+                    currentY += 5
+                    currentY = drawDayPhotosInline(thumbnails: thumbnails, startY: currentY, size: size)
+                }
 
-            // Draw photos section by day
-            drawPhotosByDaySection(photosByDay: photosByDay, startY: currentY + 40, size: size)
+                // Spacing between days
+                currentY += 25
+            }
 
             // Watermark (always included)
             let watermarkFont = UIFont.systemFont(ofSize: 24, weight: .medium)
@@ -1786,6 +1788,37 @@ struct RecordSharePreviewView: View {
             let watermarkSize = watermarkString.size()
             watermarkString.draw(at: CGPoint(x: size.width - watermarkSize.width - 40, y: size.height - watermarkSize.height - 40))
         }
+    }
+
+    /// Draw photos for a single day (horizontal row)
+    private func drawDayPhotosInline(thumbnails: [UIImage], startY: CGFloat, size: CGSize) -> CGFloat {
+        let margin: CGFloat = 60
+        let spacing: CGFloat = 10
+        let availableWidth = size.width - (margin * 2)
+        let cornerRadius: CGFloat = 12
+
+        var currentY = startY
+        let photoCount = thumbnails.count
+
+        if photoCount == 1 {
+            let photoWidth = availableWidth * 0.55
+            let photoHeight: CGFloat = 160
+            let photoRect = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
+            drawRoundedImage(thumbnails[0], in: photoRect, cornerRadius: cornerRadius)
+            currentY += photoHeight
+        } else {
+            let photoWidth = (availableWidth - spacing * CGFloat(photoCount - 1)) / CGFloat(photoCount)
+            let photoHeight: CGFloat = 150
+
+            for (index, thumbnail) in thumbnails.enumerated() {
+                let x = margin + CGFloat(index) * (photoWidth + spacing)
+                let rect = CGRect(x: x, y: currentY, width: photoWidth, height: photoHeight)
+                drawRoundedImage(thumbnail, in: rect, cornerRadius: cornerRadius)
+            }
+            currentY += photoHeight
+        }
+
+        return currentY
     }
 
     private func loadThumbnailsByDay() async -> [(dayNumber: Int, date: Date, thumbnails: [UIImage])] {
@@ -1837,84 +1870,6 @@ struct RecordSharePreviewView: View {
         }
 
         return result
-    }
-
-    private func drawPhotosByDaySection(photosByDay: [(dayNumber: Int, date: Date, thumbnails: [UIImage])], startY: CGFloat, size: CGSize) {
-        guard !photosByDay.isEmpty else { return }
-
-        let titleFont = UIFont.systemFont(ofSize: 28, weight: .bold)
-        let titleColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
-        let dayHeaderFont = UIFont.systemFont(ofSize: 20, weight: .bold)
-        let dayDateFont = UIFont.systemFont(ofSize: 16, weight: .regular)
-        let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1)
-        let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1)
-        let timeColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
-
-        var currentY = startY
-
-        // Section title
-        let sectionTitle = NSAttributedString(
-            string: "📸 사진",
-            attributes: [.font: titleFont, .foregroundColor: titleColor]
-        )
-        sectionTitle.draw(at: CGPoint(x: 60, y: currentY))
-        currentY += 50
-
-        let margin: CGFloat = 60
-        let spacing: CGFloat = 10
-        let availableWidth = size.width - (margin * 2)
-        let cornerRadius: CGFloat = 12
-
-        for dayData in photosByDay {
-            // Day header badge
-            let dayHeaderRect = CGRect(x: margin, y: currentY, width: 70, height: 28)
-            let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 6)
-            primaryPaleColor.setFill()
-            dayHeaderPath.fill()
-
-            let dayString = NSAttributedString(
-                string: "Day \(dayData.dayNumber)",
-                attributes: [.font: dayHeaderFont, .foregroundColor: primaryColor]
-            )
-            let dayStringSize = dayString.size()
-            dayString.draw(at: CGPoint(
-                x: dayHeaderRect.midX - dayStringSize.width / 2,
-                y: dayHeaderRect.midY - dayStringSize.height / 2
-            ))
-
-            // Date next to badge
-            let dateString = NSAttributedString(
-                string: formatDateWithWeekday(dayData.date),
-                attributes: [.font: dayDateFont, .foregroundColor: timeColor]
-            )
-            dateString.draw(at: CGPoint(x: margin + 80, y: currentY + 4))
-
-            currentY += 40
-
-            // Draw thumbnails for this day (horizontal row)
-            let thumbnails = dayData.thumbnails
-            let photoCount = thumbnails.count
-
-            if photoCount == 1 {
-                // Single photo: larger, but not full width
-                let photoWidth = availableWidth * 0.6
-                let photoHeight: CGFloat = 200
-                let photoRect = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
-                drawRoundedImage(thumbnails[0], in: photoRect, cornerRadius: cornerRadius)
-                currentY += photoHeight + 20
-            } else {
-                // Multiple photos: side by side
-                let photoWidth = (availableWidth - spacing * CGFloat(photoCount - 1)) / CGFloat(photoCount)
-                let photoHeight: CGFloat = 180
-
-                for (index, thumbnail) in thumbnails.enumerated() {
-                    let x = margin + CGFloat(index) * (photoWidth + spacing)
-                    let rect = CGRect(x: x, y: currentY, width: photoWidth, height: photoHeight)
-                    drawRoundedImage(thumbnail, in: rect, cornerRadius: cornerRadius)
-                }
-                currentY += photoHeight + 20
-            }
-        }
     }
 
     private func drawRoundedImage(_ image: UIImage, in rect: CGRect, cornerRadius: CGFloat) {
