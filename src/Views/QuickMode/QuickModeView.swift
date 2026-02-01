@@ -365,7 +365,9 @@ struct QuickModeAnalyzingView: View {
             .foregroundColor(WanderColors.textSecondary)
             .padding(.bottom, WanderSpacing.space8)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(WanderColors.background)
+        .ignoresSafeArea()
         .task {
             await analyze()
         }

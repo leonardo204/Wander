@@ -31,6 +31,8 @@ struct RecordsView: View {
             result = result.filter { $0.recordType == "daily" }
         case .weekly:
             result = result.filter { $0.recordType == "weekly" }
+        case .business:
+            result = result.filter { $0.recordType == "business" }
         }
 
         return result
@@ -167,6 +169,8 @@ struct RecordsView: View {
             return records.filter { $0.recordType == "daily" }.count
         case .weekly:
             return records.filter { $0.recordType == "weekly" }.count
+        case .business:
+            return records.filter { $0.recordType == "business" }.count
         }
     }
 
@@ -182,6 +186,7 @@ enum RecordFilter: String, CaseIterable, Identifiable {
     case travel
     case daily
     case weekly
+    case business
 
     var id: String { rawValue }
 
@@ -191,6 +196,7 @@ enum RecordFilter: String, CaseIterable, Identifiable {
         case .travel: return "여행"
         case .daily: return "일상"
         case .weekly: return "주간"
+        case .business: return "출장"
         }
     }
 }

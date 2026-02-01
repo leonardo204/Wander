@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import Photos
 import os.log
 
@@ -75,7 +76,12 @@ struct SettingsView: View {
                             subtitle: "버전, 라이선스"
                         )
                     }
+                } header: {
+                    Text("기타")
+                }
 
+                // Developer Mode Section
+                Section {
                     Button(action: resetOnboarding) {
                         SettingsRow(
                             icon: "arrow.counterclockwise",
@@ -85,7 +91,7 @@ struct SettingsView: View {
                         )
                     }
                 } header: {
-                    Text("기타")
+                    Text("개발자 모드")
                 }
             }
             .listStyle(.insetGrouped)
@@ -375,8 +381,8 @@ struct APIKeyInputView: View {
 
 // MARK: - Data Management View
 struct DataManagementView: View {
+    @Query private var records: [TravelRecord]
     @State private var cacheSize = "계산 중..."
-    @State private var recordCount = 0
     @State private var showDeleteAllConfirmation = false
     @Environment(\.modelContext) private var modelContext
 
@@ -400,7 +406,7 @@ struct DataManagementView: View {
                 HStack {
                     Text("저장된 기록")
                     Spacer()
-                    Text("\(recordCount)개")
+                    Text("\(records.count)개")
                         .foregroundColor(WanderColors.textSecondary)
                 }
 
@@ -442,9 +448,11 @@ struct DataManagementView: View {
     }
 
     private func deleteAllRecords() {
-        logger.info("📦 [DataManagementView] 모든 기록 삭제")
-        // Delete all records
-        recordCount = 0
+        logger.info("📦 [DataManagementView] 모든 기록 삭제 - \(records.count)개")
+        for record in records {
+            modelContext.delete(record)
+        }
+        try? modelContext.save()
     }
 }
 
@@ -575,17 +583,6 @@ struct AboutView: View {
                     }
                     .padding(.vertical, WanderSpacing.space6)
                     Spacer()
-                }
-            }
-
-            Section {
-                Link(destination: URL(string: "https://github.com/leonardo204/Wander")!) {
-                    HStack {
-                        Text("GitHub")
-                        Spacer()
-                        Image(systemName: "arrow.up.right")
-                            .foregroundColor(WanderColors.textTertiary)
-                    }
                 }
             }
 
