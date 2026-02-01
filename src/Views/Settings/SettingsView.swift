@@ -626,7 +626,6 @@ struct PermissionSettingsView: View {
 
 // MARK: - Share Settings View
 struct ShareSettingsView: View {
-    @AppStorage("includeWatermark") private var includeWatermark = true
     @AppStorage("defaultShareFormat") private var defaultShareFormat = "text"
 
     var body: some View {
@@ -635,17 +634,19 @@ struct ShareSettingsView: View {
                 Picker("형식", selection: $defaultShareFormat) {
                     Text("텍스트").tag("text")
                     Text("이미지").tag("image")
-                    Text("Markdown").tag("markdown")
                 }
                 .pickerStyle(.segmented)
             }
 
             Section {
-                Toggle("워터마크 포함", isOn: $includeWatermark)
-            } header: {
-                Text("옵션")
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(WanderColors.success)
+                    Text("워터마크 항상 포함")
+                        .foregroundColor(WanderColors.textSecondary)
+                }
             } footer: {
-                Text("공유 시 'Wander로 기록했어요' 문구가 포함됩니다.")
+                Text("공유 시 'Wander' 워터마크가 자동으로 포함됩니다.")
             }
         }
         .navigationTitle("공유 설정")

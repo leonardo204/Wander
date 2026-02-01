@@ -1396,8 +1396,6 @@ struct RecordSharePreviewView: View {
     let format: RecordShareFormat
     let onDismissAll: () -> Void
 
-    @AppStorage("includeWatermark") private var includeWatermark = true
-
     @State private var isLoading = true
     @State private var previewImage: UIImage?
     @State private var previewText: String = ""
@@ -1423,19 +1421,6 @@ struct RecordSharePreviewView: View {
 
             // Bottom Bar
             VStack(spacing: WanderSpacing.space3) {
-                Toggle(isOn: $includeWatermark) {
-                    HStack(spacing: WanderSpacing.space2) {
-                        Image(systemName: "signature")
-                            .foregroundColor(WanderColors.textSecondary)
-                        Text("워터마크 포함")
-                            .font(WanderTypography.body)
-                    }
-                }
-                .tint(WanderColors.primary)
-                .onChange(of: includeWatermark) { _, _ in
-                    generatePreview()
-                }
-
                 Button(action: performShare) {
                     HStack {
                         if isSharing {
@@ -1542,14 +1527,14 @@ struct RecordSharePreviewView: View {
         Task.detached(priority: .userInitiated) {
             switch format {
             case .text:
-                let text = generateTextFromRecord(includeWatermark: includeWatermark)
+                let text = generateTextFromRecord()
                 await MainActor.run {
                     previewText = text
                     isLoading = false
                 }
 
             case .image:
-                let image = await generateImageFromRecord(includeWatermark: includeWatermark)
+                let image = await generateImageFromRecord()
                 await MainActor.run {
                     previewImage = image
                     isLoading = false
@@ -1558,29 +1543,35 @@ struct RecordSharePreviewView: View {
         }
     }
 
-    private func generateTextFromRecord(includeWatermark: Bool) -> String {
+    private func generateTextFromRecord() -> String {
         var text = "\(record.title)\n\n"
         text += "📅 \(formatDate(record.startDate)) ~ \(formatDate(record.endDate))\n"
         text += "📍 \(record.placeCount)개 장소 | 📸 \(record.photoCount)장 | 🚗 \(String(format: "%.1f", record.totalDistance))km\n\n"
-        text += "--- 타임라인 ---\n\n"
+        text += "--- 타임라인 ---\n"
 
         for day in record.days.sorted(by: { $0.dayNumber < $1.dayNumber }) {
-            text += "Day \(day.dayNumber)\n"
-            for place in day.places.sorted(by: { $0.order < $1.order }) {
+            text += "\n━━━ Day \(day.dayNumber) · \(formatDateWithWeekday(day.date)) ━━━\n\n"
+            for (index, place) in day.places.sorted(by: { $0.order < $1.order }).enumerated() {
                 let time = formatTime(place.startTime)
-                text += "  \(time) - \(place.name) (\(place.activityLabel))\n"
+                text += "[\(index + 1)] \(time)\n"
+                text += "\(place.name)\n"
+                text += "📍 \(place.activityLabel)\n\n"
             }
-            text += "\n"
         }
 
-        if includeWatermark {
-            text += "---\n🗺️ Wander로 기록했어요"
-        }
+        text += "---\n🗺️ Wander로 기록했어요"
 
         return text
     }
 
-    private func generateImageFromRecord(includeWatermark: Bool) async -> UIImage? {
+    private func formatDateWithWeekday(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M월 d일 (E)"
+        formatter.locale = Locale(identifier: "ko_KR")
+        return formatter.string(from: date)
+    }
+
+    private func generateImageFromRecord() async -> UIImage? {
         let size = CGSize(width: 1080, height: 1920)
         let renderer = UIGraphicsImageRenderer(size: size)
 
@@ -1660,86 +1651,133 @@ struct RecordSharePreviewView: View {
             sectionTitle.draw(at: CGPoint(x: 60, y: currentY))
             currentY += 60
 
-            let placeFont = UIFont.systemFont(ofSize: 28, weight: .semibold)
-            let timeFont = UIFont.systemFont(ofSize: 22, weight: .regular)
-            let addressFont = UIFont.systemFont(ofSize: 20, weight: .regular)
+            // Fonts and colors
+            let dayHeaderFont = UIFont.systemFont(ofSize: 24, weight: .bold)
+            let dayDateFont = UIFont.systemFont(ofSize: 18, weight: .regular)
+            let placeFont = UIFont.systemFont(ofSize: 24, weight: .semibold)
+            let timeFont = UIFont.systemFont(ofSize: 18, weight: .regular)
+            let addressFont = UIFont.systemFont(ofSize: 16, weight: .regular)
             let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1)
+            let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1)
+            let timeColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
 
-            let allPlaces = record.days
-                .sorted { $0.dayNumber < $1.dayNumber }
-                .flatMap { $0.places.sorted { $0.order < $1.order } }
+            let sortedDays = record.days.sorted { $0.dayNumber < $1.dayNumber }
+            var totalPlacesDrawn = 0
+            let maxPlaces = 5
 
-            let maxPlaces = min(allPlaces.count, 6)
-            for index in 0..<maxPlaces {
-                let place = allPlaces[index]
+            for day in sortedDays {
+                guard totalPlacesDrawn < maxPlaces else { break }
 
-                // Number circle
-                let circleRect = CGRect(x: 60, y: currentY, width: 50, height: 50)
-                let circlePath = UIBezierPath(ovalIn: circleRect)
-                primaryColor.setFill()
-                circlePath.fill()
+                // Draw Day header
+                let dayHeaderRect = CGRect(x: 60, y: currentY, width: 80, height: 32)
+                let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 8)
+                primaryPaleColor.setFill()
+                dayHeaderPath.fill()
 
-                let numberString = NSAttributedString(
-                    string: "\(index + 1)",
-                    attributes: [.font: UIFont.systemFont(ofSize: 24, weight: .bold), .foregroundColor: UIColor.white]
+                let dayString = NSAttributedString(
+                    string: "Day \(day.dayNumber)",
+                    attributes: [.font: dayHeaderFont, .foregroundColor: primaryColor]
                 )
-                let numberSize = numberString.size()
-                numberString.draw(at: CGPoint(x: circleRect.midX - numberSize.width / 2, y: circleRect.midY - numberSize.height / 2))
+                let dayStringSize = dayString.size()
+                dayString.draw(at: CGPoint(
+                    x: dayHeaderRect.midX - dayStringSize.width / 2,
+                    y: dayHeaderRect.midY - dayStringSize.height / 2
+                ))
 
-                // Connector line
-                if index < maxPlaces - 1 {
-                    let linePath = UIBezierPath()
-                    linePath.move(to: CGPoint(x: 85, y: currentY + 50))
-                    linePath.addLine(to: CGPoint(x: 85, y: currentY + 160))
-                    UIColor(red: 0.9, green: 0.93, blue: 0.95, alpha: 1).setStroke()
-                    linePath.lineWidth = 3
-                    linePath.stroke()
+                // Draw date next to Day header
+                let dayDateString = NSAttributedString(
+                    string: formatDateWithWeekday(day.date),
+                    attributes: [.font: dayDateFont, .foregroundColor: timeColor]
+                )
+                dayDateString.draw(at: CGPoint(x: 150, y: currentY + 6))
+
+                currentY += 50
+
+                // Draw places for this day
+                let sortedPlaces = day.places.sorted { $0.order < $1.order }
+                for (placeIndex, place) in sortedPlaces.enumerated() {
+                    guard totalPlacesDrawn < maxPlaces else { break }
+
+                    let isLastInDay = placeIndex == sortedPlaces.count - 1
+                    let isLastOverall = totalPlacesDrawn == maxPlaces - 1
+
+                    // Number circle
+                    let circleRect = CGRect(x: 60, y: currentY, width: 44, height: 44)
+                    let circlePath = UIBezierPath(ovalIn: circleRect)
+                    primaryColor.setFill()
+                    circlePath.fill()
+
+                    let numberString = NSAttributedString(
+                        string: "\(placeIndex + 1)",
+                        attributes: [.font: UIFont.systemFont(ofSize: 20, weight: .bold), .foregroundColor: UIColor.white]
+                    )
+                    let numberSize = numberString.size()
+                    numberString.draw(at: CGPoint(x: circleRect.midX - numberSize.width / 2, y: circleRect.midY - numberSize.height / 2))
+
+                    // Connector line (if not last)
+                    if !isLastInDay && !isLastOverall {
+                        let linePath = UIBezierPath()
+                        linePath.move(to: CGPoint(x: 82, y: currentY + 44))
+                        linePath.addLine(to: CGPoint(x: 82, y: currentY + 130))
+                        UIColor(red: 0.9, green: 0.93, blue: 0.95, alpha: 1).setStroke()
+                        linePath.lineWidth = 2
+                        linePath.stroke()
+                    }
+
+                    // Time
+                    let timeString = NSAttributedString(
+                        string: formatTime(place.startTime),
+                        attributes: [.font: timeFont, .foregroundColor: timeColor]
+                    )
+                    timeString.draw(at: CGPoint(x: 120, y: currentY - 2))
+
+                    // Place name (truncated if needed)
+                    var displayName = place.name
+                    if displayName.count > 25 {
+                        displayName = String(displayName.prefix(25)) + "..."
+                    }
+                    let placeString = NSAttributedString(
+                        string: displayName,
+                        attributes: [.font: placeFont, .foregroundColor: titleColor]
+                    )
+                    placeString.draw(at: CGPoint(x: 120, y: currentY + 20))
+
+                    // Activity
+                    let activityString = NSAttributedString(
+                        string: place.activityLabel,
+                        attributes: [.font: addressFont, .foregroundColor: dateColor]
+                    )
+                    activityString.draw(at: CGPoint(x: 120, y: currentY + 50))
+
+                    currentY += 140
+                    totalPlacesDrawn += 1
                 }
 
-                // Time
-                let timeString = NSAttributedString(
-                    string: formatTime(place.startTime),
-                    attributes: [.font: timeFont, .foregroundColor: dateColor]
-                )
-                timeString.draw(at: CGPoint(x: 130, y: currentY - 5))
-
-                // Place name
-                let placeString = NSAttributedString(
-                    string: place.name,
-                    attributes: [.font: placeFont, .foregroundColor: titleColor]
-                )
-                placeString.draw(at: CGPoint(x: 130, y: currentY + 25))
-
-                // Activity
-                let activityString = NSAttributedString(
-                    string: place.activityLabel,
-                    attributes: [.font: addressFont, .foregroundColor: dateColor]
-                )
-                activityString.draw(at: CGPoint(x: 130, y: currentY + 65))
-
-                currentY += 170
+                // Add spacing between days
+                if totalPlacesDrawn < maxPlaces {
+                    currentY += 20
+                }
             }
 
             // More indicator
-            if allPlaces.count > maxPlaces {
+            let totalPlaces = record.days.reduce(0) { $0 + $1.places.count }
+            if totalPlaces > totalPlacesDrawn {
                 let moreString = NSAttributedString(
-                    string: "... 외 \(allPlaces.count - maxPlaces)곳",
-                    attributes: [.font: addressFont, .foregroundColor: dateColor]
+                    string: "... 외 \(totalPlaces - totalPlacesDrawn)곳",
+                    attributes: [.font: addressFont, .foregroundColor: timeColor]
                 )
-                moreString.draw(at: CGPoint(x: 130, y: currentY))
+                moreString.draw(at: CGPoint(x: 120, y: currentY))
             }
 
-            // Watermark
-            if includeWatermark {
-                let watermarkFont = UIFont.systemFont(ofSize: 24, weight: .medium)
-                let watermarkColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 0.8)
-                let watermarkString = NSAttributedString(
-                    string: "🗺️ Wander",
-                    attributes: [.font: watermarkFont, .foregroundColor: watermarkColor]
-                )
-                let watermarkSize = watermarkString.size()
-                watermarkString.draw(at: CGPoint(x: size.width - watermarkSize.width - 40, y: size.height - watermarkSize.height - 40))
-            }
+            // Watermark (always included)
+            let watermarkFont = UIFont.systemFont(ofSize: 24, weight: .medium)
+            let watermarkColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 0.8)
+            let watermarkString = NSAttributedString(
+                string: "🗺️ Wander",
+                attributes: [.font: watermarkFont, .foregroundColor: watermarkColor]
+            )
+            let watermarkSize = watermarkString.size()
+            watermarkString.draw(at: CGPoint(x: size.width - watermarkSize.width - 40, y: size.height - watermarkSize.height - 40))
         }
     }
 

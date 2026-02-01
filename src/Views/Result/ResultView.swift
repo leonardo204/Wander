@@ -679,7 +679,6 @@ struct SharePreviewView: View {
     let onDismissAll: () -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("includeWatermark") private var includeWatermark = true
 
     @State private var isLoading = true
     @State private var previewImage: UIImage?
@@ -707,20 +706,6 @@ struct SharePreviewView: View {
 
             // Bottom Bar
             VStack(spacing: WanderSpacing.space3) {
-                // Watermark Toggle
-                Toggle(isOn: $includeWatermark) {
-                    HStack(spacing: WanderSpacing.space2) {
-                        Image(systemName: "signature")
-                            .foregroundColor(WanderColors.textSecondary)
-                        Text("워터마크 포함")
-                            .font(WanderTypography.body)
-                    }
-                }
-                .tint(WanderColors.primary)
-                .onChange(of: includeWatermark) { _, _ in
-                    generatePreview()
-                }
-
                 // Share Button
                 Button(action: performShare) {
                     HStack {
@@ -842,14 +827,14 @@ struct SharePreviewView: View {
         Task.detached(priority: .userInitiated) {
             switch format {
             case .text:
-                let text = ExportService.shared.exportAsText(result: result, includeWatermark: includeWatermark)
+                let text = ExportService.shared.exportAsText(result: result)
                 await MainActor.run {
                     previewText = text
                     isLoading = false
                 }
 
             case .image:
-                let image = await ExportService.shared.exportAsImage(result: result, includeWatermark: includeWatermark)
+                let image = await ExportService.shared.exportAsImage(result: result)
                 await MainActor.run {
                     previewImage = image
                     isLoading = false
