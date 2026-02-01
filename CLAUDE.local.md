@@ -177,16 +177,35 @@ Wander/
 ## AI 서비스 (BYOK)
 
 ### 지원 프로바이더
-| 프로바이더 | 서비스 파일 | 모델 |
-|-----------|------------|------|
-| OpenAI | `OpenAIService.swift` | GPT-4o, GPT-4o mini |
-| Anthropic | `AnthropicService.swift` | Claude 3.5 Sonnet, Haiku |
-| Google | `GoogleAIService.swift` | Gemini 1.5 Pro, Flash |
-| Azure OpenAI | `AzureOpenAIService.swift` | GPT-4o (Azure) |
+| 프로바이더 | 서비스 파일 | 지원 모델 |
+|-----------|------------|----------|
+| OpenAI | `OpenAIService.swift` | GPT-4o, GPT-4o Mini |
+| Anthropic | `AnthropicService.swift` | Claude 3.5 Sonnet, Claude 3 Haiku |
+| Google | `GoogleAIService.swift` | Gemini 2.0 Flash, 2.0 Flash Lite, 1.5 Pro, 1.5 Flash |
+| Azure OpenAI | `AzureOpenAIService.swift` | GPT-4o (Azure 배포) |
+
+### 모델별 토큰 설정
+| 프로바이더 | 모델 | maxTokens | temperature |
+|-----------|------|-----------|-------------|
+| OpenAI | GPT-4o | 1024 | 0.8 |
+| OpenAI | GPT-4o Mini | 800 | 0.7 |
+| Anthropic | Claude 3.5 Sonnet | 1024 | - |
+| Anthropic | Claude 3 Haiku | 600 | - |
+| Google | Gemini 2.0 Flash | 1024 | 0.7 |
+| Google | Gemini 2.0 Flash Lite | 512 | 0.6 |
+| Google | Gemini 1.5 Pro | 1024 | 0.8 |
+| Google | Gemini 1.5 Flash | 800 | 0.7 |
+
+### 모델 선택 기능
+- 설정 > AI 설정 > 프로바이더 선택 시 모델 Picker 제공
+- 선택된 모델은 `UserDefaults`에 저장
+- 연결 테스트 시 최소 토큰(1) 사용으로 비용 절감
+- 429 Rate Limit은 연결 성공으로 처리 (API 키 유효 확인)
 
 ### API Key 저장
 - Keychain에 안전하게 저장 (`KeychainManager.swift`)
 - 앱 내에서만 접근 가능
+- 기존 키는 마스킹 표시 (`abcd••••••••efgh`)
 
 ---
 
