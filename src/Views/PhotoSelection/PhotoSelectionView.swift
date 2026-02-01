@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import Photos
 import PhotosUI
 import os.log
@@ -6,6 +7,8 @@ import os.log
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "PhotoSelectionView")
 
 struct PhotoSelectionView: View {
+    var onSaveComplete: ((TravelRecord) -> Void)?
+
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = PhotoSelectionViewModel()
     @State private var showDatePicker = false
@@ -78,7 +81,10 @@ struct PhotoSelectionView: View {
                 .presentationDetents([.medium])
             }
             .fullScreenCover(isPresented: $viewModel.showAnalysis) {
-                AnalyzingView(viewModel: viewModel)
+                AnalyzingView(viewModel: viewModel, onSaveComplete: { savedRecord in
+                    logger.info("📷 [PhotoSelectionView] 저장 완료 콜백 받음: \(savedRecord.title)")
+                    onSaveComplete?(savedRecord)
+                })
             }
             .onChange(of: viewModel.shouldDismissPhotoSelection) { _, shouldDismiss in
                 if shouldDismiss {

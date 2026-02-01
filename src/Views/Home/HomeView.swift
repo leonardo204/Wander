@@ -11,9 +11,11 @@ struct HomeView: View {
     @State private var showPhotoSelection = false
     @State private var showQuickMode = false
     @State private var showLookback = false
+    @State private var navigationPath = NavigationPath()
+    @State private var savedRecordId: UUID?
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             ZStack {
                 ScrollView {
                     VStack(spacing: WanderSpacing.space6) {
@@ -28,23 +30,30 @@ struct HomeView: View {
                     }
                     .padding(.horizontal, WanderSpacing.screenMargin)
                     .padding(.top, WanderSpacing.space4)
-                    .padding(.bottom, 80) // FAB 공간 확보
+                    .padding(.bottom, records.isEmpty ? WanderSpacing.space4 : 80) // FAB 공간 확보
                 }
                 .background(WanderColors.background)
 
-                // FAB (Floating Action Button)
-                VStack {
-                    Spacer()
-                    HStack {
+                // FAB (Floating Action Button) - 기록이 있을 때만 표시
+                if !records.isEmpty {
+                    VStack {
                         Spacer()
-                        fabButton
-                            .padding(.trailing, WanderSpacing.screenMargin)
-                            .padding(.bottom, WanderSpacing.space4)
+                        HStack {
+                            Spacer()
+                            fabButton
+                                .padding(.trailing, WanderSpacing.screenMargin)
+                                .padding(.bottom, WanderSpacing.space4)
+                        }
                     }
                 }
             }
             .navigationTitle("Wander")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(for: UUID.self) { recordId in
+                if let record = records.first(where: { $0.id == recordId }) {
+                    RecordDetailFullView(record: record)
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Wander")
@@ -53,7 +62,10 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showPhotoSelection) {
-                PhotoSelectionView()
+                PhotoSelectionView(onSaveComplete: { savedRecord in
+                    logger.info("🏠 [HomeView] 저장 완료 콜백 받음: \(savedRecord.title)")
+                    savedRecordId = savedRecord.id
+                })
             }
             .sheet(isPresented: $showQuickMode) {
                 QuickModeView()
@@ -65,6 +77,16 @@ struct HomeView: View {
                 logger.info("🏠 [HomeView] 나타남 - 저장된 기록: \(records.count)개")
                 for (index, record) in records.prefix(5).enumerated() {
                     logger.info("🏠 [HomeView] 기록[\(index)]: \(record.title), days: \(record.days.count), places: \(record.placeCount)")
+                }
+            }
+            .onChange(of: savedRecordId) { _, newRecordId in
+                if let recordId = newRecordId {
+                    logger.info("🏠 [HomeView] 저장된 기록으로 이동: \(recordId)")
+                    // 약간의 딜레이 후 이동 (sheet 닫힘 애니메이션 완료 대기)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        navigationPath.append(recordId)
+                        savedRecordId = nil
+                    }
                 }
             }
         }
@@ -184,7 +206,7 @@ struct HomeView: View {
     private var recentRecordsList: some View {
         LazyVStack(spacing: WanderSpacing.space4) {
             ForEach(records.prefix(5)) { record in
-                NavigationLink(destination: RecordDetailFullView(record: record)) {
+                NavigationLink(value: record.id) {
                     RecordCard(record: record)
                 }
                 .buttonStyle(.plain)

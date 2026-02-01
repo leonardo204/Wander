@@ -218,24 +218,26 @@ struct LookbackView: View {
 
         DispatchQueue.global(qos: .userInitiated).async {
             let fetchOptions = PHFetchOptions()
-            fetchOptions.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
-                NSPredicate(format: "creationDate >= %@ AND creationDate <= %@", startDate as NSDate, endDate as NSDate),
-                NSPredicate(format: "location != nil")
-            ])
+            // Note: PhotoKit doesn't support "location != nil" predicate
+            // Filter by date range only, then filter by location in memory
+            fetchOptions.predicate = NSPredicate(format: "creationDate >= %@ AND creationDate <= %@", startDate as NSDate, endDate as NSDate)
             fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
 
             let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
 
             var assets: [PHAsset] = []
             fetchResult.enumerateObjects { asset, _, _ in
-                assets.append(asset)
+                // Filter: only photos with GPS location
+                if asset.location != nil {
+                    assets.append(asset)
+                }
             }
 
             DispatchQueue.main.async {
                 self.photos = assets
                 self.selectedPhotos = Set(assets.map { $0.localIdentifier })
                 self.isLoading = false
-                logger.info("🔄 [LookbackView] 사진 로드 완료: \(assets.count)장")
+                logger.info("🔄 [LookbackView] 사진 로드 완료: \(assets.count)장 (GPS 있는 사진만)")
             }
         }
     }

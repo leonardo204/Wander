@@ -8,15 +8,18 @@ private let logger = Logger(subsystem: "com.zerolive.wander", category: "ResultV
 struct ResultView: View {
     let result: AnalysisResult
     let selectedAssets: [PHAsset]
+    var onSaveComplete: ((TravelRecord) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @State private var showShareSheet = false
     @State private var isSaved = false
+    @State private var savedRecord: TravelRecord?
 
-    init(result: AnalysisResult, selectedAssets: [PHAsset]) {
+    init(result: AnalysisResult, selectedAssets: [PHAsset], onSaveComplete: ((TravelRecord) -> Void)? = nil) {
         self.result = result
         self.selectedAssets = selectedAssets
+        self.onSaveComplete = onSaveComplete
         logger.info("📊 [ResultView] init - 제목: \(result.title), 장소: \(result.places.count)개")
     }
 
@@ -143,19 +146,47 @@ struct ResultView: View {
 
     // MARK: - Timeline Section
     private var timelineSection: some View {
-        VStack(alignment: .leading, spacing: WanderSpacing.space4) {
+        let groupedByDate = groupPlacesByDate()
+        let sortedDates = groupedByDate.keys.sorted()
+
+        return VStack(alignment: .leading, spacing: WanderSpacing.space4) {
             Text("타임라인")
                 .font(WanderTypography.headline)
                 .foregroundColor(WanderColors.textPrimary)
 
-            ForEach(Array(result.places.enumerated()), id: \.element.id) { index, place in
-                TimelineCard(
-                    place: place,
-                    index: index,
-                    isLast: index == result.places.count - 1
-                )
+            ForEach(Array(sortedDates.enumerated()), id: \.element) { dayIndex, date in
+                // Day header
+                DayHeader(dayNumber: dayIndex + 1, date: date)
+
+                // Places for this day
+                if let placesForDay = groupedByDate[date] {
+                    let sortedPlaces = placesForDay.sorted { $0.startTime < $1.startTime }
+                    ForEach(Array(sortedPlaces.enumerated()), id: \.element.id) { placeIndex, place in
+                        TimelineCard(
+                            place: place,
+                            index: placeIndex,
+                            isLast: placeIndex == sortedPlaces.count - 1
+                        )
+                    }
+                }
             }
         }
+    }
+
+    /// 장소를 날짜별로 그룹화
+    private func groupPlacesByDate() -> [Date: [PlaceCluster]] {
+        let calendar = Calendar.current
+        var grouped: [Date: [PlaceCluster]] = [:]
+
+        for place in result.places {
+            let dateOnly = calendar.startOfDay(for: place.startTime)
+            if grouped[dateOnly] == nil {
+                grouped[dateOnly] = []
+            }
+            grouped[dateOnly]?.append(place)
+        }
+
+        return grouped
     }
 
     // MARK: - Action Buttons
@@ -206,44 +237,78 @@ struct ResultView: View {
         record.placeCount = result.placeCount
         record.photoCount = selectedAssets.count // Use actual selected count
 
-        // Create day
-        let day = TravelDay(date: result.startDate, dayNumber: 1)
-
         // Collect photos that are in clusters
         var savedPhotoIds = Set<String>()
 
-        // Create places from clusters
-        for (index, cluster) in result.places.enumerated() {
-            let place = Place(
-                name: cluster.name,
-                address: cluster.address,
-                coordinate: cluster.coordinate,
-                startTime: cluster.startTime
-            )
-            place.activityLabel = cluster.activityType.displayName
-            place.placeType = cluster.placeType ?? "other"
-            place.order = index
+        // Group clusters by date
+        let calendar = Calendar.current
+        var clustersByDate: [Date: [PlaceCluster]] = [:]
 
-            // Save photos to place
-            for (photoIndex, asset) in cluster.photos.enumerated() {
-                let photo = PhotoItem(
-                    assetIdentifier: asset.localIdentifier,
-                    capturedAt: asset.creationDate,
-                    latitude: asset.location?.coordinate.latitude,
-                    longitude: asset.location?.coordinate.longitude
+        for cluster in result.places {
+            let dateOnly = calendar.startOfDay(for: cluster.startTime)
+            if clustersByDate[dateOnly] == nil {
+                clustersByDate[dateOnly] = []
+            }
+            clustersByDate[dateOnly]?.append(cluster)
+        }
+
+        // Sort dates and create days
+        let sortedDates = clustersByDate.keys.sorted()
+        logger.info("💾 [ResultView] 날짜별 분류: \(sortedDates.count)일")
+
+        for (dayIndex, date) in sortedDates.enumerated() {
+            let dayNumber = dayIndex + 1
+            let day = TravelDay(date: date, dayNumber: dayNumber)
+
+            guard let clustersForDay = clustersByDate[date] else { continue }
+
+            // Sort clusters by time within the day
+            let sortedClusters = clustersForDay.sorted { $0.startTime < $1.startTime }
+
+            for (placeIndex, cluster) in sortedClusters.enumerated() {
+                let place = Place(
+                    name: cluster.name,
+                    address: cluster.address,
+                    coordinate: cluster.coordinate,
+                    startTime: cluster.startTime
                 )
-                photo.order = photoIndex
-                place.photos.append(photo)
-                savedPhotoIds.insert(asset.localIdentifier)
+                place.activityLabel = cluster.activityType.displayName
+                place.placeType = cluster.placeType ?? "other"
+                place.order = placeIndex
+
+                // Save photos to place
+                for (photoIndex, asset) in cluster.photos.enumerated() {
+                    let photo = PhotoItem(
+                        assetIdentifier: asset.localIdentifier,
+                        capturedAt: asset.creationDate,
+                        latitude: asset.location?.coordinate.latitude,
+                        longitude: asset.location?.coordinate.longitude
+                    )
+                    photo.order = photoIndex
+                    place.photos.append(photo)
+                    savedPhotoIds.insert(asset.localIdentifier)
+                }
+
+                day.places.append(place)
             }
 
-            day.places.append(place)
+            record.days.append(day)
+            logger.info("💾 [ResultView] Day \(dayNumber): \(sortedClusters.count)개 장소")
         }
 
         // Find photos not in any cluster (no GPS or filtered out)
         let uncategorizedAssets = selectedAssets.filter { !savedPhotoIds.contains($0.localIdentifier) }
 
         if !uncategorizedAssets.isEmpty {
+            // Add to the last day or create new day if no days exist
+            let lastDay: TravelDay
+            if let existingLastDay = record.days.last {
+                lastDay = existingLastDay
+            } else {
+                lastDay = TravelDay(date: result.startDate, dayNumber: 1)
+                record.days.append(lastDay)
+            }
+
             // Create "미분류" place for uncategorized photos
             let uncategorizedPlace = Place(
                 name: "미분류 사진",
@@ -253,7 +318,7 @@ struct ResultView: View {
             )
             uncategorizedPlace.activityLabel = "기타"
             uncategorizedPlace.placeType = "other"
-            uncategorizedPlace.order = result.places.count
+            uncategorizedPlace.order = lastDay.places.count
 
             for (photoIndex, asset) in uncategorizedAssets.enumerated() {
                 let photo = PhotoItem(
@@ -266,19 +331,31 @@ struct ResultView: View {
                 uncategorizedPlace.photos.append(photo)
             }
 
-            day.places.append(uncategorizedPlace)
+            lastDay.places.append(uncategorizedPlace)
             record.placeCount += 1
             logger.info("💾 [ResultView] 미분류 사진 \(uncategorizedAssets.count)장 추가")
         }
 
-        record.days.append(day)
-
         modelContext.insert(record)
+        savedRecord = record
 
-        logger.info("💾 [ResultView] 저장 완료 - 장소: \(record.placeCount), 사진: \(selectedAssets.count)")
+        logger.info("💾 [ResultView] 저장 완료 - 날짜: \(record.days.count)일, 장소: \(record.placeCount), 사진: \(selectedAssets.count)")
 
         withAnimation {
             isSaved = true
+        }
+
+        // 저장 후 1초 뒤 자동으로 닫기
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            logger.info("📊 [ResultView] 자동 닫기 - 저장된 기록으로 이동")
+            if let record = savedRecord {
+                onSaveComplete?(record)
+            }
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                dismiss()
+            }
         }
     }
 }
@@ -330,6 +407,39 @@ struct StatCard: View {
         .padding(WanderSpacing.space4)
         .background(WanderColors.surface)
         .cornerRadius(WanderSpacing.radiusLarge)
+    }
+}
+
+// MARK: - Day Header
+struct DayHeader: View {
+    let dayNumber: Int
+    let date: Date
+
+    var body: some View {
+        HStack(spacing: WanderSpacing.space3) {
+            Text("Day \(dayNumber)")
+                .font(WanderTypography.headline)
+                .foregroundColor(WanderColors.primary)
+                .padding(.horizontal, WanderSpacing.space3)
+                .padding(.vertical, WanderSpacing.space1)
+                .background(WanderColors.primaryPale)
+                .cornerRadius(WanderSpacing.radiusMedium)
+
+            Text(formatDate(date))
+                .font(WanderTypography.caption1)
+                .foregroundColor(WanderColors.textSecondary)
+
+            Spacer()
+        }
+        .padding(.top, dayNumber > 1 ? WanderSpacing.space4 : 0)
+        .padding(.bottom, WanderSpacing.space2)
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M월 d일 (E)"
+        formatter.locale = Locale(identifier: "ko_KR")
+        return formatter.string(from: date)
     }
 }
 
@@ -412,29 +522,62 @@ struct TimelineCard: View {
     }
 }
 
-// MARK: - Share Sheet View
+// MARK: - Share Format
+enum ShareFormat: String, CaseIterable, Identifiable {
+    case text
+    case image
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .text: return "텍스트"
+        case .image: return "이미지"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .text: return "doc.text"
+        case .image: return "photo"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .text: return "타임라인을 텍스트로 공유"
+        case .image: return "1080×1920 세로형 이미지"
+        }
+    }
+}
+
+// MARK: - Share Sheet View (Format Selection → Preview → Share)
 struct ShareSheetView: View {
     let result: AnalysisResult
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("includeWatermark") private var includeWatermark = true
 
-    @State private var selectedFormat: ExportFormat = .image
-    @State private var isExporting = false
-    @State private var showActivitySheet = false
-    @State private var exportedImage: UIImage?
-    @State private var exportedText: String = ""
+    @State private var selectedFormat: ShareFormat = .image
+    @State private var showPreview = false
 
     var body: some View {
         NavigationStack {
             VStack(spacing: WanderSpacing.space5) {
-                // Format Selection
-                VStack(alignment: .leading, spacing: WanderSpacing.space3) {
-                    Text("내보내기 형식")
-                        .font(WanderTypography.headline)
+                // Header
+                VStack(spacing: WanderSpacing.space2) {
+                    Text("공유 형식 선택")
+                        .font(WanderTypography.title3)
                         .foregroundColor(WanderColors.textPrimary)
 
-                    ForEach(ExportFormat.allCases) { format in
-                        ExportFormatRow(
+                    Text("형식을 선택한 후 미리보기를 확인하세요")
+                        .font(WanderTypography.body)
+                        .foregroundColor(WanderColors.textSecondary)
+                }
+                .padding(.top, WanderSpacing.space4)
+
+                // Format Selection
+                VStack(spacing: WanderSpacing.space3) {
+                    ForEach(ShareFormat.allCases) { format in
+                        ShareFormatCard(
                             format: format,
                             isSelected: selectedFormat == format,
                             onSelect: { selectedFormat = format }
@@ -442,34 +585,13 @@ struct ShareSheetView: View {
                     }
                 }
 
-                Divider()
-
-                // Options
-                VStack(alignment: .leading, spacing: WanderSpacing.space3) {
-                    Text("옵션")
-                        .font(WanderTypography.headline)
-                        .foregroundColor(WanderColors.textPrimary)
-
-                    Toggle("워터마크 포함", isOn: $includeWatermark)
-                        .tint(WanderColors.primary)
-
-                    Text("'Wander' 로고가 하단에 표시됩니다.")
-                        .font(WanderTypography.caption1)
-                        .foregroundColor(WanderColors.textTertiary)
-                }
-
                 Spacer()
 
-                // Export Button
-                Button(action: performExport) {
+                // Next Button
+                Button(action: { showPreview = true }) {
                     HStack {
-                        if isExporting {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        } else {
-                            Image(systemName: "square.and.arrow.up")
-                        }
-                        Text(isExporting ? "내보내는 중..." : "내보내기")
+                        Text("미리보기")
+                        Image(systemName: "chevron.right")
                     }
                     .font(WanderTypography.headline)
                     .foregroundColor(.white)
@@ -478,7 +600,6 @@ struct ShareSheetView: View {
                     .background(WanderColors.primary)
                     .cornerRadius(WanderSpacing.radiusLarge)
                 }
-                .disabled(isExporting)
             }
             .padding(WanderSpacing.screenMargin)
             .navigationTitle("공유하기")
@@ -488,105 +609,313 @@ struct ShareSheetView: View {
                     Button("닫기") { dismiss() }
                 }
             }
-            .sheet(isPresented: $showActivitySheet) {
-                if let image = exportedImage {
-                    ActivityViewController(activityItems: [image])
-                } else if !exportedText.isEmpty {
-                    ActivityViewController(activityItems: [exportedText])
-                }
-            }
-        }
-    }
-
-    private func performExport() {
-        isExporting = true
-        let exportService = ExportService.shared
-
-        Task {
-            switch selectedFormat {
-            case .image:
-                if let image = await exportService.exportAsImage(result: result, includeWatermark: includeWatermark) {
-                    await MainActor.run {
-                        exportedImage = image
-                        exportedText = ""
-                        isExporting = false
-                        showActivitySheet = true
-                    }
-                }
-
-            case .text:
-                let text = exportService.exportAsText(result: result, includeWatermark: includeWatermark)
-                await MainActor.run {
-                    exportedText = text
-                    exportedImage = nil
-                    isExporting = false
-                    showActivitySheet = true
-                }
-
-            case .markdown:
-                let markdown = exportService.exportAsMarkdown(result: result, includeWatermark: includeWatermark)
-                await MainActor.run {
-                    exportedText = markdown
-                    exportedImage = nil
-                    isExporting = false
-                    showActivitySheet = true
-                }
-
-            case .deeplink:
-                if let message = exportService.createShareMessage(result: result) {
-                    await MainActor.run {
-                        exportedText = message
-                        exportedImage = nil
-                        isExporting = false
-                        showActivitySheet = true
-                    }
-                } else {
-                    await MainActor.run {
-                        isExporting = false
-                    }
-                }
+            .navigationDestination(isPresented: $showPreview) {
+                SharePreviewView(result: result, format: selectedFormat, onDismissAll: { dismiss() })
             }
         }
     }
 }
 
-// MARK: - Export Format Row
-struct ExportFormatRow: View {
-    let format: ExportFormat
+// MARK: - Share Format Card
+struct ShareFormatCard: View {
+    let format: ShareFormat
     let isSelected: Bool
     let onSelect: () -> Void
 
     var body: some View {
         Button(action: onSelect) {
-            HStack(spacing: WanderSpacing.space3) {
-                Image(systemName: format.icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(isSelected ? WanderColors.primary : WanderColors.textSecondary)
-                    .frame(width: 28)
+            HStack(spacing: WanderSpacing.space4) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? WanderColors.primary : WanderColors.surface)
+                        .frame(width: 48, height: 48)
 
-                Text(format.displayName)
-                    .font(WanderTypography.body)
-                    .foregroundColor(WanderColors.textPrimary)
+                    Image(systemName: format.icon)
+                        .font(.system(size: 20))
+                        .foregroundColor(isSelected ? .white : WanderColors.textSecondary)
+                }
+
+                // Text
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(format.title)
+                        .font(WanderTypography.headline)
+                        .foregroundColor(WanderColors.textPrimary)
+
+                    Text(format.description)
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textSecondary)
+                }
 
                 Spacer()
 
+                // Checkmark
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 24))
                         .foregroundColor(WanderColors.primary)
                 } else {
-                    Image(systemName: "circle")
-                        .foregroundColor(WanderColors.border)
+                    Circle()
+                        .stroke(WanderColors.border, lineWidth: 2)
+                        .frame(width: 24, height: 24)
                 }
             }
-            .padding(WanderSpacing.space3)
+            .padding(WanderSpacing.space4)
             .background(isSelected ? WanderColors.primaryPale : WanderColors.surface)
-            .cornerRadius(WanderSpacing.radiusMedium)
+            .cornerRadius(WanderSpacing.radiusLarge)
             .overlay(
-                RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium)
-                    .stroke(isSelected ? WanderColors.primary : WanderColors.border, lineWidth: 1)
+                RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge)
+                    .stroke(isSelected ? WanderColors.primary : WanderColors.border, lineWidth: isSelected ? 2 : 1)
             )
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Share Preview View
+struct SharePreviewView: View {
+    let result: AnalysisResult
+    let format: ShareFormat
+    let onDismissAll: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("includeWatermark") private var includeWatermark = true
+
+    @State private var isLoading = true
+    @State private var previewImage: UIImage?
+    @State private var previewText: String = ""
+    @State private var isSharing = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Preview Content
+            ScrollView {
+                VStack(spacing: WanderSpacing.space4) {
+                    if isLoading {
+                        loadingView
+                    } else {
+                        switch format {
+                        case .text:
+                            textPreview
+                        case .image:
+                            imagePreview
+                        }
+                    }
+                }
+                .padding(WanderSpacing.screenMargin)
+            }
+
+            // Bottom Bar
+            VStack(spacing: WanderSpacing.space3) {
+                // Watermark Toggle
+                Toggle(isOn: $includeWatermark) {
+                    HStack(spacing: WanderSpacing.space2) {
+                        Image(systemName: "signature")
+                            .foregroundColor(WanderColors.textSecondary)
+                        Text("워터마크 포함")
+                            .font(WanderTypography.body)
+                    }
+                }
+                .tint(WanderColors.primary)
+                .onChange(of: includeWatermark) { _, _ in
+                    generatePreview()
+                }
+
+                // Share Button
+                Button(action: performShare) {
+                    HStack {
+                        if isSharing {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        Text(isSharing ? "공유 준비 중..." : "공유하기")
+                    }
+                    .font(WanderTypography.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: WanderSpacing.buttonHeight)
+                    .background(isLoading || isSharing ? WanderColors.textTertiary : WanderColors.primary)
+                    .cornerRadius(WanderSpacing.radiusLarge)
+                }
+                .disabled(isLoading || isSharing)
+            }
+            .padding(WanderSpacing.screenMargin)
+            .background(WanderColors.surface)
+        }
+        .background(WanderColors.background)
+        .navigationTitle("미리보기")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("닫기") {
+                    onDismissAll()
+                }
+                .foregroundColor(WanderColors.textSecondary)
+            }
+        }
+        .onAppear {
+            generatePreview()
+        }
+    }
+
+    // MARK: - Loading View
+    private var loadingView: some View {
+        VStack(spacing: WanderSpacing.space4) {
+            Spacer()
+                .frame(height: 100)
+
+            ProgressView()
+                .scaleEffect(1.5)
+
+            Text("미리보기 생성 중...")
+                .font(WanderTypography.body)
+                .foregroundColor(WanderColors.textSecondary)
+
+            Spacer()
+                .frame(height: 100)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Text Preview
+    private var textPreview: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+            // Format badge
+            HStack {
+                Image(systemName: "doc.text")
+                Text("텍스트 미리보기")
+            }
+            .font(WanderTypography.caption1)
+            .foregroundColor(WanderColors.primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(WanderColors.primaryPale)
+            .cornerRadius(WanderSpacing.radiusMedium)
+
+            // Text content
+            Text(previewText)
+                .font(.system(size: 14, design: .monospaced))
+                .foregroundColor(WanderColors.textPrimary)
+                .padding(WanderSpacing.space4)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(WanderColors.surface)
+                .cornerRadius(WanderSpacing.radiusLarge)
+                .overlay(
+                    RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge)
+                        .stroke(WanderColors.border, lineWidth: 1)
+                )
+        }
+    }
+
+    // MARK: - Image Preview
+    private var imagePreview: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+            // Format badge
+            HStack {
+                Image(systemName: "photo")
+                Text("이미지 미리보기 (1080×1920)")
+            }
+            .font(WanderTypography.caption1)
+            .foregroundColor(WanderColors.primary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(WanderColors.primaryPale)
+            .cornerRadius(WanderSpacing.radiusMedium)
+
+            // Image content
+            if let image = previewImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .cornerRadius(WanderSpacing.radiusLarge)
+                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+            }
+        }
+    }
+
+    // MARK: - Generate Preview
+    private func generatePreview() {
+        isLoading = true
+
+        Task.detached(priority: .userInitiated) {
+            switch format {
+            case .text:
+                let text = ExportService.shared.exportAsText(result: result, includeWatermark: includeWatermark)
+                await MainActor.run {
+                    previewText = text
+                    isLoading = false
+                }
+
+            case .image:
+                let image = await ExportService.shared.exportAsImage(result: result, includeWatermark: includeWatermark)
+                await MainActor.run {
+                    previewImage = image
+                    isLoading = false
+                }
+            }
+        }
+    }
+
+    // MARK: - Perform Share
+    private func performShare() {
+        isSharing = true
+        logger.info("📤 [SharePreview] 공유 시작 - 형식: \(format.title)")
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            var items: [Any] = []
+
+            switch format {
+            case .text:
+                items = [previewText]
+            case .image:
+                if let image = previewImage {
+                    items = [image]
+                }
+            }
+
+            guard !items.isEmpty else {
+                isSharing = false
+                return
+            }
+
+            showActivitySheet(with: items)
+        }
+    }
+
+    private func showActivitySheet(with items: [Any]) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first,
+              let rootVC = window.rootViewController else {
+            isSharing = false
+            return
+        }
+
+        var topVC = rootVC
+        while let presented = topVC.presentedViewController {
+            topVC = presented
+        }
+
+        let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
+
+        activityVC.completionWithItemsHandler = { _, completed, _, _ in
+            isSharing = false
+            if completed {
+                logger.info("📤 [SharePreview] 공유 완료")
+                onDismissAll()
+            }
+        }
+
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = topVC.view
+            popover.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.maxY - 100, width: 0, height: 0)
+            popover.permittedArrowDirections = .down
+        }
+
+        topVC.present(activityVC, animated: true) {
+            logger.info("📤 [SharePreview] Activity sheet 표시됨")
+        }
     }
 }
 

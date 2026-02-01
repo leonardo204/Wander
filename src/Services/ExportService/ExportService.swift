@@ -6,35 +6,7 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "ExportService")
 
-/// 내보내기 형식
-enum ExportFormat: String, CaseIterable, Identifiable {
-    case image = "image"
-    case text = "text"
-    case markdown = "markdown"
-    case deeplink = "deeplink"
-
-    var id: String { rawValue }
-
-    var displayName: String {
-        switch self {
-        case .image: return "이미지 (PNG)"
-        case .text: return "텍스트"
-        case .markdown: return "Markdown"
-        case .deeplink: return "링크로 공유"
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .image: return "photo"
-        case .text: return "doc.text"
-        case .markdown: return "doc.richtext"
-        case .deeplink: return "link"
-        }
-    }
-}
-
-/// 내보내기 서비스
+/// 내보내기 서비스 (이미지 공유 전용)
 final class ExportService {
     static let shared = ExportService()
 

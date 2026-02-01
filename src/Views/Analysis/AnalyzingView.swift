@@ -6,6 +6,8 @@ private let logger = Logger(subsystem: "com.zerolive.wander", category: "Analyzi
 
 struct AnalyzingView: View {
     @ObservedObject var viewModel: PhotoSelectionViewModel
+    var onSaveComplete: ((TravelRecord) -> Void)?
+
     @State private var engine = AnalysisEngine()
     @State private var showResult = false
     @State private var analysisResult: AnalysisResult?
@@ -55,10 +57,17 @@ struct AnalyzingView: View {
                 }
             }) {
                 if let result = analysisResult {
-                    ResultView(result: result, selectedAssets: viewModel.selectedAssets)
-                        .onAppear {
-                            logger.info("📱 ResultView fullScreenCover 표시됨 - places: \(result.places.count), photos: \(result.photoCount)")
+                    ResultView(
+                        result: result,
+                        selectedAssets: viewModel.selectedAssets,
+                        onSaveComplete: { savedRecord in
+                            logger.info("📱 [AnalyzingView] 저장 완료 콜백 받음: \(savedRecord.title)")
+                            onSaveComplete?(savedRecord)
                         }
+                    )
+                    .onAppear {
+                        logger.info("📱 ResultView fullScreenCover 표시됨 - places: \(result.places.count), photos: \(result.photoCount)")
+                    }
                 } else {
                     VStack {
                         Text("결과를 불러올 수 없습니다")
