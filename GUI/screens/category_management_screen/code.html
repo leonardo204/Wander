@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Wander - Category Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-[#111418] dark:text-gray-100">
+<div class="max-w-md mx-auto min-h-screen flex flex-col pb-10">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-4 flex items-center justify-between">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-2xl">arrow_back_ios_new</span>
+</button>
+<h1 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">카테고리 관리</h1>
+</header>
+<main class="px-5 space-y-6">
+<!-- Default Categories Section -->
+<section>
+<h3 class="text-[#111418] dark:text-gray-100 text-lg font-bold leading-tight tracking-[-0.015em] pb-3 pt-2">기본 카테고리</h3>
+<div class="bg-white dark:bg-[#1c2630] rounded-xl overflow-hidden shadow-sm border border-black/5 dark:border-white/5">
+<!-- Category Item 1 -->
+<div class="flex items-center justify-between px-4 py-4 border-b border-black/5 dark:border-white/5">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-background-light dark:bg-background-dark size-10 text-xl">
+                                🗺️
+                            </div>
+<p class="text-base font-medium">여행</p>
+</div>
+<button class="min-w-[72px] h-8 rounded-full bg-primary/10 text-primary text-sm font-semibold transition-colors hover:bg-primary/20">
+                            표시
+                        </button>
+</div>
+<!-- Category Item 2 -->
+<div class="flex items-center justify-between px-4 py-4 border-b border-black/5 dark:border-white/5">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-background-light dark:bg-background-dark size-10 text-xl">
+                                ☀️
+                            </div>
+<p class="text-base font-medium">일상</p>
+</div>
+<button class="min-w-[72px] h-8 rounded-full bg-primary/10 text-primary text-sm font-semibold transition-colors hover:bg-primary/20">
+                            표시
+                        </button>
+</div>
+<!-- Category Item 3 -->
+<div class="flex items-center justify-between px-4 py-4 border-b border-black/5 dark:border-white/5">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-background-light dark:bg-background-dark size-10 text-xl">
+                                📅
+                            </div>
+<p class="text-base font-medium">주간</p>
+</div>
+<button class="min-w-[72px] h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm font-semibold transition-colors">
+                            숨김
+                        </button>
+</div>
+<!-- Category Item 4 -->
+<div class="flex items-center justify-between px-4 py-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-background-light dark:bg-background-dark size-10 text-xl">
+                                💼
+                            </div>
+<p class="text-base font-medium">출장</p>
+</div>
+<button class="min-w-[72px] h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm font-semibold transition-colors">
+                            숨김
+                        </button>
+</div>
+</div>
+</section>
+<!-- Custom Categories Section -->
+<section>
+<h3 class="text-[#111418] dark:text-gray-100 text-lg font-bold leading-tight tracking-[-0.015em] pb-3 pt-2">내 카테고리</h3>
+<div class="bg-white dark:bg-[#1c2630] rounded-xl overflow-hidden shadow-sm border border-black/5 dark:border-white/5 mb-4">
+<!-- Custom Item 1 -->
+<div class="flex items-center justify-between px-4 py-4 border-b border-black/5 dark:border-white/5">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-background-light dark:bg-background-dark size-10 text-xl">
+                                🎂
+                            </div>
+<p class="text-base font-medium">가족 모임</p>
+</div>
+<div class="flex gap-2">
+<button class="size-8 flex items-center justify-center rounded-full text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="size-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Custom Item 2 -->
+<div class="flex items-center justify-between px-4 py-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-background-light dark:bg-background-dark size-10 text-xl">
+                                🏃
+                            </div>
+<p class="text-base font-medium">운동</p>
+</div>
+<div class="flex gap-2">
+<button class="size-8 flex items-center justify-center rounded-full text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="size-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Add Button -->
+<button class="w-full flex items-center justify-center gap-2 h-14 bg-primary/5 hover:bg-primary/10 border-2 border-dashed border-primary/20 text-primary font-bold rounded-xl transition-all duration-200 active:scale-[0.98]">
+<span class="material-symbols-outlined">add_circle</span>
+<span>새 카테고리 추가</span>
+</button>
+</section>
+<!-- Bottom Illustration / Placeholder -->
+<div class="pt-8 flex flex-col items-center opacity-40 grayscale pointer-events-none">
+<div class="w-32 h-32 bg-gradient-to-tr from-primary/20 to-transparent rounded-full flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-5xl text-primary">auto_awesome_motion</span>
+</div>
+<p class="text-sm font-medium text-center">나만의 특별한 여행 이야기를<br/>카테고리로 정리해보세요.</p>
+</div>
+</main>
+</div>
+</body></html>

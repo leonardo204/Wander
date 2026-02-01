@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#88d0ec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#121c20",
+                        "surface": "#F8FBFD"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>body {
+    font-family: "Plus Jakarta Sans", "Noto Sans KR", sans-serif
+    }
+.radio-dot-svg {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuClaqGzLuqr_xsnAz-lC7GRcc2fVTrxrC1tFWy2KYykPTusl7TcjscvUlS3yDNKQOMiyo4ZJeuK5z4m5OsE2a_A-oK4jcGKIugF1gSpzlZiACtJDpnE5-rRC8-bpf-34lS01V4RD4E2yt6xkBje8w-NxBSQd7N8UkhR8Fi_qHqEgdWdUAEJt9JhVNgkaOlbogm6EFW6LQOBDqbfMrdsGnQWFM-LkCe-lESxRs8uB4N93hqO9BkspTIr5VWPz0UJnopQ3wGA1w1Etksm)
+    }</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-[#111617] dark:text-white min-h-screen flex flex-col overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-10 flex items-center bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-3 justify-between border-b border-gray-100 dark:border-gray-800">
+<button class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined text-2xl">arrow_back_ios</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">내보내기</h2>
+</header>
+<main class="flex-1 w-full max-w-md mx-auto pb-32">
+<!-- SectionHeader: Format -->
+<div class="px-5 pt-6">
+<h3 class="text-lg font-bold tracking-tight">내보내기 형식</h3>
+</div>
+<!-- RadioList: Format Selection -->
+<div class="flex flex-col gap-3 p-5">
+<!-- Selected Option: Image -->
+<label class="relative flex items-center gap-4 rounded-xl border-2 border-primary bg-white dark:bg-gray-900 p-4 flex-row-reverse cursor-pointer shadow-sm">
+<input checked="" class="h-5 w-5 border-2 border-gray-300 bg-transparent text-transparent checked:border-primary radio-dot-svg focus:outline-none focus:ring-0 focus:ring-offset-0 checked:focus:border-primary transition-all" name="export-format" type="radio"/>
+<div class="flex grow flex-col gap-1">
+<div class="flex items-center gap-2">
+<p class="text-base font-bold">🖼️ 이미지 (.png)</p>
+<!-- Chips component style for badge -->
+<div class="flex h-6 shrink-0 items-center justify-center gap-x-1 rounded-lg bg-primary/20 px-2">
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1">star</span>
+<p class="text-[11px] font-bold text-primary leading-none">SNS 공유 최적화</p>
+</div>
+</div>
+<p class="text-[#647d87] text-sm font-normal">고해상도 다이어리 카드로 저장</p>
+</div>
+</label>
+<!-- Markdown -->
+<label class="flex items-center gap-4 rounded-xl border border-[#dce2e5] dark:border-gray-700 bg-surface dark:bg-gray-800/50 p-4 flex-row-reverse cursor-pointer hover:bg-white dark:hover:bg-gray-800 transition-colors">
+<input class="h-5 w-5 border-2 border-[#dce2e5] bg-transparent text-transparent checked:border-primary radio-dot-svg focus:outline-none focus:ring-0 focus:ring-offset-0 checked:focus:border-primary transition-all" name="export-format" type="radio"/>
+<div class="flex grow flex-col gap-1">
+<p class="text-base font-medium">📝 Markdown</p>
+<p class="text-[#647d87] text-sm font-normal">Markdown 문서로 저장</p>
+</div>
+</label>
+<!-- HTML -->
+<label class="flex items-center gap-4 rounded-xl border border-[#dce2e5] dark:border-gray-700 bg-surface dark:bg-gray-800/50 p-4 flex-row-reverse cursor-pointer hover:bg-white dark:hover:bg-gray-800 transition-colors">
+<input class="h-5 w-5 border-2 border-[#dce2e5] bg-transparent text-transparent checked:border-primary radio-dot-svg focus:outline-none focus:ring-0 focus:ring-offset-0 checked:focus:border-primary transition-all" name="export-format" type="radio"/>
+<div class="flex grow flex-col gap-1">
+<p class="text-base font-medium">🌐 HTML</p>
+<p class="text-[#647d87] text-sm font-normal">웹 브라우저에서 확인 가능한 파일</p>
+</div>
+</label>
+<!-- Text -->
+<label class="flex items-center gap-4 rounded-xl border border-[#dce2e5] dark:border-gray-700 bg-surface dark:bg-gray-800/50 p-4 flex-row-reverse cursor-pointer hover:bg-white dark:hover:bg-gray-800 transition-colors">
+<input class="h-5 w-5 border-2 border-[#dce2e5] bg-transparent text-transparent checked:border-primary radio-dot-svg focus:outline-none focus:ring-0 focus:ring-offset-0 checked:focus:border-primary transition-all" name="export-format" type="radio"/>
+<div class="flex grow flex-col gap-1">
+<p class="text-base font-medium">📄 텍스트</p>
+<p class="text-[#647d87] text-sm font-normal">서식 없는 기본 텍스트 파일</p>
+</div>
+</label>
+</div>
+<!-- SectionHeader: Options -->
+<div class="px-5 pt-4">
+<h3 class="text-lg font-bold tracking-tight">상세 설정</h3>
+</div>
+<!-- ActionPanel: Watermark Toggle -->
+<div class="p-5">
+<div class="flex flex-1 flex-col items-start justify-between gap-4 rounded-xl border border-[#dce2e5] dark:border-gray-700 bg-white dark:bg-gray-900 p-5 @[480px]:flex-row @[480px]:items-center">
+<div class="flex flex-col gap-1">
+<p class="text-base font-bold leading-tight">Wander 로고 워터마크</p>
+<p class="text-[#647d87] dark:text-gray-400 text-sm font-normal leading-normal">이미지 우측 하단에 Wander 로고를 추가합니다.</p>
+</div>
+<label class="relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none bg-gray-200 dark:bg-gray-700 p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary transition-all">
+<div class="h-full w-[27px] rounded-full bg-white shadow-md"></div>
+<input checked="" class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Preview Section -->
+<div class="px-5 pb-10">
+<p class="text-sm font-bold text-[#647d87] mb-3">미리보기</p>
+<div class="flex justify-center">
+<div class="relative aspect-[9/16] w-56 rounded-2xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-800 bg-white">
+<!-- Map Mockup -->
+<div class="h-1/2 w-full relative">
+<img alt="Travel map with route" class="w-full h-full object-cover" data-alt="Map showing a travel route in a city" data-location="Kyoto, Japan" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr4_BA6ZkPS3mcM7DamIL1hMYnHeNVDGwp91VWAWS31R8dsFTaRXu8-ZlGA84cFnWm27Oq1FIlutECYpbOn5PsR6j6vRJZBxpZ4QFnsH7phIkfzJaH4pX85u3IBOyBA5F68cyLTjSs-ThM_nfF_vfXeT5UM9mLf8T-T7GKpSeNmw1ILFkqRqYVwYjZycBdDlOXY_6hcmOBaYko4Fd1UV7rhvKEGN7Kj2h1Rb4pW3hM3e4KywhI3a8p6ublmoUxnZOR0vO6EdIm6ZiT"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+</div>
+<!-- Card Content Mockup -->
+<div class="p-4 flex flex-col h-1/2 justify-between bg-white dark:bg-gray-900">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Day 4</h4>
+<span class="text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 italic">2024.03.15</span>
+</div>
+<h3 class="text-sm font-bold mb-3">교토의 조용한 아침 산책</h3>
+<div class="flex gap-4">
+<div>
+<p class="text-[10px] text-gray-400">발걸음</p>
+<p class="text-xs font-bold">12,402</p>
+</div>
+<div>
+<p class="text-[10px] text-gray-400">사진</p>
+<p class="text-xs font-bold">48장</p>
+</div>
+<div>
+<p class="text-[10px] text-gray-400">날씨</p>
+<p class="text-xs font-bold">☀️ 18°</p>
+</div>
+</div>
+</div>
+<!-- Watermark in preview -->
+<div class="flex justify-end items-center gap-1 opacity-60">
+<span class="material-symbols-outlined text-[14px]">explore</span>
+<span class="text-[10px] font-bold tracking-tighter">Wander</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Action Button -->
+<div class="fixed bottom-0 left-0 right-0 p-5 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-t border-gray-100 dark:border-gray-800 flex justify-center">
+<button class="w-full max-w-md h-14 rounded-xl bg-primary text-white text-base font-bold shadow-lg hover:brightness-105 active:scale-[0.98] transition-all">
+            내보내기 시작
+        </button>
+</div>
+</body></html>

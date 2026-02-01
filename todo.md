@@ -1,193 +1,239 @@
-# Wander - 기능 개선 및 신규 기능 목록 (todo.md)
+# Wander - 기능 개선 구현 목록 (todo.md)
 
-> UI Scenario 변경, 정책 결정, 또는 기획이 필요한 항목
-
----
-
-## 📱 UX/UI 개선
-
-### 1. 홈 화면 레이아웃 재설계
-- **현재 문제점**:
-  - "새 여행 기록하기", "지금 뭐해", "이번 주" 영역이 너무 큼
-  - 홈 화면 공간 활용이 비효율적
-- **개선 방향**:
-  - 최근 기록 영역과의 균형 있는 배치
-  - 퀵 액션 버튼 크기 축소 또는 레이아웃 변경
-- **결정 필요 사항**:
-  - [ ] "이번 주" 명칭 변경 검토
-    - 옵션: "이번 달", "최근", "하이라이트", "모아보기" 등
-    - 또는 기간 선택 가능하게? (이번 주 / 이번 달 / 상반기)
-  - [ ] 퀵 액션 버튼 배치 방식 (가로 스크롤? 그리드? 축소?)
-- **UI Scenario 수정 필요**: SCR-005, SCR-005B
-
-### 2. 탭 네비게이션 개선
-#### 2-1. 탭 간 스와이프 이동
-- **요청**: 탭 이동 시 스와이프 제스처로 이동 가능하도록
-- **기술 검토**: TabView에 `.tabViewStyle(.page)` 적용 또는 커스텀 구현
-- **주의사항**: 내부 스크롤뷰와 제스처 충돌 가능성
-
-#### 2-2. 탭 진입 시 홈 화면으로 이동
-- **요청**: 탭 클릭 시 해당 탭의 루트 화면으로 이동 (세부 메뉴 무시)
-- **현재**: NavigationStack 상태 유지됨
-- **수정 방향**: 탭 선택 시 NavigationPath 초기화
+> v2.1 기능 구현을 위한 작업 목록
+> 기획 완료, GUI 완료, 구현 대기 상태
 
 ---
 
-## 📤 공유/내보내기 기능 개편
+## 결정 사항 요약 (2026-02-01)
 
-### 3. 내보내기 기능 개편
-- **요청사항**:
-  - 전체 기록을 하나의 이미지로 생성
-  - 출처 워터마크 삽입 (예: "Made with Wander")
-- **결정 필요 사항**:
-  - [ ] 이미지 형식 (PNG? JPG?)
-  - [ ] 이미지 크기/해상도
-  - [ ] 워터마크 위치 및 디자인
-  - [ ] 이미지 외 다른 형식도 지원? (PDF?)
-- **기술 검토**: UIGraphicsImageRenderer로 View를 이미지로 렌더링
-
-### 4. 공유 기능 개편
-- **요청사항**:
-  - 공유 시 Wander 앱 설치/실행 유도
-- **구현 방안**:
-  - 딥링크/유니버셜 링크 구현
-  - 공유 콘텐츠에 앱스토어 링크 포함
-  - 커스텀 URL Scheme (wander://)
-- **결정 필요 사항**:
-  - [ ] 앱스토어 출시 여부 및 링크
-  - [ ] 딥링크 URL 구조 설계
-
-### 5. 공유받은 항목 보기 기능
-- **요청사항**:
-  - 다른 사용자가 공유해준 여행 기록을 앱에서 볼 수 있는 기능
-- **구현 방안**:
-  - 딥링크로 공유 데이터 수신
-  - 임시 뷰어 화면 또는 "공유받은 기록" 섹션
-- **결정 필요 사항**:
-  - [ ] 공유 데이터 포맷 (JSON? 커스텀?)
-  - [ ] 공유받은 기록 저장 여부
-  - [ ] 별도 탭/섹션 필요 여부
+| 항목 | 결정 |
+|------|------|
+| 홈 화면 명칭 | "돌아보기" + 기간 선택 (이번 주/지난 주/이번 달/최근 30일) |
+| 홈 화면 레이아웃 | FAB 우하단 (여행 기록하기), 2열 카드 (지금 뭐해?, 돌아보기) |
+| 내보내기 이미지 | PNG, 1080x1920 고정 |
+| 워터마크 | 우하단, 로고만 |
+| 숨긴 기록 접근 | 기록 탭 내 "숨긴 기록" 섹션 |
+| 인증 방식 | 생체인증 우선, 실패 시 4자리 PIN |
+| 앱 잠금 | 숨긴 기록만 보호 (앱 전체 잠금 없음) |
+| 사용자 장소 | 기본(집, 회사/학교) + 사용자 정의 (최대 5개) |
+| 카테고리 | 기본 4개 숨기기 가능 + 사용자 정의 추가 가능 |
 
 ---
 
-## 🔒 보안/프라이버시
+## Phase 1: 홈 화면 & 네비게이션 개선
 
-### 6. 기록 숨기기 기능
-- **요청사항**:
-  - 특정 기록을 숨기기 가능
-  - 암호 또는 Face ID/Touch ID로 보호
-- **구현 방안**:
-  - TravelRecord에 `isHidden` 필드 추가
-  - LocalAuthentication 프레임워크 사용
-  - 설정에서 암호/생체인증 활성화 옵션
-- **결정 필요 사항**:
-  - [ ] 숨긴 기록 접근 방식 (별도 섹션? 설정에서?)
-  - [ ] 암호 vs 생체인증 vs 둘 다
-  - [ ] 앱 전체 잠금 기능도 필요?
-- **UI Scenario 추가 필요**: 숨긴 기록 섹션, 인증 화면
+### 1.1 홈 화면 FAB 도입
+- **파일**: `src/Views/Home/HomeView.swift`
+- **GUI**: `wander_home_screen_with_fab/screen.png`
+- **작업 내용**:
+  - [ ] 기존 "여행 기록 만들기" 큰 카드 제거
+  - [ ] FAB 컴포넌트 추가 (우하단, 56pt, Primary 색상)
+  - [ ] FAB 탭 시 PhotoSelectionView 표시
+  - [ ] 퀵 액션 카드 2열 레이아웃으로 변경
 
----
+### 1.2 "돌아보기" 기능 구현
+- **파일**: `src/Views/Home/LookbackView.swift` (신규)
+- **GUI**: `lookback_selection_screen/screen.png`
+- **작업 내용**:
+  - [ ] 기간 선택 Segmented Control (이번 주/지난 주/이번 달/최근 30일)
+  - [ ] 기간별 사진 자동 로드 (GPS 있는 사진만)
+  - [ ] 사진 선택/해제 그리드
+  - [ ] "하이라이트 만들기" → 분석 플로우 연결
 
-## 🤖 AI 기능 확장
-
-### 7. BYOK 기능 동작 검증
-- **현재 상태**: OpenAI, Anthropic, Google AI 구현됨
-- **검증 필요 항목**:
-  - [ ] API Key 저장/불러오기 정상 동작
-  - [ ] 각 프로바이더별 API 호출 테스트
-  - [ ] 에러 핸들링 (잘못된 키, 네트워크 오류 등)
-  - [ ] 스토리 생성 품질 확인
-
-### 8. Azure OpenAI 지원 추가
-- **요청사항**: Azure OpenAI Service 지원
-- **구현 방안**:
-  - `AzureOpenAIService.swift` 신규 생성
-  - AIServiceProtocol 구현
-  - 엔드포인트, 배포 이름 등 추가 설정 필요
-- **결정 필요 사항**:
-  - [ ] Azure 전용 설정 UI 필요 (endpoint, deployment name 등)
-  - [ ] API 버전 지원 범위
-
-### 9. 분석 알고리즘 고도화
-- **요청사항**: 분석 기능을 더 AI/Smart하게 업그레이드
-- **현재 분석 방식**:
-  - GPS 클러스터링 (거리/시간 기반)
-  - 규칙 기반 활동 추론
-  - Reverse Geocoding
-- **개선 방안**:
-  - [ ] 시간대별 활동 패턴 학습
-  - [ ] 장소 유형 더 정교하게 추론
-  - [ ] 이동 수단 추론 (속도 기반)
-  - [ ] 사용자 행동 패턴 학습
-  - [ ] AI API를 활용한 장소/활동 추론?
-- **기획 필요**: 어떤 수준까지 "스마트"하게 할 것인지
+### 1.3 탭 네비게이션 개선
+- **파일**: `src/ContentView.swift`
+- **작업 내용**:
+  - [ ] 탭 클릭 시 NavigationPath 초기화 (루트로 이동)
+  - [ ] (선택) 탭 간 스와이프 이동 검토
 
 ---
 
-## ⚙️ 설정 및 사용자화
+## Phase 2: 보안 & 프라이버시
 
-### 10. 기록 카테고리 사용자 정의
-- **현재**: travel, daily, weekly, business(추가예정) 고정
-- **요청사항**: 사용자가 직접 카테고리 추가/관리 가능
-- **구현 방안**:
-  - 별도 SwiftData 모델로 카테고리 관리
-  - 설정에서 카테고리 CRUD 화면
-  - 기록 생성/편집 시 커스텀 카테고리 선택
-- **결정 필요 사항**:
-  - [ ] 기본 카테고리 삭제 가능 여부
-  - [ ] 카테고리별 아이콘/색상 지정 가능?
+### 2.1 기록 숨기기 기능
+- **모델**: `src/Models/SwiftData/TravelRecord.swift`
+- **뷰**: `src/Views/Records/HiddenRecordsView.swift` (신규)
+- **GUI**: `hidden_travel_records_screen/screen.png`
+- **작업 내용**:
+  - [ ] TravelRecord에 `isHidden: Bool` 필드 추가
+  - [ ] 기록 상세 > 더보기 메뉴에 "숨기기" 옵션 추가
+  - [ ] RecordsView 하단에 "숨긴 기록 (N)" 섹션 추가
+  - [ ] HiddenRecordsView 구현 (인증 후 표시)
+  - [ ] "숨김 해제" 기능 구현
 
-### 11. 사용자 기본정보 설정
-- **요청사항**:
-  - 설정 탭에 "사용자 설정" 그룹 추가
-  - 집, 회사, 학교 등 주요 장소 입력
-  - 분석 시 해당 정보 활용 (예: "회사 도착", "귀가")
-- **구현 방안**:
-  - UserDefaults 또는 SwiftData로 저장
-  - 지도에서 위치 선택 또는 주소 검색
-  - 분석 시 해당 좌표 근처면 라벨링
-- **결정 필요 사항**:
-  - [ ] 저장할 장소 종류 (집, 회사, 학교, 기타?)
-  - [ ] 선택 사항임을 명시 (없어도 분석 가능)
-- **UI Scenario 추가 필요**: 사용자 설정 화면
+### 2.2 인증 시스템 구현
+- **파일**: `src/Views/Auth/AuthenticationView.swift` (신규)
+- **GUI**: `pin_authentication_screen/screen.png`
+- **작업 내용**:
+  - [ ] LocalAuthentication 프레임워크 연동 (Face ID/Touch ID)
+  - [ ] 4자리 PIN 입력 화면 구현
+  - [ ] PIN 저장 (Keychain)
+  - [ ] 생체인증 실패 시 PIN 폴백
+  - [ ] 3회 실패 시 30초 잠금
+  - [ ] 인증 성공 후 5분간 유지
 
----
-
-## 📋 우선순위 정리
-
-### Phase 1 (단기)
-1. 홈 화면 레이아웃 재설계
-2. 탭 네비게이션 개선
-3. BYOK 기능 동작 검증
-
-### Phase 2 (중기)
-4. 기록 숨기기 기능
-5. 기록 카테고리 사용자 정의
-6. 내보내기 기능 개편
-
-### Phase 3 (장기)
-7. 공유 기능 개편 + 공유받은 항목 보기
-8. Azure OpenAI 지원
-9. 사용자 기본정보 설정
-10. 분석 알고리즘 고도화
+### 2.3 인증 설정 화면
+- **파일**: `src/Views/Settings/SecuritySettingsView.swift` (신규)
+- **작업 내용**:
+  - [ ] 설정 > 보안 섹션 추가
+  - [ ] PIN 설정/변경/삭제
+  - [ ] 생체인증 토글
 
 ---
 
-## 체크리스트
+## Phase 2: 사용자 정의 기능
 
-- [ ] 홈 화면 레이아웃 재설계
-- [ ] 탭 간 스와이프 이동
-- [ ] 탭 진입 시 홈 화면으로 이동
-- [ ] 내보내기 기능 개편 (이미지 + 워터마크)
-- [ ] 공유 시 앱 실행 유도
-- [ ] 공유받은 항목 보기 기능
-- [ ] 기록 숨기기 기능 (암호/생체인증)
-- [ ] BYOK 기능 동작 검증
-- [ ] Azure OpenAI 지원
-- [ ] 기록 카테고리 사용자 정의
-- [ ] 사용자 기본정보 설정
-- [ ] 분석 알고리즘 고도화
+### 2.4 카테고리 관리
+- **모델**: `src/Models/SwiftData/RecordCategory.swift` (신규)
+- **뷰**: `src/Views/Settings/CategoryManagementView.swift` (신규)
+- **GUI**: `category_management_screen/screen.png`
+- **작업 내용**:
+  - [ ] RecordCategory SwiftData 모델 생성
+    ```swift
+    @Model class RecordCategory {
+        var id: UUID
+        var name: String
+        var icon: String  // emoji
+        var color: String // hex
+        var isDefault: Bool
+        var isHidden: Bool
+        var order: Int
+    }
+    ```
+  - [ ] 기본 카테고리 4개 시드 (여행, 일상, 주간, 출장)
+  - [ ] 카테고리 표시/숨기기 토글
+  - [ ] 사용자 카테고리 추가 (아이콘, 색상 선택)
+  - [ ] 사용자 카테고리 편집/삭제
+  - [ ] TravelRecord.recordType → RecordCategory 관계 변경
+
+### 2.5 사용자 장소 설정
+- **모델**: `src/Models/SwiftData/UserPlace.swift` (신규)
+- **뷰**: `src/Views/Settings/UserPlacesView.swift` (신규)
+- **GUI**: `user_places_management_screen/screen.png`
+- **작업 내용**:
+  - [ ] UserPlace SwiftData 모델 생성
+    ```swift
+    @Model class UserPlace {
+        var id: UUID
+        var name: String
+        var icon: String
+        var latitude: Double
+        var longitude: Double
+        var address: String
+        var isDefault: Bool  // 집, 회사/학교
+        var order: Int
+    }
+    ```
+  - [ ] 기본 장소 (집, 회사/학교) UI
+  - [ ] 사용자 장소 추가 (최대 5개)
+  - [ ] 주소 검색 또는 현재 위치 사용
+  - [ ] 지도 미리보기
+  - [ ] 분석 시 등록 장소 매칭 (반경 100m)
+
+---
+
+## Phase 2: 내보내기 개편
+
+### 2.6 이미지 내보내기
+- **파일**: `src/Services/ExportService.swift`
+- **뷰**: `src/Views/Export/ExportOptionsView.swift`
+- **GUI**: `export_options_screen_with_image_format/screen.png`
+- **작업 내용**:
+  - [ ] 내보내기 옵션에 "이미지 (PNG)" 추가
+  - [ ] RecordImageGenerator 구현
+    - 1080x1920 세로형
+    - 지도 + 타임라인 + 통계 레이아웃
+    - UIGraphicsImageRenderer 사용
+  - [ ] 워터마크 옵션 (우하단 로고)
+  - [ ] Wander 로고 에셋 추가
+  - [ ] iOS 공유 시트 연동
+
+---
+
+## Phase 3: AI 기능 확장
+
+### 3.1 BYOK 기능 검증
+- **파일**: `src/Services/AIService/*.swift`
+- **작업 내용**:
+  - [ ] OpenAI API 호출 테스트
+  - [ ] Anthropic API 호출 테스트
+  - [ ] Google Gemini API 호출 테스트
+  - [ ] API Key 저장/로드 검증 (Keychain)
+  - [ ] 에러 핸들링 테스트 (잘못된 키, 네트워크 오류)
+
+### 3.2 Azure OpenAI 지원
+- **파일**: `src/Services/AIService/AzureOpenAIService.swift` (신규)
+- **작업 내용**:
+  - [ ] AzureOpenAIService 구현 (AIServiceProtocol)
+  - [ ] Endpoint, Deployment Name, API Version 설정 UI
+  - [ ] AI 프로바이더 목록에 Azure 추가
+
+---
+
+## Phase 3: 공유 기능 개편
+
+### 3.3 딥링크 구현
+- **파일**: `src/WanderApp.swift`, Info.plist
+- **작업 내용**:
+  - [ ] URL Scheme 등록 (wander://)
+  - [ ] 유니버셜 링크 설정 (앱스토어 출시 후)
+  - [ ] 공유 시 앱스토어 링크 포함
+
+### 3.4 공유받은 기록 보기
+- **뷰**: `src/Views/Shared/SharedRecordView.swift` (신규)
+- **작업 내용**:
+  - [ ] 딥링크로 공유 데이터 수신
+  - [ ] 임시 뷰어 화면 구현
+  - [ ] "내 기록으로 저장" 옵션
+
+---
+
+## Phase 3: 분석 고도화
+
+### 3.5 사용자 장소 매칭
+- **파일**: `src/Services/AnalysisEngine.swift`
+- **작업 내용**:
+  - [ ] 분석 시 UserPlace 좌표 매칭
+  - [ ] 매칭된 장소명으로 라벨링 ("집 출발", "회사 도착")
+  - [ ] 반경 설정 (기본 100m)
+
+---
+
+## 구현 우선순위 체크리스트
+
+### Phase 1 (단기) - 1주
+- [ ] 1.1 홈 화면 FAB 도입
+- [ ] 1.2 돌아보기 기능
+- [ ] 1.3 탭 네비게이션 개선
+
+### Phase 2 (중기) - 2주
+- [ ] 2.1 기록 숨기기
+- [ ] 2.2 인증 시스템
+- [ ] 2.3 인증 설정
+- [ ] 2.4 카테고리 관리
+- [ ] 2.5 사용자 장소 설정
+- [ ] 2.6 이미지 내보내기
+
+### Phase 3 (장기) - 추후
+- [ ] 3.1 BYOK 검증
+- [ ] 3.2 Azure OpenAI
+- [ ] 3.3 딥링크
+- [ ] 3.4 공유받은 기록
+- [ ] 3.5 분석 고도화
+
+---
+
+## 참조 문서
+
+| 문서 | 용도 |
+|------|------|
+| `Ref-Concepts/wander_ui_scenario.md` | UI 플로우, 상세 시나리오 (v2.1) |
+| `GUI/index.md` | 화면 목업 인덱스 (39개) |
+| `GUI/screens/` | 화면별 PNG 목업 |
+| `fix.md` | 버그 수정 목록 (완료됨) |
 
 ---
 
 *최종 업데이트: 2026-02-01*
+*상태: 기획 완료, GUI 완료, 구현 대기*

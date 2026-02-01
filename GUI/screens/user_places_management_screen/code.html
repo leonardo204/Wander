@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-warm": "#F8FBFD",
+                        "banner-blue": "#E3F2FD"
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen">
+<div class="max-w-[480px] mx-auto bg-white dark:bg-background-dark min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="flex items-center bg-white dark:bg-background-dark px-4 py-4 sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800">
+<div class="flex-none w-10">
+<span class="material-symbols-outlined text-[#111418] dark:text-white cursor-pointer p-1">arrow_back_ios</span>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-10">내 장소</h2>
+</header>
+<!-- Info Banner (ActionPanel variant) -->
+<div class="p-5">
+<div class="flex flex-1 items-start justify-between gap-4 rounded-xl bg-banner-blue dark:bg-primary/20 p-4 border border-blue-100 dark:border-primary/30">
+<p class="text-[#111418] dark:text-white text-[15px] font-medium leading-normal">
+                    💡 자주 가는 장소를 등록하면 분석 시 자동으로 인식해요
+                </p>
+</div>
+</div>
+<main class="flex-1 px-5 pb-10">
+<!-- Default Places Section -->
+<section class="mb-8">
+<h3 class="text-[#111418] dark:text-white text-sm font-bold uppercase tracking-wider px-1 pb-3">기본 장소</h3>
+<div class="bg-surface-warm dark:bg-gray-800/50 rounded-xl overflow-hidden border border-[#dbe0e6] dark:border-gray-700">
+<!-- Item 1: Home (Registered) -->
+<div class="flex items-center gap-4 px-4 min-h-[72px] py-3 justify-between border-b border-[#dbe0e6] dark:border-gray-700">
+<div class="flex items-center gap-4">
+<div class="text-primary flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 shrink-0 size-12 shadow-sm">
+<span class="material-symbols-outlined" style="font-size: 24px;">home</span>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-[#111418] dark:text-white text-base font-bold leading-normal">🏠 집</p>
+<p class="text-[#617589] dark:text-gray-400 text-sm font-normal leading-normal line-clamp-1">서울시 강남구 테헤란로 123</p>
+</div>
+</div>
+<div class="shrink-0">
+<button class="text-primary dark:text-primary p-2 hover:bg-primary/10 rounded-full transition-colors">
+<span class="material-symbols-outlined" style="font-size: 22px;">edit</span>
+</button>
+</div>
+</div>
+<!-- Item 2: Work (Unregistered) -->
+<div class="flex items-center gap-4 px-4 min-h-[72px] py-3 justify-between">
+<div class="flex items-center gap-4">
+<div class="text-[#617589] dark:text-gray-400 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 shrink-0 size-12 shadow-sm">
+<span class="material-symbols-outlined" style="font-size: 24px;">corporate_fare</span>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-[#111418] dark:text-white text-base font-bold leading-normal">🏢 회사/학교</p>
+<p class="text-[#617589] dark:text-gray-400 text-sm font-normal leading-normal italic">등록되지 않음</p>
+</div>
+</div>
+<div class="shrink-0">
+<button class="text-primary dark:text-primary p-2 hover:bg-primary/10 rounded-full transition-colors">
+<span class="material-symbols-outlined" style="font-size: 24px;">add_circle</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Custom Places Section -->
+<section class="mb-8">
+<h3 class="text-[#111418] dark:text-white text-sm font-bold uppercase tracking-wider px-1 pb-3">추가한 장소</h3>
+<div class="bg-surface-warm dark:bg-gray-800/50 rounded-xl overflow-hidden border border-[#dbe0e6] dark:border-gray-700">
+<!-- Item 3: Gym -->
+<div class="flex items-center gap-4 px-4 min-h-[72px] py-3 justify-between border-b border-[#dbe0e6] dark:border-gray-700">
+<div class="flex items-center gap-4">
+<div class="text-primary flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 shrink-0 size-12 shadow-sm">
+<span class="material-symbols-outlined" style="font-size: 24px;">fitness_center</span>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-[#111418] dark:text-white text-base font-bold leading-normal">🏋️ 헬스장</p>
+<p class="text-[#617589] dark:text-gray-400 text-sm font-normal leading-normal line-clamp-1">서울시 강남구 역삼로 456</p>
+</div>
+</div>
+<div class="shrink-0">
+<button class="text-primary dark:text-primary p-2 hover:bg-primary/10 rounded-full transition-colors">
+<span class="material-symbols-outlined" style="font-size: 22px;">edit</span>
+</button>
+</div>
+</div>
+<!-- Item 4: Cafe -->
+<div class="flex items-center gap-4 px-4 min-h-[72px] py-3 justify-between">
+<div class="flex items-center gap-4">
+<div class="text-primary flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 shrink-0 size-12 shadow-sm">
+<span class="material-symbols-outlined" style="font-size: 24px;">local_cafe</span>
+</div>
+<div class="flex flex-col justify-center">
+<p class="text-[#111418] dark:text-white text-base font-bold leading-normal">☕ 단골 카페</p>
+<p class="text-[#617589] dark:text-gray-400 text-sm font-normal leading-normal line-clamp-1">서울시 서초구 반포동 789</p>
+</div>
+</div>
+<div class="shrink-0">
+<button class="text-primary dark:text-primary p-2 hover:bg-primary/10 rounded-full transition-colors">
+<span class="material-symbols-outlined" style="font-size: 22px;">edit</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Add Button & Limit Info -->
+<div class="mt-4 flex flex-col items-center gap-3">
+<button class="w-full flex items-center justify-center gap-2 py-4 px-6 border-2 border-primary/40 dark:border-primary/60 text-primary dark:text-primary font-bold rounded-xl hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined" style="font-size: 20px;">add_location</span>
+                    새 장소 추가
+                </button>
+<p class="text-[#617589] dark:text-gray-500 text-xs font-medium">(최대 5개)</p>
+</div>
+</main>
+<!-- Bottom Navigation Spacer (iOS Home Indicator Area) -->
+<div class="h-8 bg-white dark:bg-background-dark"></div>
+</div>
+</body></html>

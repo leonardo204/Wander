@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#84ccf0",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111c21",
+                        "surface-accent": "#F8FBFD",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+        }
+        .keypad-button {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            font-weight: 500;
+            border-radius: 9999px;
+            transition: background-color 0.2s;
+        }
+        .keypad-button:active {
+            background-color: #F8FBFD;
+        }
+        .dark .keypad-button:active {
+            background-color: rgba(132, 204, 240, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-white dark:bg-background-dark text-[#111518] dark:text-white antialiased">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header -->
+<header class="flex items-center px-4 py-4 justify-between">
+<button class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+<span class="material-symbols-outlined text-2xl">close</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">PIN 입력</h2>
+</header>
+<!-- Main Content Area -->
+<main class="flex flex-1 flex-col items-center justify-center px-6 pb-12">
+<!-- Branding/Security Context -->
+<div class="mb-12 text-center">
+<p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">보안을 위해 PIN을 입력하세요</p>
+<h1 class="text-2xl font-bold tracking-tight">Wander</h1>
+</div>
+<!-- PIN Indicators -->
+<div class="flex w-full flex-row items-center justify-center gap-6 mb-16">
+<!-- Filled -->
+<div class="h-4 w-4 rounded-full bg-primary shadow-sm shadow-primary/40"></div>
+<!-- Filled -->
+<div class="h-4 w-4 rounded-full bg-primary shadow-sm shadow-primary/40"></div>
+<!-- Empty -->
+<div class="h-4 w-4 rounded-full border-2 border-[#dce2e5] dark:border-gray-700"></div>
+<!-- Empty -->
+<div class="h-4 w-4 rounded-full border-2 border-[#dce2e5] dark:border-gray-700"></div>
+</div>
+<!-- Number Pad Grid -->
+<div class="grid grid-cols-3 gap-x-8 gap-y-4 max-w-[320px] mx-auto">
+<!-- Row 1 -->
+<button class="keypad-button">1</button>
+<button class="keypad-button">2</button>
+<button class="keypad-button">3</button>
+<!-- Row 2 -->
+<button class="keypad-button">4</button>
+<button class="keypad-button">5</button>
+<button class="keypad-button">6</button>
+<!-- Row 3 -->
+<button class="keypad-button">7</button>
+<button class="keypad-button">8</button>
+<button class="keypad-button">9</button>
+<!-- Bottom Row -->
+<button class="keypad-button text-primary">
+<span class="material-symbols-outlined text-3xl">face_unlock</span>
+</button>
+<button class="keypad-button">0</button>
+<button class="keypad-button text-gray-400">
+<span class="material-symbols-outlined text-3xl">backspace</span>
+</button>
+</div>
+<!-- Recovery Link -->
+<div class="mt-12">
+<button class="text-sm font-semibold text-primary/80 hover:text-primary transition-colors">
+                    PIN을 잊으셨나요?
+                </button>
+</div>
+</main>
+<!-- Bottom Safe Area Spacer -->
+<div class="h-8"></div>
+</div>
+</body></html>

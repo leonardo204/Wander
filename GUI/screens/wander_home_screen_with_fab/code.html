@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#89cbec",
+                        "surface": "#F8FBFD",
+                        "background-light": "#ffffff",
+                        "background-dark": "#121b20",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .ios-tab-shadow {
+            box-shadow: 0 -1px 10px rgba(0,0,0,0.05);
+        }
+        .fab-shadow {
+            box-shadow: 0 4px 12px rgba(137, 203, 236, 0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-[#121517] dark:text-white min-h-screen flex flex-col font-display">
+<!-- Header -->
+<header class="sticky top-0 z-30 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-5 py-4 flex items-center justify-between">
+<button class="text-[#121517] dark:text-white">
+<span class="material-symbols-outlined text-[28px]">menu</span>
+</button>
+<h2 class="text-[#121517] dark:text-white text-lg font-bold tracking-tight">Wander</h2>
+<div class="w-7"></div> <!-- Spacer for center alignment -->
+</header>
+<main class="flex-1 pb-32">
+<!-- Greeting -->
+<section class="px-5 pt-6 pb-4">
+<h1 class="text-[#121517] dark:text-white text-[24px] font-bold leading-tight tracking-tight">
+                오늘 어떤 이야기를<br/>만들어 볼까요?
+            </h1>
+</section>
+<!-- Quick Action Cards -->
+<section class="px-5 py-4 grid grid-cols-2 gap-4">
+<!-- Left Action Card -->
+<div class="bg-surface dark:bg-white/5 p-4 rounded-xl border border-[#eef2f6] dark:border-white/10 flex flex-col gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">camera_enhance</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-[#121517] dark:text-white text-base font-bold">지금 뭐해?</h3>
+<p class="text-[#657b86] dark:text-gray-400 text-[13px] leading-snug">사진으로 일상 기록하기</p>
+</div>
+</div>
+<!-- Right Action Card -->
+<div class="bg-surface dark:bg-white/5 p-4 rounded-xl border border-[#eef2f6] dark:border-white/10 flex flex-col gap-3">
+<div class="flex justify-between items-start">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<button class="flex items-center gap-1 bg-white dark:bg-white/10 px-2 py-1 rounded-full border border-[#eef2f6] dark:border-white/10">
+<span class="text-[11px] font-semibold text-primary">이번 주</span>
+<span class="material-symbols-outlined text-[14px] text-primary">expand_more</span>
+</button>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-[#121517] dark:text-white text-base font-bold">돌아보기</h3>
+<p class="text-[#657b86] dark:text-gray-400 text-[13px] leading-snug">하이라이트 생성하기</p>
+</div>
+</div>
+</section>
+<!-- Recent Records Section -->
+<section class="mt-4">
+<div class="px-5 pb-3 flex items-center justify-between">
+<h3 class="text-[#121517] dark:text-white text-lg font-bold tracking-tight">최근 기록</h3>
+<button class="text-primary text-sm font-semibold">전체보기</button>
+</div>
+<div class="flex flex-col gap-3 px-5">
+<!-- Record Item 1 -->
+<div class="flex items-center gap-4 bg-white dark:bg-white/5 p-3 rounded-xl border border-[#f0f3f6] dark:border-white/10">
+<div class="relative shrink-0">
+<div class="w-[80px] h-[80px] rounded-lg bg-center bg-cover" data-alt="Emerald ocean and coastline of Jeju Island" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAjvkwW5L-edTfj2y3gCbwQVD2WyEUW_xQzFxsCxQ1fCetnYoqYizJGN55rT_TZgQT6PP-xkViKyuGnu1rzXLsOfKT3e0TnI8XJzoZh66o2qlY8SfBVrMRPRVj4d--5Mt1y6V6VV2cyEerHATc-3DzDkQvXCIFww9kvAKWIJpd_E3pUq402l2wTeR_Wd9BAH22O_JRlPaV_4i93wo885of0sVovbxN3HH1NuTUNbSUOVEHlirpwjQnvtokY4SWbBAUbWpAt2pk8GOLa");'></div>
+</div>
+<div class="flex flex-1 flex-col justify-center gap-1">
+<h4 class="text-[#121517] dark:text-white text-base font-bold">제주도 3박4일</h4>
+<div class="flex items-center gap-2 text-[#657b86] dark:text-gray-400 text-xs">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[14px]">calendar_today</span> 10.12 - 10.15</span>
+</div>
+<div class="flex items-center gap-3 mt-1">
+<span class="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">12 Locations</span>
+<span class="text-xs font-medium text-[#657b86] dark:text-gray-400">45km</span>
+</div>
+</div>
+<div class="shrink-0 text-[#657b86]">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+<!-- Record Item 2 -->
+<div class="flex items-center gap-4 bg-white dark:bg-white/5 p-3 rounded-xl border border-[#f0f3f6] dark:border-white/10">
+<div class="relative shrink-0">
+<div class="w-[80px] h-[80px] rounded-lg bg-center bg-cover" data-alt="Modern aesthetic cafe interior in Seongsu-dong" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBl3InhEpVTdhsbi4j8XPddzuCc-Y9icZ01q9ahGbot4w_21Po6c-HVKx7iuYHsdIP-btagJR1iV2htjSTNh1q1qAhcFQInB2kQPIo77H6B6yrxqFHBKTdyV_6zh_BKQJhhHptCym056x_7aGj77rSGz4htaoTBzZvVdiqNFg3bJe35e69QuAGzGzRg4CkeWYafaWeR7IbQy9rOwsJ7wr7X3zQBiwzwUooymzBiLn9c9PF2vkGc6loYfGYmdhkaVrqlIv5fjnHSshGm");'></div>
+</div>
+<div class="flex flex-1 flex-col justify-center gap-1">
+<h4 class="text-[#121517] dark:text-white text-base font-bold">성수동 카페 투어</h4>
+<div class="flex items-center gap-2 text-[#657b86] dark:text-gray-400 text-xs">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[14px]">calendar_today</span> 11.02</span>
+</div>
+<div class="flex items-center gap-3 mt-1">
+<span class="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">5 Locations</span>
+<span class="text-xs font-medium text-[#657b86] dark:text-gray-400">3.2km</span>
+</div>
+</div>
+<div class="shrink-0 text-[#657b86]">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+<!-- Record Item 3 (Map/Location style) -->
+<div class="flex items-center gap-4 bg-white dark:bg-white/5 p-3 rounded-xl border border-[#f0f3f6] dark:border-white/10">
+<div class="relative shrink-0">
+<div class="w-[80px] h-[80px] rounded-lg bg-center bg-cover" data-alt="Abstract city map grid or skyline" data-location="Seoul" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAfRX6YaLEq7vg7E6dpcaVSL-DOK6-DeGAhWH8weDi5CeOggUF3xD4aEDfdTLNAAFYoN80EOgHczOuIJuiZ4zU4uQwcM1ba-00b_mHKHEhXUsZAlczXDhXCdTCAUd5N2OR3KO56MipODPrJ4WgW4efq1bHwnPR7rmnAqai1GvFK711H3jy7TLlB0Yg5TsM8SDtKeYOYNf3Nm8IZt3J7NnsRn4Mumo7hl2F8T8GhPFS7LDKy3Zt3euVyfNkoCteHg_XraOlRy09mMEul");'></div>
+</div>
+<div class="flex flex-1 flex-col justify-center gap-1">
+<h4 class="text-[#121517] dark:text-white text-base font-bold">주말 한강 산책</h4>
+<div class="flex items-center gap-2 text-[#657b86] dark:text-gray-400 text-xs">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[14px]">calendar_today</span> 11.05</span>
+</div>
+<div class="flex items-center gap-3 mt-1">
+<span class="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">2 Locations</span>
+<span class="text-xs font-medium text-[#657b86] dark:text-gray-400">8.4km</span>
+</div>
+</div>
+<div class="shrink-0 text-[#657b86]">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- FAB -->
+<button class="fixed bottom-24 right-5 w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center fab-shadow z-40">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- Tab Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-background-dark/90 backdrop-blur-lg ios-tab-shadow px-10 pb-8 pt-3 flex items-center justify-between z-50">
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">home</span>
+<span class="text-[10px] font-bold text-primary">홈</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-[#657b86] dark:text-gray-400">map</span>
+<span class="text-[10px] font-medium text-[#657b86] dark:text-gray-400">기록</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="material-symbols-outlined text-[#657b86] dark:text-gray-400">settings</span>
+<span class="text-[10px] font-medium text-[#657b86] dark:text-gray-400">설정</span>
+</div>
+</nav>
+</body></html>

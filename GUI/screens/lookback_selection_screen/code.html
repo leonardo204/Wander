@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#30abe8",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111c21",
+                        "accent-blue": "#E8F6FC",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "Noto Sans KR", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Plus Jakarta Sans", "Noto Sans KR", sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .photo-grid-scroll {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .photo-grid-scroll::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111518] dark:text-white min-h-screen flex flex-col">
+<!-- Header -->
+<header class="sticky top-0 z-30 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
+<div class="flex items-center p-4 justify-between max-w-lg mx-auto w-full">
+<div class="flex size-10 items-center justify-start cursor-pointer">
+<span class="material-symbols-outlined text-[#111518] dark:text-white">arrow_back_ios</span>
+</div>
+<h1 class="text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">돌아보기</h1>
+<div class="flex size-10 items-center justify-end">
+<button class="text-primary text-base font-bold leading-normal tracking-[0.015em] shrink-0">완료</button>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col max-w-lg mx-auto w-full pb-32">
+<!-- Period Selection -->
+<div class="px-4 py-4">
+<div class="flex h-11 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-primary has-[:checked]:text-white text-[#637c88] text-sm font-medium transition-all">
+<span class="truncate">이번 주</span>
+<input checked="" class="hidden" name="period" type="radio" value="this-week"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-primary has-[:checked]:text-white text-[#637c88] text-sm font-medium transition-all">
+<span class="truncate">지난 주</span>
+<input class="hidden" name="period" type="radio" value="last-week"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-primary has-[:checked]:text-white text-[#637c88] text-sm font-medium transition-all">
+<span class="truncate">이번 달</span>
+<input class="hidden" name="period" type="radio" value="this-month"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-primary has-[:checked]:text-white text-[#637c88] text-sm font-medium transition-all">
+<span class="truncate">최근 30일</span>
+<input class="hidden" name="period" type="radio" value="last-30-days"/>
+</label>
+</div>
+</div>
+<!-- Date Range Info Card -->
+<div class="px-4 pb-4">
+<div class="bg-accent-blue dark:bg-primary/10 flex items-center justify-between gap-4 p-5 rounded-xl border border-primary/10">
+<div class="flex flex-col gap-1">
+<p class="text-[#111518] dark:text-white text-base font-bold leading-tight">1/26 (일) - 2/1 (토)</p>
+<p class="text-[#637c88] dark:text-gray-400 text-sm font-normal leading-normal">GPS가 있는 사진 28장</p>
+</div>
+<div class="size-12 bg-primary/20 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">calendar_month</span>
+</div>
+</div>
+</div>
+<!-- Photo Grid -->
+<div class="grid grid-cols-4 gap-1 px-4">
+<!-- Repeatable Photo Item (Selected) -->
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Travel photo of a beach landscape" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAlY8nb2sT-XP94OblJpmJkOY6vFioZocVu-50cmDxfLxvPFqEwrj4w52QHQSy6QpTQsDHwqwV6swuXNtHJ8BPAIC2zmfmqRnheAAJrEbSrj7QfWzUbcKZl9aP2thmGjwr8DruC59i3hn_d5t4hAJZdvmHGacfh6dsAInjXdR-6ILNY7D-j_nrKiEC5vWzHuXQO0C2-SkopeEXjN7WWwc7pNGjgX4uWdjW4K53vpNvKdPxAO9JFJ_M60cwbz9nAinoQj8_-PotQJ_3-");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<!-- More selected items -->
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Travel photo of mountains" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAVhxPvMw-SjEdklqov5tP0mYaHEj9_oZD7xjDKUkpu656h1kUX1bCDzStoC6TBdJd2M68IruXnxhRQ2Xnc_bQ22WqzNhjeWTUg60VW7vv6Pn-PQUj7QnNw1MNCf6uhbVReqKU49WAyJwWWQCYdxW0FlqdGT-DGsk1kpYbJfpTm8dg-U9v8gFEX3oE39Uc7jPt6fDt76nDmSxHNwAwFrnkTP3V3GyUVhKWCXWjoPw1GxvtjhZTASehcwT91j5Uk0_zJk6oI1in1-lQF");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Travel photo of a cityscape" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAEbsu6_wMHMBsK0wHyiqXeRjxhGetZYgtXbhWp1rXDJRpJ2t6jWmShmLIkCmQ3t45tONLLpME9Nzem9Qw6EeXTiWJAaz6VwfRkicNnz2yUMCUsW0mRdfQHS_0AKnOmDgO32YfI1658-F8fK8bDeAwf9TZC19Yo5haas4ujQVsWl8eYOxCmTPXMjKrNCrMN0N7i5IXYwF2yKLR0H4mHF2ojhAW5sqnuDnqqC0Q1VWQRLknFh-fhAIapPPrpD6b8DRaLAX8g3JteyfaW");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<!-- Unselected item example -->
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md opacity-60" data-alt="Travel photo of a coffee shop" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCEqTajUkDtv7K0LSRl9TObkEA9_RKUiXvec4yEf326QqmIDtFCfTUppRvzHX6vF-yrHY3JOOdKv5v4ZtjghLbzsYUISGm5_pMINtataqSzm22WAyiBYKA5vsTG9Z1NTQAZ0iNMOJfgosuMFlE8iy82B0xehxd2Ei-0ERyeR_swdF9XQK1OVNvLAw868nobKP-qPyM0Ltf7wvkcfu-gCmkL1QhUKD-HpgJRX3gk_i5Mgods25O6xjj4ESW1gqqp7cWvHJ8-9FpVJeQy");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-white/40 rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+</div>
+</div>
+<!-- Repeat pattern -->
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Scenic forest path" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDfcg4IraCgW3hBGQ6uP_Qwg89vOptN-9IM4PId6Va5VTChIp5nWHy0mgfKzKhDCtt2WXqY1vAgfMPt18ohAghPhsf-s86Dexid2OLA59VPxz0ga8g_ls85tLtXdcdjygR_r9vA9gGXiJwmEp8QgqaU0v3I1wZU9z1D1a5RSzHdc9wPbSqt6xALJZp8iNbzBSiuw7-JUpPYz94kfEDkmBWz4EgbrfWf0M3f-yoaH1KNy5ORXE0HR-zSNqJIxSZAVso-EVKv0DgvYtPm");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Ancient temple ruins" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCH5MrVXPgFzJQyzraASY3pYBBd5WcoBwwpxRRWajFPbuKCo1WgGWi4_8bms4mIR7OiTWgnWHg2Dbk2ODTrAdELps-hiP_GrtpfyslXVK_szqUHIoMcc_oc5_ftRb0c3qJkk2oD9z4rOWtbRTXPBCKNmn8FDl6FDT85kRL9Q-yknEQdxlt5bf3r5MUiwXgJ9gL8u4jqsHBnVrB7zdp9qYhN8-VVe-NXws9RSajfs3tetUEn7-wyXbhIUH5IsY9opYPaR3fPUoyS8FTR");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Blue lake reflection" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBcg0mG1IGwKOtybXBceUTVffJp-T5tEs712vbW5g0_qfm6XmPgGrfpEj2_OTC_wXzw7gWFQniT6-mj0RQGmtxFU3NITH-QcKQ5rWRXC4Nt_gz1eMG2XkMk8jA5W93Y38i5T1ooUYMF_0-nMsaAQ2cbT5LW6NQFQ44oj8PCYRLAfl_8OcItTYsNrJXYrcLoAvAJu0WMiV_5yRLBbXB6n41dGMLHH5uGzWT-Ei6SZ6jqwC0-aW7CubybGbeNMj2ujDIT2kl7gb4TIENV");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Plate of colorful food" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDYXOlo2aWFMkBKZSgaoxIyjV0blyv7QDMzdF4apZLUHA0M73mwbVmfGq8E0On2nbQ-w3rbHmal1AU1C6y37GH7Dq1PiUMQ23Ew45eVhrch7O3asqLv7xqQMAttxwVbIAkX4qvi2Tib8nfxfSYZmvCv-eKpc3fpy-9iz9yfRdrLdCer458ZBVt8GPb6tIMLSHH26q8w-OhIpKF0-ZdBazdAUf2ZlUe0VMhTFp37QRhRXhfVy1JEwb82Ml-Q89RC4A2QM8H0Dgtas_R7");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Modern architecture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBr1saZ2_jr8ICzOdWDoK0VdhhIP3FDE4sFkMtfTR2lGt0ovApUzr_iNEI6h24bFCMiYs1NE9zWaumonELMx_J7AyT4RFXr7ZZxTRikIJmsS3LXNY7vHtikzfyB75asg35xoK_QAbAAUgEeox59AWAwVB94Nv6OWzAsr_-gsEM0sE2c06tapw5NFQIrkWdNRs9g5QDycpRJRyVYJcs5ayLodoOcom30lzzFgSdyLCNCYxLVK5-fc-aMYeRow9Nw9M6pNDnP0thr6rH3");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Sunset from plane window" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDWUlw-AKf5KGolUjKVlrsyeejJ74V7dWLH0eGlZVQvxyxnCC3x-XzHy88U6U7yVCHJg77V2DjKzeV_fH43zotd_Tq20cLxZCZ4DHoh4i0U2qGNeHhczvCtc7Vm69bONy67zyYtbTwbpwH-9LuOqW9TSBatrb7FkirOIQJVwWh4OOEXLKTFWaudT-JHCIVdpkOk7LR5bRQyZA5h0Qvn6Vp8K7HC5PVjKQMmswcrhOEXj-H593zXI_2Z8dLf6U-u5jcCWKTu4Vl1sG-E");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Cozy cabin in woods" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAAO-_K11D52htREtoqunnxCd5AEM_joXy2BP4WCacKr2GULrvMJ4Ng8KKd_ATRfaRPBQg-wwYSBd_NIHQfL556GRmursF3EyP5RqsdFwE-gWEj2u3N5iytBA5Q03kHA5ltW6q8FSU46OsYoPOTBnpxBLUCh9dqxzGIZRpJ4M9BrkDznVjWBd1pgzWR0GZXj0m8vVdpdsIwZhgYj_KSd3W-5jNVidi4R7uSqcxK5IL5HNCMiMx4OYkvkHFeIUQq8Ua_zLiAvM3NDKin");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Bright street art" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCqy5UH68QTDSfLSwW3wv-weGpp2gGjG7XnX0_Amm93ggo4PE7E21qqlaT8_lTILIp-rOVZ5h1HVwsFr9nxCqn6hJ2_HaWuNwl9UYEY2rgY0AVKxAmO-kWXI0bB5Jz9Z0hJKELe2_M-GTApF7xhyWv_GoFc7ksSGytY-bMpuKK6O-EvXHEy5PXrFgSnt4XmkHLP-9oiI-XU1KSdcAGMY4CNSlZnX_k4QF9_LCc63V2IlVDjaJiTqoowvyQE4R-CnuG6OxOCbS95Wbmb");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<!-- More placeholders to show scrollable effect -->
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Golden gate bridge" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCdOJhVbsb8DEr-ZiZm380Epu7fohx4GeyuKmjdrdnxqTcDbStmcY-ZgzKJEaFhB_u0iZ8ydqLSyH46gAoXqOcq4A2f3MUvAXqZSA-AsS6B443pw3Q_fMBj_s4Mq11QEiq-UG6_UwIrCl8n711eDuscwo-vHnZLz4XT8aWxjXMt1zO-D_z0-lfWP-WUMYTc5TQoLxZ2W6vxE8VTVCy51QzRQw837e4SabhPhTew0pRQDnc9u4mSjDHa1KBDC6f3efY6WSEbUnfvX_Ig");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Snowy mountain peaks" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDK93Ryqaf5rEKoxObS6wXH1sr9spD7UXs-8Dtn0XWTlL8eiFd3WHobbdHDMpVZuRiML5klSGyhUNZmj8s-SQRk4abcgPDdLH9VpI9YWvqOwG4IaoamKwaFUju2f8olQ8MOb7D9OHKUbHkvTjkGizNSt4hmXi3PmFIjggXGh16-V40HEqP1jbEtjhN_OaOG9W2gbjQBH1TzUN_pWF2ZX7O1QqIZAabZuVNYoRAbQ15usHYL_LUGeLO6seu89LyDeCKPkIkVsLs7J7vb");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md" data-alt="Bustling night market" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAlnHE80-yC2s0fUp5iFRTNtj-rKP6QRS4cvIsY0AxdbtCBn8fmmCkWDAgd8lqOrg4j1il-galLB7SRrqeGZ1-qEq2-2WfmWARa27KAR6-8edmzQQ24sF_hb5E12P-w6FZUxPXfNQ9x4JOW8RquIYqX8KiGG_AfrfZvJINFBBx9WgtwEgl_evqhFzfCm_dFWzY7YkJH_4xxQiC9ZYySSDasdQAXCtWGabMuO4rF-CQZlBYQhBi0YitG_aIG0DLmCgVp9HKQ1E323GEI");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-primary rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+</div>
+<div class="relative aspect-square">
+<div class="w-full h-full bg-center bg-no-repeat bg-cover rounded-md opacity-60" data-alt="Desert sunset" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCtz2TGYNgOqSOvCB251mtxUuMNc79CSDSixEG4q81aIRbPgD_MVnr4KSrMSDq3BIUeCDNWjDeUqWoW7EuO_xCWQebPh1jrrCRbcSnqeNQOm2I2irmgkmACItt37V32bcB_REud8ZkTDP4ium8vxi1GoSSszNJzLrrOlA_II8Q2BD8jxlOTN4s3Z-2SGUWgpdpKt3AmwjQ1XuFecicyRCVKpQGvfAcF10QVtFQazrGOjopga9dtmOKUO-MU4Cyp_wlJ7w32caUxTtAc");'></div>
+<div class="absolute top-1.5 right-1.5 size-6 bg-white/40 rounded-full border-2 border-white flex items-center justify-center shadow-sm">
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Controls -->
+<footer class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-gray-100 dark:border-gray-800 pb-8 pt-2 z-40">
+<div class="max-w-lg mx-auto w-full px-4">
+<p class="text-[#637c88] dark:text-gray-400 text-sm font-medium leading-normal pb-3 pt-1 text-center">28장 중 26장 선택됨</p>
+<button class="w-full bg-primary hover:bg-primary/90 text-white text-base font-bold h-14 rounded-xl shadow-lg shadow-primary/25 flex items-center justify-center transition-colors">
+                하이라이트 만들기
+            </button>
+</div>
+</footer>
+</body></html>
