@@ -1572,12 +1572,8 @@ struct RecordSharePreviewView: View {
     }
 
     private func generateImageFromRecord() async -> UIImage? {
-        // Collect all asset identifiers and load thumbnails
-        let allAssetIds = record.days
-            .flatMap { $0.places }
-            .flatMap { $0.photos }
-            .compactMap { $0.assetIdentifier }
-        let thumbnails = await loadThumbnailsFromAssetIds(Array(allAssetIds.prefix(6)))
+        // Load thumbnails grouped by day
+        let photosByDay = await loadThumbnailsByDay()
 
         let size = CGSize(width: 1080, height: 1920)
         let renderer = UIGraphicsImageRenderer(size: size)
@@ -1777,8 +1773,8 @@ struct RecordSharePreviewView: View {
                 currentY += 30
             }
 
-            // Draw photos section
-            drawPhotosSection(thumbnails: thumbnails, startY: currentY + 40, size: size)
+            // Draw photos section by day
+            drawPhotosByDaySection(photosByDay: photosByDay, startY: currentY + 40, size: size)
 
             // Watermark (always included)
             let watermarkFont = UIFont.systemFont(ofSize: 24, weight: .medium)
@@ -1792,11 +1788,11 @@ struct RecordSharePreviewView: View {
         }
     }
 
-    private func loadThumbnailsFromAssetIds(_ assetIds: [String]) async -> [UIImage] {
-        guard !assetIds.isEmpty else { return [] }
+    private func loadThumbnailsByDay() async -> [(dayNumber: Int, date: Date, thumbnails: [UIImage])] {
+        var result: [(dayNumber: Int, date: Date, thumbnails: [UIImage])] = []
 
-        var thumbnails: [UIImage] = []
-        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: assetIds, options: nil)
+        let maxDays = 2
+        let maxPhotosPerDay = 3
 
         let manager = PHImageManager.default()
         let options = PHImageRequestOptions()
@@ -1804,33 +1800,55 @@ struct RecordSharePreviewView: View {
         options.resizeMode = .exact
         options.isSynchronous = true
         options.isNetworkAccessAllowed = true
-
         let targetSize = CGSize(width: 400, height: 400)
 
-        fetchResult.enumerateObjects { asset, _, _ in
-            let semaphore = DispatchSemaphore(value: 0)
-            manager.requestImage(
-                for: asset,
-                targetSize: targetSize,
-                contentMode: .aspectFill,
-                options: options
-            ) { image, _ in
-                if let image = image {
-                    thumbnails.append(image)
+        let sortedDays = record.days.sorted { $0.dayNumber < $1.dayNumber }
+
+        for day in sortedDays.prefix(maxDays) {
+            let assetIds = day.places
+                .flatMap { $0.photos }
+                .prefix(maxPhotosPerDay)
+                .compactMap { $0.assetIdentifier }
+
+            guard !assetIds.isEmpty else { continue }
+
+            let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: Array(assetIds), options: nil)
+            var thumbnails: [UIImage] = []
+
+            fetchResult.enumerateObjects { asset, _, _ in
+                let semaphore = DispatchSemaphore(value: 0)
+                manager.requestImage(
+                    for: asset,
+                    targetSize: targetSize,
+                    contentMode: .aspectFill,
+                    options: options
+                ) { image, _ in
+                    if let image = image {
+                        thumbnails.append(image)
+                    }
+                    semaphore.signal()
                 }
-                semaphore.signal()
+                semaphore.wait()
             }
-            semaphore.wait()
+
+            if !thumbnails.isEmpty {
+                result.append((dayNumber: day.dayNumber, date: day.date, thumbnails: thumbnails))
+            }
         }
 
-        return thumbnails
+        return result
     }
 
-    private func drawPhotosSection(thumbnails: [UIImage], startY: CGFloat, size: CGSize) {
-        guard !thumbnails.isEmpty else { return }
+    private func drawPhotosByDaySection(photosByDay: [(dayNumber: Int, date: Date, thumbnails: [UIImage])], startY: CGFloat, size: CGSize) {
+        guard !photosByDay.isEmpty else { return }
 
         let titleFont = UIFont.systemFont(ofSize: 28, weight: .bold)
         let titleColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
+        let dayHeaderFont = UIFont.systemFont(ofSize: 20, weight: .bold)
+        let dayDateFont = UIFont.systemFont(ofSize: 16, weight: .regular)
+        let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1)
+        let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1)
+        let timeColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
 
         var currentY = startY
 
@@ -1843,60 +1861,58 @@ struct RecordSharePreviewView: View {
         currentY += 50
 
         let margin: CGFloat = 60
-        let spacing: CGFloat = 12
+        let spacing: CGFloat = 10
         let availableWidth = size.width - (margin * 2)
-        let cornerRadius: CGFloat = 16
+        let cornerRadius: CGFloat = 12
 
-        switch thumbnails.count {
-        case 1:
-            // Single photo: Full width, larger height
-            let photoWidth = availableWidth
-            let photoHeight: CGFloat = 350
-            let photoRect = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
-            drawRoundedImage(thumbnails[0], in: photoRect, cornerRadius: cornerRadius)
+        for dayData in photosByDay {
+            // Day header badge
+            let dayHeaderRect = CGRect(x: margin, y: currentY, width: 70, height: 28)
+            let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 6)
+            primaryPaleColor.setFill()
+            dayHeaderPath.fill()
 
-        case 2:
-            // Two photos: Side by side
-            let photoWidth = (availableWidth - spacing) / 2
-            let photoHeight: CGFloat = 280
+            let dayString = NSAttributedString(
+                string: "Day \(dayData.dayNumber)",
+                attributes: [.font: dayHeaderFont, .foregroundColor: primaryColor]
+            )
+            let dayStringSize = dayString.size()
+            dayString.draw(at: CGPoint(
+                x: dayHeaderRect.midX - dayStringSize.width / 2,
+                y: dayHeaderRect.midY - dayStringSize.height / 2
+            ))
 
-            let rect1 = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
-            let rect2 = CGRect(x: margin + photoWidth + spacing, y: currentY, width: photoWidth, height: photoHeight)
+            // Date next to badge
+            let dateString = NSAttributedString(
+                string: formatDateWithWeekday(dayData.date),
+                attributes: [.font: dayDateFont, .foregroundColor: timeColor]
+            )
+            dateString.draw(at: CGPoint(x: margin + 80, y: currentY + 4))
 
-            drawRoundedImage(thumbnails[0], in: rect1, cornerRadius: cornerRadius)
-            drawRoundedImage(thumbnails[1], in: rect2, cornerRadius: cornerRadius)
+            currentY += 40
 
-        case 3:
-            // Three photos: One large on left, two stacked on right
-            let largeWidth = (availableWidth - spacing) * 0.6
-            let smallWidth = (availableWidth - spacing) * 0.4
-            let largeHeight: CGFloat = 280
-            let smallHeight = (largeHeight - spacing) / 2
+            // Draw thumbnails for this day (horizontal row)
+            let thumbnails = dayData.thumbnails
+            let photoCount = thumbnails.count
 
-            let largeRect = CGRect(x: margin, y: currentY, width: largeWidth, height: largeHeight)
-            drawRoundedImage(thumbnails[0], in: largeRect, cornerRadius: cornerRadius)
+            if photoCount == 1 {
+                // Single photo: larger, but not full width
+                let photoWidth = availableWidth * 0.6
+                let photoHeight: CGFloat = 200
+                let photoRect = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
+                drawRoundedImage(thumbnails[0], in: photoRect, cornerRadius: cornerRadius)
+                currentY += photoHeight + 20
+            } else {
+                // Multiple photos: side by side
+                let photoWidth = (availableWidth - spacing * CGFloat(photoCount - 1)) / CGFloat(photoCount)
+                let photoHeight: CGFloat = 180
 
-            let smallRect1 = CGRect(x: margin + largeWidth + spacing, y: currentY, width: smallWidth, height: smallHeight)
-            let smallRect2 = CGRect(x: margin + largeWidth + spacing, y: currentY + smallHeight + spacing, width: smallWidth, height: smallHeight)
-
-            drawRoundedImage(thumbnails[1], in: smallRect1, cornerRadius: cornerRadius)
-            drawRoundedImage(thumbnails[2], in: smallRect2, cornerRadius: cornerRadius)
-
-        default:
-            // 4+ photos: Grid layout (3 columns)
-            let columns = 3
-            let photoWidth = (availableWidth - spacing * CGFloat(columns - 1)) / CGFloat(columns)
-            let photoHeight = photoWidth // Square
-
-            for (index, thumbnail) in thumbnails.prefix(6).enumerated() {
-                let row = index / columns
-                let col = index % columns
-
-                let x = margin + CGFloat(col) * (photoWidth + spacing)
-                let y = currentY + CGFloat(row) * (photoHeight + spacing)
-
-                let rect = CGRect(x: x, y: y, width: photoWidth, height: photoHeight)
-                drawRoundedImage(thumbnail, in: rect, cornerRadius: cornerRadius)
+                for (index, thumbnail) in thumbnails.enumerated() {
+                    let x = margin + CGFloat(index) * (photoWidth + spacing)
+                    let rect = CGRect(x: x, y: currentY, width: photoWidth, height: photoHeight)
+                    drawRoundedImage(thumbnail, in: rect, cornerRadius: cornerRadius)
+                }
+                currentY += photoHeight + 20
             }
         }
     }

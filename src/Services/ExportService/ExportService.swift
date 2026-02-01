@@ -110,10 +110,9 @@ final class ExportService {
     func exportAsImage(result: AnalysisResult, includeWatermark: Bool = true) async -> UIImage? {
         logger.info("📤 [ExportService] 이미지 내보내기 시작")
 
-        // Pre-load thumbnails
-        let allAssets = result.places.flatMap { $0.photos }
-        let thumbnails = await loadThumbnails(from: allAssets, maxCount: 6)
-        logger.info("📤 [ExportService] 썸네일 \(thumbnails.count)개 로드 완료")
+        // Group photos by day and load thumbnails
+        let photosByDay = await loadThumbnailsByDay(from: result.places)
+        logger.info("📤 [ExportService] 썸네일 로드 완료 - \(photosByDay.count)일")
 
         let size = CGSize(width: 1080, height: 1920)
 
@@ -131,7 +130,7 @@ final class ExportService {
             drawHeader(in: context.cgContext, result: result, size: size)
             drawStats(in: context.cgContext, result: result, size: size)
             let timelineEndY = drawTimeline(in: context.cgContext, result: result, size: size)
-            drawPhotos(thumbnails: thumbnails, startY: timelineEndY + 40, size: size)
+            drawPhotosByDay(photosByDay: photosByDay, startY: timelineEndY + 40, size: size)
 
             if includeWatermark {
                 drawWatermark(in: context.cgContext, size: size)
@@ -142,10 +141,25 @@ final class ExportService {
         return image
     }
 
-    /// PHAsset에서 썸네일 로드
-    private func loadThumbnails(from assets: [PHAsset], maxCount: Int) async -> [UIImage] {
-        let assetsToLoad = Array(assets.prefix(maxCount))
-        var thumbnails: [UIImage] = []
+    /// Day별로 PHAsset에서 썸네일 로드
+    private func loadThumbnailsByDay(from places: [PlaceCluster]) async -> [(dayNumber: Int, date: Date, thumbnails: [UIImage])] {
+        let calendar = Calendar.current
+        var dayGroups: [Date: (dayNumber: Int, assets: [PHAsset])] = [:]
+
+        // Group places by date
+        let sortedDates = Set(places.map { calendar.startOfDay(for: $0.startTime) }).sorted()
+
+        for (dayIndex, date) in sortedDates.enumerated() {
+            let dayNumber = dayIndex + 1
+            let placesForDay = places.filter { calendar.startOfDay(for: $0.startTime) == date }
+            let assetsForDay = placesForDay.flatMap { $0.photos }
+            dayGroups[date] = (dayNumber, assetsForDay)
+        }
+
+        // Load thumbnails for each day (max 3 per day, max 2 days shown)
+        var result: [(dayNumber: Int, date: Date, thumbnails: [UIImage])] = []
+        let maxDays = 2
+        let maxPhotosPerDay = 3
 
         let manager = PHImageManager.default()
         let options = PHImageRequestOptions()
@@ -153,26 +167,34 @@ final class ExportService {
         options.resizeMode = .exact
         options.isSynchronous = true
         options.isNetworkAccessAllowed = true
-
         let targetSize = CGSize(width: 400, height: 400)
 
-        for asset in assetsToLoad {
-            await withCheckedContinuation { continuation in
-                manager.requestImage(
-                    for: asset,
-                    targetSize: targetSize,
-                    contentMode: .aspectFill,
-                    options: options
-                ) { image, _ in
-                    if let image = image {
-                        thumbnails.append(image)
+        for date in sortedDates.prefix(maxDays) {
+            guard let group = dayGroups[date] else { continue }
+
+            var thumbnails: [UIImage] = []
+            for asset in group.assets.prefix(maxPhotosPerDay) {
+                await withCheckedContinuation { continuation in
+                    manager.requestImage(
+                        for: asset,
+                        targetSize: targetSize,
+                        contentMode: .aspectFill,
+                        options: options
+                    ) { image, _ in
+                        if let image = image {
+                            thumbnails.append(image)
+                        }
+                        continuation.resume()
                     }
-                    continuation.resume()
                 }
+            }
+
+            if !thumbnails.isEmpty {
+                result.append((dayNumber: group.dayNumber, date: date, thumbnails: thumbnails))
             }
         }
 
-        return thumbnails
+        return result
     }
 
     // MARK: - Private Drawing Methods
@@ -417,11 +439,16 @@ final class ExportService {
         return currentY
     }
 
-    private func drawPhotos(thumbnails: [UIImage], startY: CGFloat, size: CGSize) {
-        guard !thumbnails.isEmpty else { return }
+    private func drawPhotosByDay(photosByDay: [(dayNumber: Int, date: Date, thumbnails: [UIImage])], startY: CGFloat, size: CGSize) {
+        guard !photosByDay.isEmpty else { return }
 
         let titleFont = UIFont.systemFont(ofSize: 28, weight: .bold)
         let titleColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
+        let dayHeaderFont = UIFont.systemFont(ofSize: 20, weight: .bold)
+        let dayDateFont = UIFont.systemFont(ofSize: 16, weight: .regular)
+        let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1)
+        let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1)
+        let timeColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
 
         var currentY = startY
 
@@ -434,62 +461,58 @@ final class ExportService {
         currentY += 50
 
         let margin: CGFloat = 60
-        let spacing: CGFloat = 12
+        let spacing: CGFloat = 10
         let availableWidth = size.width - (margin * 2)
-        let cornerRadius: CGFloat = 16
+        let cornerRadius: CGFloat = 12
 
-        switch thumbnails.count {
-        case 1:
-            // Single photo: Full width, larger height
-            let photoWidth = availableWidth
-            let photoHeight: CGFloat = 350
-            let photoRect = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
-            drawRoundedImage(thumbnails[0], in: photoRect, cornerRadius: cornerRadius)
+        for dayData in photosByDay {
+            // Day header badge
+            let dayHeaderRect = CGRect(x: margin, y: currentY, width: 70, height: 28)
+            let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 6)
+            primaryPaleColor.setFill()
+            dayHeaderPath.fill()
 
-        case 2:
-            // Two photos: Side by side
-            let photoWidth = (availableWidth - spacing) / 2
-            let photoHeight: CGFloat = 280
+            let dayString = NSAttributedString(
+                string: "Day \(dayData.dayNumber)",
+                attributes: [.font: dayHeaderFont, .foregroundColor: primaryColor]
+            )
+            let dayStringSize = dayString.size()
+            dayString.draw(at: CGPoint(
+                x: dayHeaderRect.midX - dayStringSize.width / 2,
+                y: dayHeaderRect.midY - dayStringSize.height / 2
+            ))
 
-            let rect1 = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
-            let rect2 = CGRect(x: margin + photoWidth + spacing, y: currentY, width: photoWidth, height: photoHeight)
+            // Date next to badge
+            let dateString = NSAttributedString(
+                string: formatDateWithWeekday(dayData.date),
+                attributes: [.font: dayDateFont, .foregroundColor: timeColor]
+            )
+            dateString.draw(at: CGPoint(x: margin + 80, y: currentY + 4))
 
-            drawRoundedImage(thumbnails[0], in: rect1, cornerRadius: cornerRadius)
-            drawRoundedImage(thumbnails[1], in: rect2, cornerRadius: cornerRadius)
+            currentY += 40
 
-        case 3:
-            // Three photos: One large on left, two stacked on right
-            let largeWidth = (availableWidth - spacing) * 0.6
-            let smallWidth = (availableWidth - spacing) * 0.4
-            let largeHeight: CGFloat = 280
-            let smallHeight = (largeHeight - spacing) / 2
+            // Draw thumbnails for this day (horizontal row)
+            let thumbnails = dayData.thumbnails
+            let photoCount = thumbnails.count
 
-            // Large photo on left
-            let largeRect = CGRect(x: margin, y: currentY, width: largeWidth, height: largeHeight)
-            drawRoundedImage(thumbnails[0], in: largeRect, cornerRadius: cornerRadius)
+            if photoCount == 1 {
+                // Single photo: larger, but not full width
+                let photoWidth = availableWidth * 0.6
+                let photoHeight: CGFloat = 200
+                let photoRect = CGRect(x: margin, y: currentY, width: photoWidth, height: photoHeight)
+                drawRoundedImage(thumbnails[0], in: photoRect, cornerRadius: cornerRadius)
+                currentY += photoHeight + 20
+            } else {
+                // Multiple photos: side by side
+                let photoWidth = (availableWidth - spacing * CGFloat(photoCount - 1)) / CGFloat(photoCount)
+                let photoHeight: CGFloat = 180
 
-            // Two small photos on right
-            let smallRect1 = CGRect(x: margin + largeWidth + spacing, y: currentY, width: smallWidth, height: smallHeight)
-            let smallRect2 = CGRect(x: margin + largeWidth + spacing, y: currentY + smallHeight + spacing, width: smallWidth, height: smallHeight)
-
-            drawRoundedImage(thumbnails[1], in: smallRect1, cornerRadius: cornerRadius)
-            drawRoundedImage(thumbnails[2], in: smallRect2, cornerRadius: cornerRadius)
-
-        default:
-            // 4+ photos: Grid layout (3 columns)
-            let columns = 3
-            let photoWidth = (availableWidth - spacing * CGFloat(columns - 1)) / CGFloat(columns)
-            let photoHeight = photoWidth // Square
-
-            for (index, thumbnail) in thumbnails.prefix(6).enumerated() {
-                let row = index / columns
-                let col = index % columns
-
-                let x = margin + CGFloat(col) * (photoWidth + spacing)
-                let y = currentY + CGFloat(row) * (photoHeight + spacing)
-
-                let rect = CGRect(x: x, y: y, width: photoWidth, height: photoHeight)
-                drawRoundedImage(thumbnail, in: rect, cornerRadius: cornerRadius)
+                for (index, thumbnail) in thumbnails.enumerated() {
+                    let x = margin + CGFloat(index) * (photoWidth + spacing)
+                    let rect = CGRect(x: x, y: currentY, width: photoWidth, height: photoHeight)
+                    drawRoundedImage(thumbnail, in: rect, cornerRadius: cornerRadius)
+                }
+                currentY += photoHeight + 20
             }
         }
     }
