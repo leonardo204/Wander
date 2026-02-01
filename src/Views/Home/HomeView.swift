@@ -10,22 +10,39 @@ struct HomeView: View {
     @Query(sort: \TravelRecord.createdAt, order: .reverse) private var records: [TravelRecord]
     @State private var showPhotoSelection = false
     @State private var showQuickMode = false
-    @State private var showWeeklyHighlight = false
+    @State private var showLookback = false
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: WanderSpacing.space6) {
-                    // Quick Action Cards
-                    quickActionSection
+            ZStack {
+                ScrollView {
+                    VStack(spacing: WanderSpacing.space6) {
+                        // Greeting
+                        greetingSection
 
-                    // Recent Records Section
-                    recentRecordsSection
+                        // Quick Action Cards (2 columns)
+                        quickActionSection
+
+                        // Recent Records Section
+                        recentRecordsSection
+                    }
+                    .padding(.horizontal, WanderSpacing.screenMargin)
+                    .padding(.top, WanderSpacing.space4)
+                    .padding(.bottom, 80) // FAB 공간 확보
                 }
-                .padding(.horizontal, WanderSpacing.screenMargin)
-                .padding(.top, WanderSpacing.space4)
+                .background(WanderColors.background)
+
+                // FAB (Floating Action Button)
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        fabButton
+                            .padding(.trailing, WanderSpacing.screenMargin)
+                            .padding(.bottom, WanderSpacing.space4)
+                    }
+                }
             }
-            .background(WanderColors.background)
             .navigationTitle("Wander")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -41,8 +58,8 @@ struct HomeView: View {
             .sheet(isPresented: $showQuickMode) {
                 QuickModeView()
             }
-            .sheet(isPresented: $showWeeklyHighlight) {
-                WeeklyHighlightView()
+            .sheet(isPresented: $showLookback) {
+                LookbackView()
             }
             .onAppear {
                 logger.info("🏠 [HomeView] 나타남 - 저장된 기록: \(records.count)개")
@@ -53,38 +70,56 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Greeting Section
+    private var greetingSection: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space1) {
+            Text("오늘 어떤 이야기를")
+                .font(WanderTypography.title2)
+                .foregroundColor(WanderColors.textPrimary)
+            Text("만들어 볼까요?")
+                .font(WanderTypography.title2)
+                .foregroundColor(WanderColors.textPrimary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - FAB Button
+    private var fabButton: some View {
+        Button(action: {
+            showPhotoSelection = true
+        }) {
+            Image(systemName: "plus")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundColor(.white)
+                .frame(width: 56, height: 56)
+                .background(WanderColors.primary)
+                .clipShape(Circle())
+                .shadow(color: WanderColors.primary.opacity(0.4), radius: 8, x: 0, y: 4)
+        }
+    }
+
     // MARK: - Quick Action Section
     private var quickActionSection: some View {
-        VStack(spacing: WanderSpacing.space4) {
-            // Main action - Travel record
+        HStack(spacing: WanderSpacing.space3) {
+            // 지금 뭐해?
             QuickActionCard(
-                icon: "camera.fill",
-                title: "새 여행 기록하기",
-                subtitle: "사진으로 여행 기록",
+                icon: "bubble.left.fill",
+                title: "지금 뭐해?",
+                subtitle: "사진 몇 장으로\n바로 공유",
                 backgroundColor: WanderColors.primaryPale
             ) {
-                showPhotoSelection = true
+                showQuickMode = true
             }
 
-            // Secondary actions
-            HStack(spacing: WanderSpacing.space4) {
-                QuickActionCard(
-                    icon: "bubble.left.fill",
-                    title: "지금 뭐해?",
-                    subtitle: "바로 공유",
-                    backgroundColor: WanderColors.primaryPale
-                ) {
-                    showQuickMode = true
-                }
-
-                QuickActionCard(
-                    icon: "calendar",
-                    title: "이번 주",
-                    subtitle: "하이라이트",
-                    backgroundColor: WanderColors.primaryPale
-                ) {
-                    showWeeklyHighlight = true
-                }
+            // 돌아보기
+            QuickActionCard(
+                icon: "arrow.counterclockwise",
+                title: "돌아보기",
+                subtitle: "자동 하이라이트\n생성",
+                backgroundColor: WanderColors.primaryPale,
+                showPeriodBadge: true
+            ) {
+                showLookback = true
             }
         }
     }
@@ -167,33 +202,49 @@ struct QuickActionCard: View {
     let title: String
     let subtitle: String
     let backgroundColor: Color
+    var showPeriodBadge: Bool = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: WanderSpacing.space3) {
-                // Icon Area
-                RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium)
-                    .fill(WanderColors.surface)
-                    .frame(height: 80)
-                    .overlay(
-                        Image(systemName: icon)
-                            .font(.system(size: 32))
+            VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+                // Icon
+                Image(systemName: icon)
+                    .font(.system(size: 24))
+                    .foregroundColor(WanderColors.primary)
+
+                Spacer()
+
+                // Title
+                Text(title)
+                    .font(WanderTypography.headline)
+                    .foregroundColor(WanderColors.textPrimary)
+
+                // Period Badge (돌아보기 전용)
+                if showPeriodBadge {
+                    HStack(spacing: 4) {
+                        Text("이번 주")
+                            .font(WanderTypography.caption1)
                             .foregroundColor(WanderColors.primary)
-                    )
-
-                // Text Area
-                VStack(alignment: .leading, spacing: WanderSpacing.space1) {
-                    Text(title)
-                        .font(WanderTypography.headline)
-                        .foregroundColor(WanderColors.textPrimary)
-
-                    Text(subtitle)
-                        .font(WanderTypography.caption1)
-                        .foregroundColor(WanderColors.textSecondary)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 10))
+                            .foregroundColor(WanderColors.primary)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(WanderColors.primary.opacity(0.15))
+                    .cornerRadius(WanderSpacing.radiusSmall)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Subtitle
+                Text(subtitle)
+                    .font(WanderTypography.caption1)
+                    .foregroundColor(WanderColors.textSecondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: 140)
             .padding(WanderSpacing.space4)
             .background(backgroundColor)
             .cornerRadius(WanderSpacing.radiusLarge)

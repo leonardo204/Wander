@@ -36,6 +36,7 @@
 		C7E4338EA3FBE76496BC86C4 /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236FC67B2D5FE36573239035 /* OnboardingContainerView.swift */; };
 		E55B852473000EF498F1B0EA /* RecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BDB68CF4F57746D7AF6F6C /* RecordsView.swift */; };
 		EC8FD13F7F236756CACF0EEF /* WeeklyHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9A94D7767877D47292A5D6 /* WeeklyHighlightView.swift */; };
+		ED9CC1319A16AD28CA5EC02F /* LookbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E67E67E11F2FCD5C5FF0ADB /* LookbackView.swift */; };
 		F053FEAC293BBEFDFA6F1A06 /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CE9F664E03D6DBD0C97AE6E /* ResultView.swift */; };
 		F0B56A8F65147DECD8344DA3 /* TravelRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27D468AA704F3E844714452 /* TravelRecord.swift */; };
 		F0EEF6703154148EC1994A3B /* MapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9F4F32B5C6B9C8CD73F7B41 /* MapDetailView.swift */; };
@@ -47,6 +48,7 @@
 /* Begin PBXFileReference section */
 		01DA78D53A168F6F953CAB10 /* AIServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIServiceProtocol.swift; sourceTree = "<group>"; };
 		0C7C9E0DF1C8C2E3C8D5164B /* WanderColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WanderColors.swift; sourceTree = "<group>"; };
+		0E67E67E11F2FCD5C5FF0ADB /* LookbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookbackView.swift; sourceTree = "<group>"; };
 		103DE727B96D53981C6197C4 /* AIStoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIStoryView.swift; sourceTree = "<group>"; };
 		10F5AF74E8976C19CA1F2931 /* WanderApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WanderApp.swift; sourceTree = "<group>"; };
 		1CE9F664E03D6DBD0C97AE6E /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
@@ -205,6 +207,7 @@
 			isa = PBXGroup;
 			children = (
 				2D159347FCDC44AD0120B147 /* HomeView.swift */,
+				0E67E67E11F2FCD5C5FF0ADB /* LookbackView.swift */,
 			);
 			path = Home;
 			sourceTree = "<group>";
@@ -326,7 +329,7 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		"TEMP_9166F654-1F51-497C-A6FA-214F1D37EBBB" /* Common */ = {
+		"TEMP_A042C72B-AB76-4F61-836C-FED4F24CC846" /* Common */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -415,6 +418,7 @@
 				154B8870CE80CF4AD29D8226 /* GoogleAIService.swift in Sources */,
 				68C9C4F8DBDD77FAF0329C54 /* HomeView.swift in Sources */,
 				751A2972E76920FF3D6FB66B /* KeychainManager.swift in Sources */,
+				ED9CC1319A16AD28CA5EC02F /* LookbackView.swift in Sources */,
 				F0EEF6703154148EC1994A3B /* MapDetailView.swift in Sources */,
 				C7E4338EA3FBE76496BC86C4 /* OnboardingContainerView.swift in Sources */,
 				3B9443DFDB1CE7954776ECC0 /* OnboardingIntroView.swift in Sources */,
