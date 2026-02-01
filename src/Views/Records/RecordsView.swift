@@ -1210,43 +1210,73 @@ struct PhotoViewer: View {
     }
 }
 
-// MARK: - Zoomable Image View
+// MARK: - Zoomable Image View (핀치투줌 + 드래그 + 더블탭)
 struct ZoomableImageView: View {
     let image: UIImage
+
     @State private var scale: CGFloat = 1.0
     @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+
+    private let minScale: CGFloat = 1.0
+    private let maxScale: CGFloat = 4.0
 
     var body: some View {
-        Image(uiImage: image)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .scaleEffect(scale)
-            .gesture(
-                MagnificationGesture()
-                    .onChanged { value in
-                        scale = lastScale * value
-                    }
-                    .onEnded { _ in
-                        lastScale = scale
-                        if scale < 1.0 {
-                            withAnimation {
-                                scale = 1.0
-                                lastScale = 1.0
+        GeometryReader { geometry in
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .scaleEffect(scale)
+                .offset(offset)
+                .gesture(
+                    MagnificationGesture()
+                        .onChanged { value in
+                            let newScale = lastScale * value
+                            scale = min(max(newScale, minScale), maxScale)
+                        }
+                        .onEnded { _ in
+                            lastScale = scale
+                            if scale <= minScale {
+                                withAnimation(.spring(response: 0.3)) {
+                                    scale = minScale
+                                    offset = .zero
+                                    lastOffset = .zero
+                                }
                             }
                         }
-                    }
-            )
-            .onTapGesture(count: 2) {
-                withAnimation {
-                    if scale > 1.0 {
-                        scale = 1.0
-                        lastScale = 1.0
-                    } else {
-                        scale = 2.5
-                        lastScale = 2.5
+                )
+                .simultaneousGesture(
+                    DragGesture()
+                        .onChanged { value in
+                            if scale > 1 {
+                                offset = CGSize(
+                                    width: lastOffset.width + value.translation.width,
+                                    height: lastOffset.height + value.translation.height
+                                )
+                            }
+                        }
+                        .onEnded { _ in
+                            lastOffset = offset
+                        }
+                )
+                .onTapGesture(count: 2) {
+                    withAnimation(.spring(response: 0.3)) {
+                        if scale > 1 {
+                            scale = 1.0
+                            lastScale = 1.0
+                            offset = .zero
+                            lastOffset = .zero
+                        } else {
+                            scale = 2.5
+                            lastScale = 2.5
+                        }
                     }
                 }
-            }
+                .frame(width: geometry.size.width, height: geometry.size.height)
+        }
+        .cornerRadius(WanderSpacing.radiusLarge)
+        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -1526,16 +1556,19 @@ struct RecordSharePreviewView: View {
             if !previewImages.isEmpty {
                 TabView(selection: $currentImageIndex) {
                     ForEach(previewImages.indices, id: \.self) { index in
-                        Image(uiImage: previewImages[index])
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .cornerRadius(WanderSpacing.radiusLarge)
-                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                        ZoomableImageView(image: previewImages[index])
                             .tag(index)
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: previewImages.count > 1 ? .automatic : .never))
                 .frame(height: 500)
+
+                // 줌 힌트
+                if previewImages.count == 1 {
+                    Text("핀치로 확대/축소, 더블탭으로 토글")
+                        .font(WanderTypography.caption2)
+                        .foregroundColor(WanderColors.textTertiary)
+                }
             }
         }
     }
