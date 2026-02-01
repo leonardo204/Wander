@@ -1171,7 +1171,9 @@ struct PhotoViewer: View {
 
             TabView(selection: $currentIndex) {
                 ForEach(0..<photos.count, id: \.self) { index in
-                    ZoomableImageView(image: photos[index])
+                    Image(uiImage: photos[index])
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
                         .tag(index)
                 }
             }
@@ -1205,60 +1207,6 @@ struct PhotoViewer: View {
                     .background(Color.black.opacity(0.5))
                     .cornerRadius(WanderSpacing.radiusFull)
                     .padding(.bottom, 50)
-            }
-        }
-    }
-}
-
-// MARK: - Zoomable Image View (핀치투줌 + 더블탭)
-struct ZoomableImageView: View {
-    let image: UIImage
-
-    @State private var scale: CGFloat = 1.0
-    @State private var lastScale: CGFloat = 1.0
-
-    private let minScale: CGFloat = 1.0
-    private let maxScale: CGFloat = 4.0
-
-    var body: some View {
-        // 전체 영역에서 제스처 인식을 위해 ZStack + contentShape 사용
-        ZStack {
-            Color.clear
-                .contentShape(Rectangle())  // 투명 영역도 터치 가능
-
-            Image(uiImage: image)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .scaleEffect(scale)
-                .cornerRadius(WanderSpacing.radiusLarge)
-                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-        }
-        .contentShape(Rectangle())  // ZStack 전체 영역 터치 가능
-        .gesture(
-            MagnificationGesture()
-                .onChanged { value in
-                    let newScale = lastScale * value
-                    scale = min(max(newScale, minScale), maxScale)
-                }
-                .onEnded { _ in
-                    lastScale = scale
-                    if scale < minScale {
-                        withAnimation(.spring(response: 0.3)) {
-                            scale = minScale
-                            lastScale = minScale
-                        }
-                    }
-                }
-        )
-        .onTapGesture(count: 2) {
-            withAnimation(.spring(response: 0.3)) {
-                if scale > 1 {
-                    scale = 1.0
-                    lastScale = 1.0
-                } else {
-                    scale = 2.5
-                    lastScale = 2.5
-                }
             }
         }
     }
@@ -1540,19 +1488,16 @@ struct RecordSharePreviewView: View {
             if !previewImages.isEmpty {
                 TabView(selection: $currentImageIndex) {
                     ForEach(previewImages.indices, id: \.self) { index in
-                        ZoomableImageView(image: previewImages[index])
+                        Image(uiImage: previewImages[index])
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .cornerRadius(WanderSpacing.radiusLarge)
+                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
                             .tag(index)
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: previewImages.count > 1 ? .automatic : .never))
                 .frame(height: 500)
-
-                // 줌 힌트
-                if previewImages.count == 1 {
-                    Text("핀치로 확대/축소, 더블탭으로 토글")
-                        .font(WanderTypography.caption2)
-                        .foregroundColor(WanderColors.textTertiary)
-                }
             }
         }
     }
