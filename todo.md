@@ -51,34 +51,35 @@
 
 ## Phase 2: 보안 & 프라이버시
 
-### 2.1 기록 숨기기 기능
+### 2.1 기록 숨기기 기능 ✅
 - **모델**: `src/Models/SwiftData/TravelRecord.swift`
 - **뷰**: `src/Views/Records/HiddenRecordsView.swift` (신규)
 - **GUI**: `hidden_travel_records_screen/screen.png`
 - **작업 내용**:
-  - [ ] TravelRecord에 `isHidden: Bool` 필드 추가
-  - [ ] 기록 상세 > 더보기 메뉴에 "숨기기" 옵션 추가
-  - [ ] RecordsView 하단에 "숨긴 기록 (N)" 섹션 추가
-  - [ ] HiddenRecordsView 구현 (인증 후 표시)
-  - [ ] "숨김 해제" 기능 구현
+  - [x] TravelRecord에 `isHidden: Bool` 필드 추가
+  - [x] 기록 상세 > 더보기 메뉴에 "숨기기" 옵션 추가
+  - [x] RecordsView 하단에 "숨긴 기록 (N)" 섹션 추가
+  - [x] HiddenRecordsView 구현 (인증 후 표시)
+  - [x] "숨김 해제" 기능 구현
 
-### 2.2 인증 시스템 구현
-- **파일**: `src/Views/Auth/AuthenticationView.swift` (신규)
+### 2.2 인증 시스템 구현 ✅
+- **파일**: `src/Views/Auth/PINInputView.swift` (신규)
+- **파일**: `src/Services/AuthenticationManager.swift` (신규)
 - **GUI**: `pin_authentication_screen/screen.png`
 - **작업 내용**:
-  - [ ] LocalAuthentication 프레임워크 연동 (Face ID/Touch ID)
-  - [ ] 4자리 PIN 입력 화면 구현
-  - [ ] PIN 저장 (Keychain)
-  - [ ] 생체인증 실패 시 PIN 폴백
-  - [ ] 3회 실패 시 30초 잠금
-  - [ ] 인증 성공 후 5분간 유지
+  - [x] LocalAuthentication 프레임워크 연동 (Face ID/Touch ID)
+  - [x] 4자리 PIN 입력 화면 구현
+  - [x] PIN 저장 (Keychain)
+  - [x] 생체인증 실패 시 PIN 폴백
+  - [x] 3회 실패 시 30초 잠금
+  - [x] 인증 성공 후 5분간 유지
 
-### 2.3 인증 설정 화면
+### 2.3 인증 설정 화면 ✅
 - **파일**: `src/Views/Settings/SecuritySettingsView.swift` (신규)
 - **작업 내용**:
-  - [ ] 설정 > 보안 섹션 추가
-  - [ ] PIN 설정/변경/삭제
-  - [ ] 생체인증 토글
+  - [x] 설정 > 보안 섹션 추가
+  - [x] PIN 설정/변경/삭제
+  - [x] 생체인증 토글
 
 ---
 
@@ -208,9 +209,9 @@
 - [x] 1.3 탭 네비게이션 개선
 
 ### Phase 2 (중기) - 2주
-- [ ] 2.1 기록 숨기기
-- [ ] 2.2 인증 시스템
-- [ ] 2.3 인증 설정
+- [x] 2.1 기록 숨기기 ✅
+- [x] 2.2 인증 시스템 ✅
+- [x] 2.3 인증 설정 ✅
 - [ ] 2.4 카테고리 관리
 - [ ] 2.5 사용자 장소 설정
 - [ ] 2.6 이미지 내보내기
