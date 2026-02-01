@@ -206,7 +206,9 @@ struct HomeView: View {
     private var recentRecordsList: some View {
         LazyVStack(spacing: WanderSpacing.space4) {
             ForEach(records.prefix(5)) { record in
-                NavigationLink(value: record.id) {
+                Button {
+                    navigationPath.append(record.id)
+                } label: {
                     RecordCard(record: record)
                 }
                 .buttonStyle(.plain)
@@ -325,6 +327,7 @@ struct RecordCard: View {
         .background(WanderColors.surface)
         .cornerRadius(WanderSpacing.radiusXXL)
         .elevation1()
+        .contentShape(Rectangle())  // 전체 영역 터치 가능
         .onAppear {
             loadThumbnail()
         }
