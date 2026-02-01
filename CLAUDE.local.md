@@ -40,39 +40,94 @@ import Security      // Keychain (API Key 저장)
 | 항목 | 값 |
 |------|-----|
 | 프로젝트 위치 | `/Volumes/MiniExt/main_work/75_AI/Wander/` |
+| 소스 코드 | `src/` |
 | Bundle ID | `com.zerolive.wander` |
 | 프로젝트명 | `Wander` |
 | GitHub | https://github.com/leonardo204/Wander |
 
 ---
 
-## 문서 구조
+## 폴더 구조
 
 ```
 Wander/
-├── claude.local.md              ← 이 파일 (개발 가이드)
-├── wander_planning_report.md    ← 기획서
-├── wander_ui_scenario.md        ← UI 시나리오
-├── wander_design_concept.md     ← 디자인 시스템
+├── CLAUDE.local.md              ← 이 파일 (개발 가이드)
+├── .gitignore
+│
+├── src/                         ← 소스 코드 (Xcode 프로젝트)
+│   ├── WanderApp.swift
+│   ├── ContentView.swift
+│   ├── project.yml              ← xcodegen 설정
+│   ├── Wander.xcodeproj/        ← Xcode 프로젝트
+│   ├── App/
+│   ├── Core/
+│   │   ├── Design/
+│   │   │   ├── WanderColors.swift
+│   │   │   ├── WanderTypography.swift
+│   │   │   └── WanderSpacing.swift
+│   │   └── Utilities/
+│   │       └── KeychainManager.swift
+│   ├── Models/SwiftData/
+│   │   ├── TravelRecord.swift
+│   │   ├── TravelDay.swift
+│   │   ├── Place.swift
+│   │   └── PhotoItem.swift
+│   ├── Services/
+│   │   ├── AIService/
+│   │   │   ├── AIServiceProtocol.swift
+│   │   │   ├── OpenAIService.swift
+│   │   │   ├── AnthropicService.swift
+│   │   │   └── GoogleAIService.swift
+│   │   ├── AnalysisService/
+│   │   │   ├── AnalysisEngine.swift
+│   │   │   ├── ClusteringService.swift
+│   │   │   └── ActivityInferenceService.swift
+│   │   └── LocationService/
+│   │       └── GeocodingService.swift
+│   ├── ViewModels/
+│   │   └── PhotoSelection/
+│   │       └── PhotoSelectionViewModel.swift
+│   ├── Views/
+│   │   ├── Launch/SplashView.swift
+│   │   ├── Onboarding/
+│   │   ├── Home/HomeView.swift
+│   │   ├── PhotoSelection/PhotoSelectionView.swift
+│   │   ├── Analysis/AnalyzingView.swift
+│   │   ├── Result/
+│   │   │   ├── ResultView.swift
+│   │   │   ├── MapDetailView.swift
+│   │   │   └── AIStoryView.swift
+│   │   ├── Records/RecordsView.swift
+│   │   ├── QuickMode/QuickModeView.swift
+│   │   ├── Weekly/WeeklyHighlightView.swift
+│   │   └── Settings/SettingsView.swift
+│   ├── Resources/
+│   └── Preview Content/
+│
+├── Ref-Concepts/                ← 기획/디자인 문서
+│   ├── wander_planning_report.md    ← 기획서
+│   ├── wander_ui_scenario.md        ← UI 시나리오
+│   └── wander_design_concept.md     ← 디자인 시스템
+│
 ├── GUI/                         ← UI 목업 (개발 참조용)
 │   ├── index.md                 ← UI 목업 인덱스
 │   ├── screens/                 ← 32개 화면 PNG 목업
 │   └── prompts/                 ← Google Stitch 프롬프트 (개발 불필요)
-│       ├── wander_ai_prompts.md
-│       ├── wander_ai_prompts2.md
-│       └── wander_ai_prompts3.md
-└── Ref-docs/                    ← 참조 문서
-    ├── CLAUDE_CODE_HANDOFF.md   ← 구버전 핸드오프 (참고용)
-    └── google-stitch/           ← 구버전 UI 목업 백업
+│
+└── Ref-docs/                    ← 구버전 참조 문서 (백업용)
+    ├── CLAUDE_CODE_HANDOFF.md
+    └── google-stitch/
 ```
 
-### 개발 시 참조 필수 문서
+---
+
+## 개발 시 참조 문서
 
 | 파일 | 용도 | 참조 시점 |
 |------|------|----------|
-| `wander_planning_report.md` | 기획서, 기능 정의, 비즈니스 로직 | 기능 구현 전 |
-| `wander_ui_scenario.md` | UI 시나리오, 플로우, 상태 정의 | 화면 구현 시 |
-| `wander_design_concept.md` | 디자인 시스템 (컬러, 타이포, 컴포넌트) | UI 스타일링 시 |
+| `Ref-Concepts/wander_planning_report.md` | 기획서, 기능 정의, 비즈니스 로직 | 기능 구현 전 |
+| `Ref-Concepts/wander_ui_scenario.md` | UI 시나리오, 플로우, 상태 정의 | 화면 구현 시 |
+| `Ref-Concepts/wander_design_concept.md` | 디자인 시스템 (컬러, 타이포, 컴포넌트) | UI 스타일링 시 |
 | `GUI/index.md` | UI 목업 인덱스 (32개 화면) | 디자인 참조 시 |
 | `GUI/screens/` | 화면별 PNG 목업 | 레이아웃 참조 시 |
 
@@ -181,9 +236,11 @@ static let radiusXXL: CGFloat = 20     // 큰 카드
 | SCR-008 | 사진 선택 | `PhotoSelectionView` |
 | SCR-009 | 분석 중 | `AnalyzingView` |
 | SCR-010 | 분석 결과 | `ResultView` |
+| SCR-010B | 지금 뭐해? | `QuickModeView` |
 | SCR-011 | 지도 상세 | `MapDetailView` |
 | SCR-012 | 타임라인 편집 | `TimelineEditView` |
 | SCR-013 | AI 스토리 | `AIStoryView` |
+| SCR-022 | 주간 하이라이트 | `WeeklyHighlightView` |
 
 ---
 
@@ -198,10 +255,20 @@ class TravelRecord {
     var title: String
     var startDate: Date
     var endDate: Date
-    var places: [Place]
+    var days: [TravelDay]
     var totalDistance: Double
+    var placeCount: Int
+    var photoCount: Int
     var createdAt: Date
     var aiStory: String?
+}
+
+@Model
+class TravelDay {
+    var id: UUID
+    var date: Date
+    var dayNumber: Int
+    var places: [Place]
 }
 
 @Model
@@ -209,17 +276,25 @@ class Place {
     var id: UUID
     var name: String
     var address: String
-    var coordinate: CLLocationCoordinate2D
-    var visitTime: Date
-    var duration: TimeInterval
-    var activityType: ActivityType
+    var latitude: Double
+    var longitude: Double
+    var startTime: Date
+    var activityLabel: String
+    var placeType: String
     var photos: [PhotoItem]
     var memo: String?
+    var order: Int
 }
 
-enum ActivityType: String, Codable {
-    case cafe, restaurant, beach, mountain
-    case shopping, culture, airport, other
+@Model
+class PhotoItem {
+    var id: UUID
+    var assetIdentifier: String
+    var capturedAt: Date?
+    var latitude: Double?
+    var longitude: Double?
+    var hasGPS: Bool
+    var order: Int
 }
 ```
 
@@ -255,7 +330,7 @@ enum ActivityType: String, Codable {
 
 ---
 
-## 구현 상태 (2026-01-31)
+## 구현 상태 (2026-02-01)
 
 ### ✅ Phase 1: 기본 구조 - 완료
 - [x] Xcode 프로젝트 생성 (xcodegen)
@@ -274,8 +349,10 @@ enum ActivityType: String, Codable {
 ### ✅ Phase 3: 부가 기능 - 완료
 - [x] 기록 목록 & 상세
 - [x] 설정 화면 (AI설정, 데이터관리, 권한, 공유, 앱정보)
-- [ ] 공유 기능 (플레이스홀더)
-- [ ] 내보내기 (플레이스홀더)
+- [x] 공유 기능 (텍스트/이미지 공유)
+- [x] 내보내기 (Markdown, HTML)
+- [x] 지금 뭐해? 퀵 모드
+- [x] 주간 하이라이트
 
 ### ✅ Phase 4: AI 기능 (BYOK) - 완료
 - [x] KeychainManager (API Key 저장)
@@ -349,96 +426,7 @@ logger.warning("⚠️ [Clustering] GPS 없는 사진 스킵")
 | ⚠️ | 경고 |
 | 📖 | 기록 상세 |
 | 👋 | 온보딩 |
-
-### 로그 카테고리 목록
-
-| 카테고리 | 파일 |
-|----------|------|
-| `WanderApp` | WanderApp.swift |
-| `ContentView` | ContentView.swift |
-| `HomeView` | HomeView.swift |
-| `RecordsView` | RecordsView.swift |
-| `PhotoSelectionView` | PhotoSelectionView.swift |
-| `PhotoSelectionVM` | PhotoSelectionViewModel.swift |
-| `AnalyzingView` | AnalyzingView.swift |
-| `AnalysisEngine` | AnalysisEngine.swift |
-| `ClusteringService` | ClusteringService.swift |
-| `GeocodingService` | GeocodingService.swift |
-| `ActivityInference` | ActivityInferenceService.swift |
-| `ResultView` | ResultView.swift |
-| `MapDetailView` | MapDetailView.swift |
-| `AIStoryView` | AIStoryView.swift |
-| `SettingsView` | SettingsView.swift |
-| `OpenAIService` | OpenAIService.swift |
-| `AnthropicService` | AnthropicService.swift |
-| `GoogleAIService` | GoogleAIService.swift |
-| `KeychainManager` | KeychainManager.swift |
-| `SplashView` | SplashView.swift |
-| `Onboarding` | OnboardingContainerView.swift |
-| `OnboardingIntro` | OnboardingIntroView.swift |
-| `OnboardingPhoto` | OnboardingPhotoView.swift |
-| `OnboardingLocation` | OnboardingLocationView.swift |
-
-### Console.app에서 확인
-
-1. Mac에서 **Console.app** 실행
-2. 왼쪽 패널에서 연결된 **iPhone** 선택
-3. 검색창에 `com.zerolive.wander` 입력
-4. 실시간 로그 확인
-
-**팁:**
-- `subsystem:com.zerolive.wander`로 필터링
-- `category:AnalysisEngine`으로 특정 카테고리만 필터링
-
----
-
-## 프로젝트 구조 (실제 파일)
-
-```
-Wander/
-├── WanderApp.swift
-├── ContentView.swift
-├── project.yml                    # xcodegen 설정
-├── Core/
-│   ├── Design/
-│   │   ├── WanderColors.swift
-│   │   ├── WanderTypography.swift
-│   │   └── WanderSpacing.swift
-│   └── Utilities/
-│       └── KeychainManager.swift
-├── Models/SwiftData/
-│   ├── TravelRecord.swift
-│   ├── TravelDay.swift
-│   ├── Place.swift
-│   └── PhotoItem.swift
-├── Services/
-│   ├── AIService/
-│   │   ├── AIServiceProtocol.swift
-│   │   ├── OpenAIService.swift
-│   │   ├── AnthropicService.swift
-│   │   └── GoogleAIService.swift
-│   ├── AnalysisService/
-│   │   ├── AnalysisEngine.swift
-│   │   ├── ClusteringService.swift
-│   │   └── ActivityInferenceService.swift
-│   └── LocationService/
-│       └── GeocodingService.swift
-├── ViewModels/
-│   └── PhotoSelection/
-│       └── PhotoSelectionViewModel.swift
-└── Views/
-    ├── Launch/SplashView.swift
-    ├── Onboarding/
-    ├── Home/HomeView.swift
-    ├── PhotoSelection/PhotoSelectionView.swift
-    ├── Analysis/AnalyzingView.swift
-    ├── Result/
-    │   ├── ResultView.swift
-    │   ├── MapDetailView.swift
-    │   └── AIStoryView.swift
-    ├── Records/RecordsView.swift
-    └── Settings/SettingsView.swift
-```
+| 💾 | 저장 |
 
 ---
 
@@ -469,6 +457,11 @@ Wander/
 
 ## 유용한 참조
 
+### Xcode 프로젝트 재생성
+```bash
+cd src && xcodegen generate
+```
+
 ### UI 목업 확인
 ```bash
 open GUI/screens/SCR-005_home_empty/screen.png
@@ -476,15 +469,15 @@ open GUI/screens/SCR-005_home_empty/screen.png
 
 ### 특정 화면 시나리오 검색
 ```bash
-grep -n "SCR-010" wander_ui_scenario.md
+grep -n "SCR-010" Ref-Concepts/wander_ui_scenario.md
 ```
 
 ### 디자인 컬러 검색
 ```bash
-grep -n "#87CEEB" wander_design_concept.md
+grep -n "#87CEEB" Ref-Concepts/wander_design_concept.md
 ```
 
 ---
 
-*최종 업데이트: 2026-01-31*
+*최종 업데이트: 2026-02-01*
 *작성: Claude Code*
