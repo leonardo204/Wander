@@ -1404,9 +1404,10 @@ struct RecordSharePreviewView: View {
     let onDismissAll: () -> Void
 
     @State private var isLoading = true
-    @State private var previewImage: UIImage?
+    @State private var previewImages: [UIImage] = []
     @State private var previewText: String = ""
     @State private var isSharing = false
+    @State private var currentImageIndex = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -1508,8 +1509,12 @@ struct RecordSharePreviewView: View {
     private var imagePreview: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space3) {
             HStack {
-                Image(systemName: "photo")
-                Text("이미지 미리보기 (1080×1920)")
+                Image(systemName: "photo.on.rectangle")
+                if previewImages.count > 1 {
+                    Text("이미지 \(currentImageIndex + 1)/\(previewImages.count) (1080×1920)")
+                } else {
+                    Text("이미지 미리보기 (1080×1920)")
+                }
             }
             .font(WanderTypography.caption1)
             .foregroundColor(WanderColors.primary)
@@ -1518,12 +1523,19 @@ struct RecordSharePreviewView: View {
             .background(WanderColors.primaryPale)
             .cornerRadius(WanderSpacing.radiusMedium)
 
-            if let image = previewImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .cornerRadius(WanderSpacing.radiusLarge)
-                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+            if !previewImages.isEmpty {
+                TabView(selection: $currentImageIndex) {
+                    ForEach(previewImages.indices, id: \.self) { index in
+                        Image(uiImage: previewImages[index])
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .cornerRadius(WanderSpacing.radiusLarge)
+                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                            .tag(index)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: previewImages.count > 1 ? .automatic : .never))
+                .frame(height: 500)
             }
         }
     }
@@ -1541,9 +1553,9 @@ struct RecordSharePreviewView: View {
                 }
 
             case .image:
-                let image = await generateImageFromRecord()
+                let images = await generateImagesFromRecord()
                 await MainActor.run {
-                    previewImage = image
+                    previewImages = images
                     isLoading = false
                 }
             }
@@ -1578,216 +1590,326 @@ struct RecordSharePreviewView: View {
         return formatter.string(from: date)
     }
 
-    private func generateImageFromRecord() async -> UIImage? {
-        // Load thumbnails grouped by day
-        let photosByDay = await loadThumbnailsByDay()
-        // Convert to dictionary for easy lookup
+    private func generateImagesFromRecord() async -> [UIImage] {
+        // Load thumbnails for ALL days
+        let photosByDay = await loadAllThumbnailsByDay()
         var thumbnailsByDayNumber: [Int: [UIImage]] = [:]
         for dayData in photosByDay {
             thumbnailsByDayNumber[dayData.dayNumber] = dayData.thumbnails
         }
 
         let size = CGSize(width: 1080, height: 1920)
-        let renderer = UIGraphicsImageRenderer(size: size)
+        let sortedDays = record.days.sorted { $0.dayNumber < $1.dayNumber }
 
-        return renderer.image { context in
-            let rect = CGRect(origin: .zero, size: size)
+        // 레이아웃 상수
+        let headerHeight: CGFloat = 440  // 제목 + 날짜 + 통계 + 타임라인 제목
+        let continueHeaderHeight: CGFloat = 120  // 이어서 표시 헤더
+        let watermarkHeight: CGFloat = 80
+        let dayHeaderHeight: CGFloat = 42
+        let placeHeight: CGFloat = 95
+        let photoRowHeight: CGFloat = 170
+        let daySpacing: CGFloat = 30
+        let maxPlacesPerDay = 3
 
-            // Background
-            UIColor.white.setFill()
-            context.fill(rect)
+        // 각 페이지에 들어갈 Day 계산
+        var pages: [[TravelDay]] = []
+        var currentPage: [TravelDay] = []
+        var currentPageHeight: CGFloat = headerHeight  // 첫 페이지는 헤더 포함
 
-            // Title
-            let titleFont = UIFont.systemFont(ofSize: 48, weight: .bold)
-            let titleColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
-            let titleRect = CGRect(x: 60, y: 80, width: size.width - 120, height: 70)
-            let titleString = NSAttributedString(
-                string: record.title,
-                attributes: [.font: titleFont, .foregroundColor: titleColor]
-            )
-            titleString.draw(in: titleRect)
+        for day in sortedDays {
+            let placesCount = min(day.places.count, maxPlacesPerDay)
+            let hasMorePlaces = day.places.count > maxPlacesPerDay
+            let hasPhotos = thumbnailsByDayNumber[day.dayNumber] != nil
 
-            // Date
-            let dateFont = UIFont.systemFont(ofSize: 28, weight: .regular)
-            let dateColor = UIColor(red: 0.35, green: 0.42, blue: 0.45, alpha: 1)
-            let dateRect = CGRect(x: 60, y: 160, width: size.width - 120, height: 40)
-            let dateString = NSAttributedString(
-                string: "📅 \(formatDate(record.startDate)) ~ \(formatDate(record.endDate))",
-                attributes: [.font: dateFont, .foregroundColor: dateColor]
-            )
-            dateString.draw(in: dateRect)
+            var dayHeight = dayHeaderHeight
+            dayHeight += CGFloat(placesCount) * placeHeight
+            if hasMorePlaces { dayHeight += 30 }  // "외 X곳 더" 텍스트
+            if hasPhotos { dayHeight += photoRowHeight }
+            dayHeight += daySpacing
 
-            // Stats background
-            let statsY: CGFloat = 240
-            let statsRect = CGRect(x: 40, y: statsY, width: size.width - 80, height: 150)
-            let statsPath = UIBezierPath(roundedRect: statsRect, cornerRadius: 24)
-            UIColor(red: 0.97, green: 0.98, blue: 0.99, alpha: 1).setFill()
-            statsPath.fill()
+            let maxPageHeight = size.height - watermarkHeight
 
-            // Stats
-            let statFont = UIFont.systemFont(ofSize: 36, weight: .bold)
-            let labelFont = UIFont.systemFont(ofSize: 20, weight: .regular)
-            let statColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
-            let labelColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
-
-            let stats = [
-                ("📍", "\(record.placeCount)", "방문 장소"),
-                ("📸", "\(record.photoCount)", "사진"),
-                ("🚗", String(format: "%.1f", record.totalDistance), "km")
-            ]
-
-            let statWidth = (size.width - 80) / 3
-            for (index, stat) in stats.enumerated() {
-                let x = 40 + CGFloat(index) * statWidth
-                let centerX = x + statWidth / 2
-
-                let valueString = NSAttributedString(
-                    string: "\(stat.0) \(stat.1)",
-                    attributes: [.font: statFont, .foregroundColor: statColor]
-                )
-                let valueSize = valueString.size()
-                valueString.draw(at: CGPoint(x: centerX - valueSize.width / 2, y: statsY + 35))
-
-                let labelString = NSAttributedString(
-                    string: stat.2,
-                    attributes: [.font: labelFont, .foregroundColor: labelColor]
-                )
-                let labelSize = labelString.size()
-                labelString.draw(at: CGPoint(x: centerX - labelSize.width / 2, y: statsY + 95))
+            if currentPageHeight + dayHeight > maxPageHeight && !currentPage.isEmpty {
+                // 현재 페이지 마감, 새 페이지 시작
+                pages.append(currentPage)
+                currentPage = [day]
+                currentPageHeight = continueHeaderHeight + dayHeight
+            } else {
+                currentPage.append(day)
+                currentPageHeight += dayHeight
             }
-
-            // Timeline with integrated photos
-            var currentY: CGFloat = 440
-            let sectionFont = UIFont.systemFont(ofSize: 32, weight: .bold)
-            let sectionTitle = NSAttributedString(
-                string: "타임라인",
-                attributes: [.font: sectionFont, .foregroundColor: titleColor]
-            )
-            sectionTitle.draw(at: CGPoint(x: 60, y: currentY))
-            currentY += 60
-
-            // Fonts and colors
-            let dayHeaderFont = UIFont.systemFont(ofSize: 22, weight: .bold)
-            let dayDateFont = UIFont.systemFont(ofSize: 16, weight: .regular)
-            let placeFont = UIFont.systemFont(ofSize: 20, weight: .semibold)
-            let timeFont = UIFont.systemFont(ofSize: 14, weight: .regular)
-            let addressFont = UIFont.systemFont(ofSize: 13, weight: .regular)
-            let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1)
-            let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1)
-            let timeColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
-
-            let sortedDays = record.days.sorted { $0.dayNumber < $1.dayNumber }
-            let maxDays = 2
-            let maxPlacesPerDay = 2
-
-            for day in sortedDays.prefix(maxDays) {
-                // Draw Day header (실제 날짜)
-                let dayHeaderRect = CGRect(x: 60, y: currentY, width: 150, height: 30)
-                let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 8)
-                primaryPaleColor.setFill()
-                dayHeaderPath.fill()
-
-                let dayString = NSAttributedString(
-                    string: formatDateWithWeekday(day.date),
-                    attributes: [.font: dayHeaderFont, .foregroundColor: primaryColor]
-                )
-                let dayStringSize = dayString.size()
-                dayString.draw(at: CGPoint(
-                    x: dayHeaderRect.minX + 8,
-                    y: dayHeaderRect.midY - dayStringSize.height / 2
-                ))
-
-                currentY += 42
-
-                // Draw places for this day
-                let sortedPlaces = day.places.sorted { $0.order < $1.order }
-                for (placeIndex, place) in sortedPlaces.prefix(maxPlacesPerDay).enumerated() {
-                    let isLastInDay = placeIndex == min(sortedPlaces.count, maxPlacesPerDay) - 1
-
-                    // Number circle
-                    let circleRect = CGRect(x: 60, y: currentY, width: 36, height: 36)
-                    let circlePath = UIBezierPath(ovalIn: circleRect)
-                    primaryColor.setFill()
-                    circlePath.fill()
-
-                    let numberString = NSAttributedString(
-                        string: "\(placeIndex + 1)",
-                        attributes: [.font: UIFont.systemFont(ofSize: 16, weight: .bold), .foregroundColor: UIColor.white]
-                    )
-                    let numberSize = numberString.size()
-                    numberString.draw(at: CGPoint(x: circleRect.midX - numberSize.width / 2, y: circleRect.midY - numberSize.height / 2))
-
-                    // Connector line (if not last place in day)
-                    if !isLastInDay {
-                        let linePath = UIBezierPath()
-                        linePath.move(to: CGPoint(x: 78, y: currentY + 36))
-                        linePath.addLine(to: CGPoint(x: 78, y: currentY + 85))
-                        UIColor(red: 0.9, green: 0.93, blue: 0.95, alpha: 1).setStroke()
-                        linePath.lineWidth = 2
-                        linePath.stroke()
-                    }
-
-                    // Time
-                    let timeString = NSAttributedString(
-                        string: formatTime(place.startTime),
-                        attributes: [.font: timeFont, .foregroundColor: timeColor]
-                    )
-                    timeString.draw(at: CGPoint(x: 110, y: currentY - 2))
-
-                    // Place name with activity emoji (truncated if needed)
-                    var displayName = "\(place.activityLabel) \(place.name)"
-                    if displayName.count > 30 {
-                        displayName = String(displayName.prefix(30)) + "..."
-                    }
-                    let placeString = NSAttributedString(
-                        string: displayName,
-                        attributes: [.font: placeFont, .foregroundColor: titleColor]
-                    )
-                    placeString.draw(at: CGPoint(x: 110, y: currentY + 15))
-
-                    // Address (truncated)
-                    var displayAddress = place.address
-                    if displayAddress.count > 42 {
-                        displayAddress = String(displayAddress.prefix(42)) + "..."
-                    }
-                    let addressString = NSAttributedString(
-                        string: "📍 \(displayAddress)",
-                        attributes: [.font: addressFont, .foregroundColor: dateColor]
-                    )
-                    addressString.draw(at: CGPoint(x: 110, y: currentY + 40))
-
-                    currentY += 95
-                }
-
-                // Show "more" if there are more places in this day
-                if sortedPlaces.count > maxPlacesPerDay {
-                    let moreString = NSAttributedString(
-                        string: "외 \(sortedPlaces.count - maxPlacesPerDay)곳 더",
-                        attributes: [.font: addressFont, .foregroundColor: timeColor]
-                    )
-                    moreString.draw(at: CGPoint(x: 110, y: currentY - 10))
-                }
-
-                // Draw photos for this day (integrated under places)
-                if let thumbnails = thumbnailsByDayNumber[day.dayNumber], !thumbnails.isEmpty {
-                    currentY += 5
-                    currentY = drawDayPhotosInline(thumbnails: thumbnails, startY: currentY, size: size)
-                }
-
-                // Spacing between days
-                currentY += 25
-            }
-
-            // Watermark (always included)
-            let watermarkFont = UIFont.systemFont(ofSize: 24, weight: .medium)
-            let watermarkColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 0.8)
-            let watermarkString = NSAttributedString(
-                string: "🗺️ Wander",
-                attributes: [.font: watermarkFont, .foregroundColor: watermarkColor]
-            )
-            let watermarkSize = watermarkString.size()
-            watermarkString.draw(at: CGPoint(x: size.width - watermarkSize.width - 40, y: size.height - watermarkSize.height - 40))
         }
+
+        // 마지막 페이지 추가
+        if !currentPage.isEmpty {
+            pages.append(currentPage)
+        }
+
+        // 이미지 생성
+        var images: [UIImage] = []
+        let totalPages = pages.count
+
+        for (pageIndex, pageDays) in pages.enumerated() {
+            let isFirstPage = pageIndex == 0
+            let renderer = UIGraphicsImageRenderer(size: size)
+
+            let image = renderer.image { context in
+                let rect = CGRect(origin: .zero, size: size)
+                UIColor.white.setFill()
+                context.fill(rect)
+
+                var currentY: CGFloat = 0
+
+                if isFirstPage {
+                    // 첫 페이지: 전체 헤더 그리기
+                    drawFirstPageHeader(size: size)
+                    currentY = headerHeight
+                } else {
+                    // 이어지는 페이지: 간단한 헤더
+                    drawContinueHeader(pageNumber: pageIndex + 1, totalPages: totalPages, size: size)
+                    currentY = continueHeaderHeight
+                }
+
+                // Day 컨텐츠 그리기
+                currentY = drawDaysContent(
+                    days: pageDays,
+                    thumbnailsByDayNumber: thumbnailsByDayNumber,
+                    startY: currentY,
+                    size: size,
+                    maxPlacesPerDay: maxPlacesPerDay
+                )
+
+                // 워터마크
+                drawWatermarkAt(size: size)
+            }
+
+            images.append(image)
+        }
+
+        return images
+    }
+
+    // MARK: - Drawing Helper Functions
+
+    private func drawFirstPageHeader(size: CGSize) {
+        let titleFont = UIFont.systemFont(ofSize: 48, weight: .bold)
+        let titleColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
+        let dateFont = UIFont.systemFont(ofSize: 28, weight: .regular)
+        let dateColor = UIColor(red: 0.35, green: 0.42, blue: 0.45, alpha: 1)
+
+        // Title
+        let titleRect = CGRect(x: 60, y: 80, width: size.width - 120, height: 70)
+        let titleString = NSAttributedString(
+            string: record.title,
+            attributes: [.font: titleFont, .foregroundColor: titleColor]
+        )
+        titleString.draw(in: titleRect)
+
+        // Date
+        let dateRect = CGRect(x: 60, y: 160, width: size.width - 120, height: 40)
+        let dateString = NSAttributedString(
+            string: "📅 \(formatDate(record.startDate)) ~ \(formatDate(record.endDate))",
+            attributes: [.font: dateFont, .foregroundColor: dateColor]
+        )
+        dateString.draw(in: dateRect)
+
+        // Stats
+        let statsY: CGFloat = 240
+        let statsRect = CGRect(x: 40, y: statsY, width: size.width - 80, height: 150)
+        let statsPath = UIBezierPath(roundedRect: statsRect, cornerRadius: 24)
+        UIColor(red: 0.97, green: 0.98, blue: 0.99, alpha: 1).setFill()
+        statsPath.fill()
+
+        let statFont = UIFont.systemFont(ofSize: 36, weight: .bold)
+        let labelFont = UIFont.systemFont(ofSize: 20, weight: .regular)
+        let statColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
+        let labelColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
+
+        let stats = [
+            ("📍", "\(record.placeCount)", "방문 장소"),
+            ("📸", "\(record.photoCount)", "사진"),
+            ("🚗", String(format: "%.1f", record.totalDistance), "km")
+        ]
+
+        let statWidth = (size.width - 80) / 3
+        for (index, stat) in stats.enumerated() {
+            let x = 40 + CGFloat(index) * statWidth
+            let centerX = x + statWidth / 2
+
+            let valueString = NSAttributedString(
+                string: "\(stat.0) \(stat.1)",
+                attributes: [.font: statFont, .foregroundColor: statColor]
+            )
+            let valueSize = valueString.size()
+            valueString.draw(at: CGPoint(x: centerX - valueSize.width / 2, y: statsY + 35))
+
+            let labelString = NSAttributedString(
+                string: stat.2,
+                attributes: [.font: labelFont, .foregroundColor: labelColor]
+            )
+            let labelSize = labelString.size()
+            labelString.draw(at: CGPoint(x: centerX - labelSize.width / 2, y: statsY + 95))
+        }
+
+        // Timeline title
+        let sectionFont = UIFont.systemFont(ofSize: 32, weight: .bold)
+        let sectionTitle = NSAttributedString(
+            string: "타임라인",
+            attributes: [.font: sectionFont, .foregroundColor: titleColor]
+        )
+        sectionTitle.draw(at: CGPoint(x: 60, y: 440 - 60))
+    }
+
+    private func drawContinueHeader(pageNumber: Int, totalPages: Int, size: CGSize) {
+        let titleFont = UIFont.systemFont(ofSize: 36, weight: .bold)
+        let titleColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
+        let subtitleFont = UIFont.systemFont(ofSize: 20, weight: .regular)
+        let subtitleColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
+
+        // 제목 (이어서)
+        let titleString = NSAttributedString(
+            string: record.title,
+            attributes: [.font: titleFont, .foregroundColor: titleColor]
+        )
+        titleString.draw(at: CGPoint(x: 60, y: 50))
+
+        // 페이지 표시
+        let pageString = NSAttributedString(
+            string: "타임라인 (\(pageNumber)/\(totalPages))",
+            attributes: [.font: subtitleFont, .foregroundColor: subtitleColor]
+        )
+        pageString.draw(at: CGPoint(x: 60, y: 95))
+    }
+
+    private func drawDaysContent(
+        days: [TravelDay],
+        thumbnailsByDayNumber: [Int: [UIImage]],
+        startY: CGFloat,
+        size: CGSize,
+        maxPlacesPerDay: Int
+    ) -> CGFloat {
+        var currentY = startY
+
+        let dayHeaderFont = UIFont.systemFont(ofSize: 22, weight: .bold)
+        let placeFont = UIFont.systemFont(ofSize: 20, weight: .semibold)
+        let timeFont = UIFont.systemFont(ofSize: 14, weight: .regular)
+        let addressFont = UIFont.systemFont(ofSize: 13, weight: .regular)
+        let titleColor = UIColor(red: 0.1, green: 0.17, blue: 0.2, alpha: 1)
+        let dateColor = UIColor(red: 0.35, green: 0.42, blue: 0.45, alpha: 1)
+        let primaryColor = UIColor(red: 0.53, green: 0.81, blue: 0.92, alpha: 1)
+        let primaryPaleColor = UIColor(red: 0.91, green: 0.96, blue: 0.99, alpha: 1)
+        let timeColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 1)
+
+        for day in days {
+            // Day header
+            let dayHeaderRect = CGRect(x: 60, y: currentY, width: 150, height: 30)
+            let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 8)
+            primaryPaleColor.setFill()
+            dayHeaderPath.fill()
+
+            let dayString = NSAttributedString(
+                string: formatDateWithWeekday(day.date),
+                attributes: [.font: dayHeaderFont, .foregroundColor: primaryColor]
+            )
+            let dayStringSize = dayString.size()
+            dayString.draw(at: CGPoint(
+                x: dayHeaderRect.minX + 8,
+                y: dayHeaderRect.midY - dayStringSize.height / 2
+            ))
+
+            currentY += 42
+
+            // Places
+            let sortedPlaces = day.places.sorted { $0.order < $1.order }
+            for (placeIndex, place) in sortedPlaces.prefix(maxPlacesPerDay).enumerated() {
+                let isLastInDay = placeIndex == min(sortedPlaces.count, maxPlacesPerDay) - 1
+
+                // Number circle
+                let circleRect = CGRect(x: 60, y: currentY, width: 36, height: 36)
+                let circlePath = UIBezierPath(ovalIn: circleRect)
+                primaryColor.setFill()
+                circlePath.fill()
+
+                let numberString = NSAttributedString(
+                    string: "\(placeIndex + 1)",
+                    attributes: [.font: UIFont.systemFont(ofSize: 16, weight: .bold), .foregroundColor: UIColor.white]
+                )
+                let numberSize = numberString.size()
+                numberString.draw(at: CGPoint(x: circleRect.midX - numberSize.width / 2, y: circleRect.midY - numberSize.height / 2))
+
+                // Connector line
+                if !isLastInDay {
+                    let linePath = UIBezierPath()
+                    linePath.move(to: CGPoint(x: 78, y: currentY + 36))
+                    linePath.addLine(to: CGPoint(x: 78, y: currentY + 85))
+                    UIColor(red: 0.9, green: 0.93, blue: 0.95, alpha: 1).setStroke()
+                    linePath.lineWidth = 2
+                    linePath.stroke()
+                }
+
+                // Time
+                let timeString = NSAttributedString(
+                    string: formatTime(place.startTime),
+                    attributes: [.font: timeFont, .foregroundColor: timeColor]
+                )
+                timeString.draw(at: CGPoint(x: 110, y: currentY - 2))
+
+                // Place name
+                var displayName = "\(place.activityLabel) \(place.name)"
+                if displayName.count > 30 {
+                    displayName = String(displayName.prefix(30)) + "..."
+                }
+                let placeString = NSAttributedString(
+                    string: displayName,
+                    attributes: [.font: placeFont, .foregroundColor: titleColor]
+                )
+                placeString.draw(at: CGPoint(x: 110, y: currentY + 15))
+
+                // Address
+                var displayAddress = place.address
+                if displayAddress.count > 42 {
+                    displayAddress = String(displayAddress.prefix(42)) + "..."
+                }
+                let addressString = NSAttributedString(
+                    string: "📍 \(displayAddress)",
+                    attributes: [.font: addressFont, .foregroundColor: dateColor]
+                )
+                addressString.draw(at: CGPoint(x: 110, y: currentY + 40))
+
+                currentY += 95
+            }
+
+            // "외 X곳 더" 표시
+            if sortedPlaces.count > maxPlacesPerDay {
+                let moreString = NSAttributedString(
+                    string: "외 \(sortedPlaces.count - maxPlacesPerDay)곳 더",
+                    attributes: [.font: addressFont, .foregroundColor: timeColor]
+                )
+                moreString.draw(at: CGPoint(x: 110, y: currentY - 10))
+                currentY += 20
+            }
+
+            // Photos
+            if let thumbnails = thumbnailsByDayNumber[day.dayNumber], !thumbnails.isEmpty {
+                currentY += 5
+                currentY = drawDayPhotosInline(thumbnails: thumbnails, startY: currentY, size: size)
+            }
+
+            currentY += 30
+        }
+
+        return currentY
+    }
+
+    private func drawWatermarkAt(size: CGSize) {
+        let watermarkFont = UIFont.systemFont(ofSize: 24, weight: .medium)
+        let watermarkColor = UIColor(red: 0.54, green: 0.6, blue: 0.64, alpha: 0.8)
+        let watermarkString = NSAttributedString(
+            string: "🗺️ Wander",
+            attributes: [.font: watermarkFont, .foregroundColor: watermarkColor]
+        )
+        let watermarkSize = watermarkString.size()
+        watermarkString.draw(at: CGPoint(x: size.width - watermarkSize.width - 40, y: size.height - watermarkSize.height - 40))
     }
 
     /// Draw photos for a single day (horizontal row)
@@ -1821,10 +1943,10 @@ struct RecordSharePreviewView: View {
         return currentY
     }
 
-    private func loadThumbnailsByDay() async -> [(dayNumber: Int, date: Date, thumbnails: [UIImage])] {
+    /// 모든 Day의 썸네일 로드 (분할 이미지 생성용)
+    private func loadAllThumbnailsByDay() async -> [(dayNumber: Int, date: Date, thumbnails: [UIImage])] {
         var result: [(dayNumber: Int, date: Date, thumbnails: [UIImage])] = []
 
-        let maxDays = 2
         let maxPhotosPerDay = 3
 
         let manager = PHImageManager.default()
@@ -1837,7 +1959,7 @@ struct RecordSharePreviewView: View {
 
         let sortedDays = record.days.sorted { $0.dayNumber < $1.dayNumber }
 
-        for day in sortedDays.prefix(maxDays) {
+        for day in sortedDays {  // 모든 Day 로드
             let assetIds = day.places
                 .flatMap { $0.photos }
                 .prefix(maxPhotosPerDay)
@@ -1920,13 +2042,13 @@ struct RecordSharePreviewView: View {
             case .text:
                 items = [previewText]
             case .image:
-                if let image = previewImage {
-                    // JPEG 압축으로 메모리 사용량 감소 (카카오톡 등 외부 앱 호환성 향상)
+                // 모든 이미지를 JPEG 압축하여 공유 (카카오톡 등 외부 앱 호환성 향상)
+                for image in previewImages {
                     if let jpegData = image.jpegData(compressionQuality: 0.85),
                        let compressedImage = UIImage(data: jpegData) {
-                        items = [compressedImage]
+                        items.append(compressedImage)
                     } else {
-                        items = [image]
+                        items.append(image)
                     }
                 }
             }
