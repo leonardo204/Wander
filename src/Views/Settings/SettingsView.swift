@@ -181,8 +181,6 @@ struct SettingsRow: View {
 
 // MARK: - AI Provider Settings View
 struct AIProviderSettingsView: View {
-    @State private var selectedProvider: AIProvider?
-    @State private var showAPIKeyInput = false
     @State private var providerToEdit: AIProvider?
 
     private var configuredProviders: Set<AIProvider> {
@@ -203,7 +201,6 @@ struct AIProviderSettingsView: View {
                 ForEach(AIProvider.allCases) { provider in
                     Button(action: {
                         providerToEdit = provider
-                        showAPIKeyInput = true
                     }) {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
@@ -251,10 +248,8 @@ struct AIProviderSettingsView: View {
         .onAppear {
             logger.info("⚙️ [AIProviderSettingsView] AI 설정 화면 나타남 - 설정된 프로바이더: \(self.configuredProviders.count)개")
         }
-        .sheet(isPresented: $showAPIKeyInput) {
-            if let provider = providerToEdit {
-                APIKeyInputView(provider: provider)
-            }
+        .sheet(item: $providerToEdit) { provider in
+            APIKeyInputView(provider: provider)
         }
     }
 
