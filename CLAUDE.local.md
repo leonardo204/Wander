@@ -129,6 +129,10 @@ Wander/
 │   │   └── Shared/SharedRecordView.swift
 │   │
 │   ├── Resources/
+│   │   └── Assets.xcassets/
+│   │       └── AppIcon.appiconset/
+│   │           ├── AppIcon.png      ← 앱 아이콘 (1024x1024)
+│   │           └── Contents.json
 │   └── Preview Content/
 │
 ├── Ref-Concepts/                ← 기획/디자인 문서
@@ -210,6 +214,25 @@ static let error = Color(hex: "#F44336")
 │   홈          기록        설정       │
 └─────────────────────────────────────┘
 ```
+
+### 앱 아이콘
+```
+┌─────────────────┐
+│░░░░░░✦░░░░░░░░░░│  ← AI 스파클
+│░░░  ╲    ╱  ░░░░│
+│░░░   ╲╱╲╱   ░░░░│  ← W 심볼 (여행 경로)
+│░░░░░░░░░░░░░░░░░│
+└─────────────────┘
+```
+
+| 항목 | 값 |
+|------|-----|
+| 사이즈 | 1024x1024 (iOS 17+ Universal) |
+| 배경 | Sky Blue 그라데이션 (#5DADE2 → #87CEEB) |
+| 심볼 | W (여행 경로) + ✦ (AI 스파클) |
+| 파일 위치 | `src/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png` |
+| 프롬프트 | `GUI/prompts/wander_ai_prompts5.md` |
+| 원본 HTML | `GUI/screens/wander_app_icon_C4/icon_only.html` |
 
 ---
 

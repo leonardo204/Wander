@@ -36,7 +36,7 @@ final class ExportService {
             let dayNumber = dayIndex + 1
             text += """
 
-            ━━━ Day \(dayNumber) · \(formatDateWithWeekday(date)) ━━━
+            ━━━ \(formatDateWithWeekday(date)) ━━━
 
             """
 
@@ -304,28 +304,21 @@ final class ExportService {
         for (dayIndex, date) in sortedDates.prefix(maxDays).enumerated() {
             let dayNumber = dayIndex + 1
 
-            // Draw Day header
-            let dayHeaderRect = CGRect(x: 60, y: currentY, width: 75, height: 30)
+            // Draw Day header (date)
+            let dayHeaderRect = CGRect(x: 60, y: currentY, width: 150, height: 30)
             let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 8)
             primaryPaleColor.setFill()
             dayHeaderPath.fill()
 
             let dayString = NSAttributedString(
-                string: "Day \(dayNumber)",
+                string: formatDateWithWeekday(date),
                 attributes: [.font: dayHeaderFont, .foregroundColor: primaryColor]
             )
             let dayStringSize = dayString.size()
             dayString.draw(at: CGPoint(
-                x: dayHeaderRect.midX - dayStringSize.width / 2,
+                x: dayHeaderRect.minX + 8,
                 y: dayHeaderRect.midY - dayStringSize.height / 2
             ))
-
-            // Draw date next to Day header
-            let dateString = NSAttributedString(
-                string: formatDateWithWeekday(date),
-                attributes: [.font: dayDateFont, .foregroundColor: timeColor]
-            )
-            dateString.draw(at: CGPoint(x: 145, y: currentY + 5))
 
             currentY += 42
 

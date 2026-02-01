@@ -417,17 +417,13 @@ struct DayHeader: View {
 
     var body: some View {
         HStack(spacing: WanderSpacing.space3) {
-            Text("Day \(dayNumber)")
+            Text(formatDate(date))
                 .font(WanderTypography.headline)
                 .foregroundColor(WanderColors.primary)
                 .padding(.horizontal, WanderSpacing.space3)
                 .padding(.vertical, WanderSpacing.space1)
                 .background(WanderColors.primaryPale)
                 .cornerRadius(WanderSpacing.radiusMedium)
-
-            Text(formatDate(date))
-                .font(WanderTypography.caption1)
-                .foregroundColor(WanderColors.textSecondary)
 
             Spacer()
         }

@@ -772,8 +772,8 @@ struct DaySection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space3) {
-            // Day header
-            Text("Day \(day.dayNumber)")
+            // Day header (실제 날짜)
+            Text(formatDateWithWeekday(day.date))
                 .font(WanderTypography.headline)
                 .foregroundColor(WanderColors.primary)
                 .padding(.horizontal, WanderSpacing.space3)
@@ -786,6 +786,13 @@ struct DaySection: View {
                 PlaceRow(place: place)
             }
         }
+    }
+
+    private func formatDateWithWeekday(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M월 d일 (E)"
+        formatter.locale = Locale(identifier: "ko_KR")
+        return formatter.string(from: date)
     }
 }
 
@@ -1550,7 +1557,7 @@ struct RecordSharePreviewView: View {
         text += "--- 타임라인 ---\n"
 
         for day in record.days.sorted(by: { $0.dayNumber < $1.dayNumber }) {
-            text += "\n━━━ Day \(day.dayNumber) · \(formatDateWithWeekday(day.date)) ━━━\n\n"
+            text += "\n━━━ \(formatDateWithWeekday(day.date)) ━━━\n\n"
             for (index, place) in day.places.sorted(by: { $0.order < $1.order }).enumerated() {
                 let time = formatTime(place.startTime)
                 text += "[\(index + 1)] \(time)\n"
@@ -1674,28 +1681,21 @@ struct RecordSharePreviewView: View {
             let maxPlacesPerDay = 2
 
             for day in sortedDays.prefix(maxDays) {
-                // Draw Day header
-                let dayHeaderRect = CGRect(x: 60, y: currentY, width: 75, height: 30)
+                // Draw Day header (실제 날짜)
+                let dayHeaderRect = CGRect(x: 60, y: currentY, width: 150, height: 30)
                 let dayHeaderPath = UIBezierPath(roundedRect: dayHeaderRect, cornerRadius: 8)
                 primaryPaleColor.setFill()
                 dayHeaderPath.fill()
 
                 let dayString = NSAttributedString(
-                    string: "Day \(day.dayNumber)",
+                    string: formatDateWithWeekday(day.date),
                     attributes: [.font: dayHeaderFont, .foregroundColor: primaryColor]
                 )
                 let dayStringSize = dayString.size()
                 dayString.draw(at: CGPoint(
-                    x: dayHeaderRect.midX - dayStringSize.width / 2,
+                    x: dayHeaderRect.minX + 8,
                     y: dayHeaderRect.midY - dayStringSize.height / 2
                 ))
-
-                // Draw date next to Day header
-                let dayDateString = NSAttributedString(
-                    string: formatDateWithWeekday(day.date),
-                    attributes: [.font: dayDateFont, .foregroundColor: timeColor]
-                )
-                dayDateString.draw(at: CGPoint(x: 145, y: currentY + 5))
 
                 currentY += 42
 
@@ -2048,7 +2048,7 @@ struct RecordEditView: View {
                     ForEach(record.days.sorted { $0.dayNumber < $1.dayNumber }) { day in
                         NavigationLink(destination: DayEditView(day: day)) {
                             HStack {
-                                Text("Day \(day.dayNumber)")
+                                Text(formatDayDate(day.date))
                                     .font(WanderTypography.headline)
                                 Spacer()
                                 Text("\(day.places.count)곳")
@@ -2117,6 +2117,13 @@ struct RecordEditView: View {
         try? modelContext.save()
         logger.info("🗑️ [RecordEditView] 기록 삭제됨")
     }
+
+    private func formatDayDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M월 d일 (E)"
+        formatter.locale = Locale(identifier: "ko_KR")
+        return formatter.string(from: date)
+    }
 }
 
 // MARK: - Day Edit View
@@ -2152,7 +2159,7 @@ struct DayEditView: View {
                 try? modelContext.save()
             }
         }
-        .navigationTitle("Day \(day.dayNumber)")
+        .navigationTitle(formatDayDate(day.date))
         .toolbar {
             EditButton()
         }
@@ -2161,6 +2168,13 @@ struct DayEditView: View {
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private func formatDayDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M월 d일 (E)"
+        formatter.locale = Locale(identifier: "ko_KR")
         return formatter.string(from: date)
     }
 }

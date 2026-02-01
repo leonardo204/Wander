@@ -12,7 +12,8 @@ GUI/
 │   ├── wander_ai_prompts.md
 │   ├── wander_ai_prompts2.md
 │   ├── wander_ai_prompts3.md
-│   └── wander_ai_prompts4.md  ← v2.1 신규 화면
+│   ├── wander_ai_prompts4.md  ← v2.1 신규 화면
+│   └── wander_ai_prompts5.md  ← 앱 아이콘 프롬프트
 └── screens/
     ├── SCR-XXX_name/
     │   ├── screen.png   ← UI 스크린샷
@@ -22,7 +23,7 @@ GUI/
 
 ---
 
-## 전체 화면 목록 (39개)
+## 전체 화면 목록 (40개)
 
 ### 온보딩 (4개)
 
@@ -109,6 +110,12 @@ GUI/
 | `SHEET-003_place_detail` | 장소 상세 시트 |
 | `MODAL-001_delete_confirm` | 삭제 확인 모달 |
 
+### 앱 아이콘 (1개)
+
+| 폴더명 | 설명 | 비고 |
+|--------|------|------|
+| `wander_app_icon_C4` | 앱 아이콘 (1024x1024) | W 심볼 + AI 스파클 |
+
 ---
 
 ## v2.1 신규 화면 요약 (7개)
@@ -138,4 +145,4 @@ GUI/
 
 ---
 
-*최종 업데이트: 2026-02-01 (총 39개 화면, v2.1 신규 7개)*
+*최종 업데이트: 2026-02-01 (총 40개 화면, v2.1 신규 7개 + 앱 아이콘 1개)*

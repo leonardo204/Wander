@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Wander App Icon</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                "sky-blue-start": "#5DADE2",
+                "sky-blue-end": "#87CEEB",
+            },
+        },
+    },
+}
+</script>
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1024px;
+    height: 1024px;
+    background: transparent;
+}
+.w-ribbon-path {
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+}
+</style>
+</head>
+<body>
+<!-- 1024x1024 아이콘 -->
+<div class="w-[1024px] h-[1024px] rounded-[220px] overflow-hidden bg-gradient-to-br from-sky-blue-start to-sky-blue-end flex flex-col items-center justify-center relative">
+    <!-- 하이라이트 그라데이션 -->
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.4),transparent_70%)] opacity-50"></div>
+
+    <!-- AI 스파클 -->
+    <div class="absolute top-[28%] left-1/2 -translate-x-1/2 flex flex-col items-center">
+        <span class="text-white text-[120px] drop-shadow-sm select-none">✦</span>
+    </div>
+
+    <!-- W 심볼 -->
+    <div class="relative w-[55%] h-[40%] mt-[100px] w-ribbon-path">
+        <svg class="w-full h-full" fill="none" viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 10 C 20 50, 30 50, 50 25 C 70 50, 80 50, 90 10" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="12"></path>
+        </svg>
+    </div>
+</div>
+</body>
+</html>
