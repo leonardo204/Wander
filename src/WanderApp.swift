@@ -65,6 +65,7 @@ struct WanderApp: App {
                     SharedRecordView(sharedData: data)
                 }
             }
+            .preferredColorScheme(.light)  // 라이트모드 고정
         }
         .modelContainer(sharedModelContainer)
     }
