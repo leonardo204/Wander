@@ -111,6 +111,61 @@ final class KeychainManager {
             try? deleteAPIKey(for: type)
         }
     }
+
+    // MARK: - Generic Key Storage
+
+    /// 일반 문자열 저장
+    func save(key: String, value: String) -> Bool {
+        logger.info("🔐 [Keychain] save - key: \(key)")
+        guard let data = value.data(using: .utf8) else { return false }
+
+        // 기존 값 삭제
+        delete(key: key)
+
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        ]
+
+        let status = SecItemAdd(query as CFDictionary, nil)
+        return status == errSecSuccess
+    }
+
+    /// 일반 문자열 조회
+    func retrieve(key: String) -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let value = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+
+        return value
+    }
+
+    /// 일반 키 삭제
+    func delete(key: String) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key
+        ]
+
+        SecItemDelete(query as CFDictionary)
+    }
 }
 
 // MARK: - Keychain Errors

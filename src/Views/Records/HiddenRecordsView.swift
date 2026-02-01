@@ -12,10 +12,20 @@ struct HiddenRecordsView: View {
     @Query(filter: #Predicate<TravelRecord> { $0.isHidden }, sort: \TravelRecord.createdAt, order: .reverse)
     private var hiddenRecords: [TravelRecord]
 
-    @State private var isAuthenticated = false
-    @State private var authError: String?
+    @State private var authManager = AuthenticationManager.shared
+    @State private var showPINInput = false
     @State private var showDeleteConfirmation = false
     @State private var recordToDelete: TravelRecord?
+
+    /// 인증 상태
+    private var isAuthenticated: Bool {
+        authManager.isAuthenticationValid
+    }
+
+    /// PIN 설정 여부
+    private var isPINSet: Bool {
+        authManager.isPINSet
+    }
 
     var body: some View {
         NavigationStack {
@@ -34,7 +44,20 @@ struct HiddenRecordsView: View {
                 }
             }
             .onAppear {
-                authenticate()
+                attemptAuthentication()
+            }
+            .sheet(isPresented: $showPINInput) {
+                NavigationStack {
+                    PINInputView(mode: .verify, onSuccess: {
+                        showPINInput = false
+                        logger.info("✅ [HiddenRecordsView] PIN 인증 성공")
+                    }, onCancel: {
+                        showPINInput = false
+                        dismiss()
+                    })
+                    .navigationTitle("PIN 입력")
+                    .navigationBarTitleDisplayMode(.inline)
+                }
             }
         }
     }
@@ -44,41 +67,47 @@ struct HiddenRecordsView: View {
         VStack(spacing: WanderSpacing.space6) {
             Spacer()
 
-            Image(systemName: "lock.shield.fill")
+            Image(systemName: isPINSet ? "lock.shield.fill" : "lock.open.fill")
                 .font(.system(size: 60))
                 .foregroundColor(WanderColors.primary)
 
             VStack(spacing: WanderSpacing.space2) {
-                Text("인증이 필요합니다")
+                Text(isPINSet ? "인증이 필요합니다" : "보안 설정 필요")
                     .font(WanderTypography.title2)
                     .foregroundColor(WanderColors.textPrimary)
 
-                Text("숨긴 기록을 보려면 인증해 주세요")
+                Text(isPINSet ? "숨긴 기록을 보려면 인증해 주세요" : "설정에서 PIN을 설정해 주세요")
                     .font(WanderTypography.body)
                     .foregroundColor(WanderColors.textSecondary)
             }
 
-            if let error = authError {
-                Text(error)
-                    .font(WanderTypography.caption1)
-                    .foregroundColor(WanderColors.error)
-                    .padding(.horizontal, WanderSpacing.space4)
-                    .multilineTextAlignment(.center)
-            }
-
-            Button(action: { authenticate() }) {
-                HStack(spacing: WanderSpacing.space2) {
-                    Image(systemName: "faceid")
-                    Text("인증하기")
+            if isPINSet {
+                Button(action: { attemptAuthentication() }) {
+                    HStack(spacing: WanderSpacing.space2) {
+                        Image(systemName: authManager.canUseBiometric && authManager.isBiometricEnabled ? authManager.biometricIcon : "lock.fill")
+                        Text("인증하기")
+                    }
+                    .font(WanderTypography.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: WanderSpacing.buttonHeight)
+                    .background(WanderColors.primary)
+                    .cornerRadius(WanderSpacing.radiusLarge)
                 }
-                .font(WanderTypography.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: WanderSpacing.buttonHeight)
-                .background(WanderColors.primary)
-                .cornerRadius(WanderSpacing.radiusLarge)
+                .padding(.horizontal, WanderSpacing.space8)
+            } else {
+                // PIN 미설정 시 설정 안내
+                Button(action: { dismiss() }) {
+                    Text("설정으로 이동")
+                        .font(WanderTypography.headline)
+                        .foregroundColor(WanderColors.primary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: WanderSpacing.buttonHeight)
+                        .background(WanderColors.primaryPale)
+                        .cornerRadius(WanderSpacing.radiusLarge)
+                }
+                .padding(.horizontal, WanderSpacing.space8)
             }
-            .padding(.horizontal, WanderSpacing.space8)
 
             Spacer()
         }
@@ -165,48 +194,33 @@ struct HiddenRecordsView: View {
     }
 
     // MARK: - Authentication
-    private func authenticate() {
-        let context = LAContext()
-        var error: NSError?
+    private func attemptAuthentication() {
+        // 이미 인증된 상태면 스킵
+        if authManager.isAuthenticationValid {
+            logger.info("✅ [HiddenRecordsView] 기존 인증 유효")
+            return
+        }
 
-        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
-            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "숨긴 기록을 보려면 인증이 필요합니다") { success, authenticationError in
-                DispatchQueue.main.async {
-                    if success {
-                        logger.info("🔓 [HiddenRecordsView] 생체 인증 성공")
-                        isAuthenticated = true
-                        authError = nil
-                    } else {
-                        logger.warning("🔒 [HiddenRecordsView] 생체 인증 실패: \(authenticationError?.localizedDescription ?? "알 수 없음")")
-                        // 생체 인증 실패 시 기기 암호로 대체
-                        authenticateWithPasscode()
+        // PIN이 설정되지 않은 경우
+        guard isPINSet else {
+            logger.info("ℹ️ [HiddenRecordsView] PIN 미설정")
+            return
+        }
+
+        // 생체인증 시도
+        if authManager.canUseBiometric && authManager.isBiometricEnabled {
+            Task {
+                let success = await authManager.authenticateWithBiometric()
+                if !success {
+                    // 생체인증 실패 시 PIN 입력 화면 표시
+                    await MainActor.run {
+                        showPINInput = true
                     }
                 }
             }
-        } else if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
-            // 생체 인증 불가, 기기 암호로 대체
-            authenticateWithPasscode()
         } else {
-            // 인증 방법 없음 - 기기에 인증이 설정되지 않음
-            logger.info("🔓 [HiddenRecordsView] 인증 방법 없음 - 접근 허용")
-            isAuthenticated = true
-        }
-    }
-
-    private func authenticateWithPasscode() {
-        let context = LAContext()
-
-        context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: "숨긴 기록을 보려면 인증이 필요합니다") { success, authenticationError in
-            DispatchQueue.main.async {
-                if success {
-                    logger.info("🔓 [HiddenRecordsView] 암호 인증 성공")
-                    isAuthenticated = true
-                    authError = nil
-                } else {
-                    logger.warning("🔒 [HiddenRecordsView] 암호 인증 실패")
-                    authError = "인증에 실패했습니다. 다시 시도해 주세요."
-                }
-            }
+            // PIN 입력 화면 표시
+            showPINInput = true
         }
     }
 

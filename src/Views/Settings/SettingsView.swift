@@ -52,6 +52,20 @@ struct SettingsView: View {
                     Text("데이터 및 권한")
                 }
 
+                // Security Section
+                Section {
+                    NavigationLink(destination: SecuritySettingsView()) {
+                        SettingsRow(
+                            icon: "lock.shield.fill",
+                            iconColor: WanderColors.primary,
+                            title: "보안",
+                            subtitle: "PIN, 생체인증 설정"
+                        )
+                    }
+                } header: {
+                    Text("보안")
+                }
+
                 // Share Settings Section
                 Section {
                     NavigationLink(destination: ShareSettingsView()) {

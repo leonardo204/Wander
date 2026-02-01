@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		06D7B35EF39572C788EEA5E1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FA4CD0C634E35AE8A56305 /* SettingsView.swift */; };
+		AUTH002A1B2C3D4E5F67890B /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AUTH001A1B2C3D4E5F67890A /* AuthenticationManager.swift */; };
+		PININPUT02A1B2C3D4E5F678 /* PINInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PININPUT01A1B2C3D4E5F678 /* PINInputView.swift */; };
+		SECSET02A1B2C3D4E5F67890 /* SecuritySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SECSET01A1B2C3D4E5F67890 /* SecuritySettingsView.swift */; };
 		154B8870CE80CF4AD29D8226 /* GoogleAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B83A53B85B3CB3EFBC9F9389 /* GoogleAIService.swift */; };
 		1B778F3F742D51F19AF34113 /* TravelDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D32AB57310AA1E255D0FF460 /* TravelDay.swift */; };
 		3457679691F9C61C331A5AAD /* WanderTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27E913D21309F23DFAC47B1C /* WanderTypography.swift */; };
@@ -48,6 +51,9 @@
 
 /* Begin PBXFileReference section */
 		01DA78D53A168F6F953CAB10 /* AIServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIServiceProtocol.swift; sourceTree = "<group>"; };
+		AUTH001A1B2C3D4E5F67890A /* AuthenticationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
+		PININPUT01A1B2C3D4E5F678 /* PINInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PINInputView.swift; sourceTree = "<group>"; };
+		SECSET01A1B2C3D4E5F67890 /* SecuritySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecuritySettingsView.swift; sourceTree = "<group>"; };
 		0C7C9E0DF1C8C2E3C8D5164B /* WanderColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WanderColors.swift; sourceTree = "<group>"; };
 		0E67E67E11F2FCD5C5FF0ADB /* LookbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookbackView.swift; sourceTree = "<group>"; };
 		103DE727B96D53981C6197C4 /* AIStoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIStoryView.swift; sourceTree = "<group>"; };
@@ -242,6 +248,7 @@
 			isa = PBXGroup;
 			children = (
 				3392D5D54968AD65A2604BF2 /* Analysis */,
+				AUTHGRP01A1B2C3D4E5F6789 /* Auth */,
 				71A00D22192B49D221223004 /* Home */,
 				0EFFF345C6CCFBC3068AC8FF /* Launch */,
 				F55277BF95635A3AE6FBE71C /* Onboarding */,
@@ -276,6 +283,7 @@
 			children = (
 				646136F222FBE8776922806C /* AIService */,
 				0E434F9AB97B40385202037B /* AnalysisService */,
+				AUTH001A1B2C3D4E5F67890A /* AuthenticationManager.swift */,
 				65CA908A962BD01CF4B2D8C8 /* LocationService */,
 			);
 			path = Services;
@@ -284,9 +292,18 @@
 		E536121B41C725BADEE15BAA /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				SECSET01A1B2C3D4E5F67890 /* SecuritySettingsView.swift */,
 				67FA4CD0C634E35AE8A56305 /* SettingsView.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		AUTHGRP01A1B2C3D4E5F6789 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				PININPUT01A1B2C3D4E5F678 /* PINInputView.swift */,
+			);
+			path = Auth;
 			sourceTree = "<group>";
 		};
 		EB08FBA24C38A7B14815BA33 /* PhotoSelection */ = {
@@ -436,6 +453,9 @@
 				HIDDEN002A1B2C3D4E5F6789 /* HiddenRecordsView.swift in Sources */,
 				E55B852473000EF498F1B0EA /* RecordsView.swift in Sources */,
 				F053FEAC293BBEFDFA6F1A06 /* ResultView.swift in Sources */,
+				AUTH002A1B2C3D4E5F67890B /* AuthenticationManager.swift in Sources */,
+				PININPUT02A1B2C3D4E5F678 /* PINInputView.swift in Sources */,
+				SECSET02A1B2C3D4E5F67890 /* SecuritySettingsView.swift in Sources */,
 				06D7B35EF39572C788EEA5E1 /* SettingsView.swift in Sources */,
 				C6B483A846611F5C47805D89 /* SplashView.swift in Sources */,
 				1B778F3F742D51F19AF34113 /* TravelDay.swift in Sources */,
