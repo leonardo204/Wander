@@ -50,11 +50,17 @@ struct WeeklyHighlightView: View {
                     weeklyPhotos: weeklyPhotos,
                     selectedAssets: selectedAssets,
                     onComplete: { result in
+                        logger.info("📅 [Weekly] 분석 완료 - 결과 수신")
                         self.analysisResult = result
                         self.showAnalyzing = false
-                        self.showResult = true
+                        // fullScreenCover 닫힌 후 sheet 열기 (딜레이 필요)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            logger.info("📅 [Weekly] 결과 화면 표시")
+                            self.showResult = true
+                        }
                     },
                     onCancel: {
+                        logger.info("📅 [Weekly] 분석 취소")
                         self.showAnalyzing = false
                     }
                 )
@@ -62,6 +68,12 @@ struct WeeklyHighlightView: View {
             .sheet(isPresented: $showResult) {
                 if let result = analysisResult {
                     WeeklyResultView(result: result)
+                } else {
+                    Text("결과를 불러올 수 없습니다")
+                        .onAppear {
+                            logger.error("📅 [Weekly] 결과 없음 - sheet 닫기")
+                            showResult = false
+                        }
                 }
             }
         }
