@@ -1221,39 +1221,46 @@ struct ZoomableImageView: View {
     private let maxScale: CGFloat = 4.0
 
     var body: some View {
-        Image(uiImage: image)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .scaleEffect(scale)
-            .gesture(
-                MagnificationGesture()
-                    .onChanged { value in
-                        let newScale = lastScale * value
-                        scale = min(max(newScale, minScale), maxScale)
-                    }
-                    .onEnded { _ in
-                        lastScale = scale
-                        if scale < minScale {
-                            withAnimation(.spring(response: 0.3)) {
-                                scale = minScale
-                                lastScale = minScale
-                            }
+        // 전체 영역에서 제스처 인식을 위해 ZStack + contentShape 사용
+        ZStack {
+            Color.clear
+                .contentShape(Rectangle())  // 투명 영역도 터치 가능
+
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .scaleEffect(scale)
+                .cornerRadius(WanderSpacing.radiusLarge)
+                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        }
+        .contentShape(Rectangle())  // ZStack 전체 영역 터치 가능
+        .gesture(
+            MagnificationGesture()
+                .onChanged { value in
+                    let newScale = lastScale * value
+                    scale = min(max(newScale, minScale), maxScale)
+                }
+                .onEnded { _ in
+                    lastScale = scale
+                    if scale < minScale {
+                        withAnimation(.spring(response: 0.3)) {
+                            scale = minScale
+                            lastScale = minScale
                         }
                     }
-            )
-            .onTapGesture(count: 2) {
-                withAnimation(.spring(response: 0.3)) {
-                    if scale > 1 {
-                        scale = 1.0
-                        lastScale = 1.0
-                    } else {
-                        scale = 2.5
-                        lastScale = 2.5
-                    }
+                }
+        )
+        .onTapGesture(count: 2) {
+            withAnimation(.spring(response: 0.3)) {
+                if scale > 1 {
+                    scale = 1.0
+                    lastScale = 1.0
+                } else {
+                    scale = 2.5
+                    lastScale = 2.5
                 }
             }
-            .cornerRadius(WanderSpacing.radiusLarge)
-            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        }
     }
 }
 
