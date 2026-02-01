@@ -3,14 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		06D7B35EF39572C788EEA5E1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67FA4CD0C634E35AE8A56305 /* SettingsView.swift */; };
-		AUTH002A1B2C3D4E5F67890B /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AUTH001A1B2C3D4E5F67890A /* AuthenticationManager.swift */; };
-		PININPUT02A1B2C3D4E5F678 /* PINInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PININPUT01A1B2C3D4E5F678 /* PINInputView.swift */; };
-		SECSET02A1B2C3D4E5F67890 /* SecuritySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SECSET01A1B2C3D4E5F67890 /* SecuritySettingsView.swift */; };
 		154B8870CE80CF4AD29D8226 /* GoogleAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B83A53B85B3CB3EFBC9F9389 /* GoogleAIService.swift */; };
 		1B778F3F742D51F19AF34113 /* TravelDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D32AB57310AA1E255D0FF460 /* TravelDay.swift */; };
 		3457679691F9C61C331A5AAD /* WanderTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27E913D21309F23DFAC47B1C /* WanderTypography.swift */; };
@@ -22,7 +19,6 @@
 		571EEEDE259E9D468204DAAF /* PhotoSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6FCA8AF89107AA1A681BE8 /* PhotoSelectionView.swift */; };
 		5AE2A5F8D26942F3BD7358F1 /* OnboardingLocationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AADA581AA1B63216B34086C1 /* OnboardingLocationView.swift */; };
 		68296BEF19751744F2E96941 /* AnalysisEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68785E679F65AB40EAF888D /* AnalysisEngine.swift */; };
-		HIDDEN002A1B2C3D4E5F6789 /* HiddenRecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HIDDEN001A1B2C3D4E5F6789 /* HiddenRecordsView.swift */; };
 		68C9C4F8DBDD77FAF0329C54 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D159347FCDC44AD0120B147 /* HomeView.swift */; };
 		6A01487B492939612E6BDEDA /* AIStoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103DE727B96D53981C6197C4 /* AIStoryView.swift */; };
 		751A2972E76920FF3D6FB66B /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73183A726FDF526C78A4DEF7 /* KeychainManager.swift */; };
@@ -33,27 +29,35 @@
 		9D7E270A4419591FCC9418C1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1FA3A94673E649CAB283D798 /* Assets.xcassets */; };
 		A25089AD601F47DCC1DA7BF9 /* ClusteringService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3881765410920805E8E63290 /* ClusteringService.swift */; };
 		ADA3D6A857DA9EEC387D8F0B /* PhotoSelectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A80A73AF84DC0DF5CDBCA5 /* PhotoSelectionViewModel.swift */; };
+		AUTH002A1B2C3D4E5F67890B /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AUTH001A1B2C3D4E5F67890A /* AuthenticationManager.swift */; };
+		AZURE02A1B2C3D4E5F6789012 /* AzureOpenAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AZURE01A1B2C3D4E5F6789012 /* AzureOpenAIService.swift */; };
 		B88F11C8EC476D3DB4D26194 /* Place.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5C5BBA95CC778655ADDEE3 /* Place.swift */; };
 		BE975E61B6F748D4749A8062 /* OpenAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E299756317EC3EDAF793DD65 /* OpenAIService.swift */; };
 		C6B483A846611F5C47805D89 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFFD1D05FE7C12A250BCABE1 /* SplashView.swift */; };
 		C6F45014D4E4AD45CA27D6A8 /* WanderSpacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C176F0945D37E98219E4347 /* WanderSpacing.swift */; };
 		C7E4338EA3FBE76496BC86C4 /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236FC67B2D5FE36573239035 /* OnboardingContainerView.swift */; };
+		CATMGT02A1B2C3D4E5F67890 /* CategoryManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CATMGT01A1B2C3D4E5F67890 /* CategoryManagementView.swift */; };
 		E55B852473000EF498F1B0EA /* RecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BDB68CF4F57746D7AF6F6C /* RecordsView.swift */; };
 		EC8FD13F7F236756CACF0EEF /* WeeklyHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9A94D7767877D47292A5D6 /* WeeklyHighlightView.swift */; };
 		ED9CC1319A16AD28CA5EC02F /* LookbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E67E67E11F2FCD5C5FF0ADB /* LookbackView.swift */; };
+		EXPORT02A1B2C3D4E5F67890 /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EXPORT01A1B2C3D4E5F67890 /* ExportService.swift */; };
 		F053FEAC293BBEFDFA6F1A06 /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CE9F664E03D6DBD0C97AE6E /* ResultView.swift */; };
 		F0B56A8F65147DECD8344DA3 /* TravelRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27D468AA704F3E844714452 /* TravelRecord.swift */; };
 		F0EEF6703154148EC1994A3B /* MapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9F4F32B5C6B9C8CD73F7B41 /* MapDetailView.swift */; };
 		F53C6AFADF1BCE1C4B2CAC98 /* QuickModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 714F818522502D4D1BA656B1 /* QuickModeView.swift */; };
 		FA83756C2DCE71CA3DEF2678 /* AIServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01DA78D53A168F6F953CAB10 /* AIServiceProtocol.swift */; };
 		FF32092CD15E0A707B20C7E8 /* WanderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F5AF74E8976C19CA1F2931 /* WanderApp.swift */; };
+		HIDDEN002A1B2C3D4E5F6789 /* HiddenRecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = HIDDEN001A1B2C3D4E5F6789 /* HiddenRecordsView.swift */; };
+		PININPUT02A1B2C3D4E5F678 /* PINInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = PININPUT01A1B2C3D4E5F678 /* PINInputView.swift */; };
+		RECCAT02A1B2C3D4E5F67890 /* RecordCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = RECCAT01A1B2C3D4E5F67890 /* RecordCategory.swift */; };
+		SECSET02A1B2C3D4E5F67890 /* SecuritySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SECSET01A1B2C3D4E5F67890 /* SecuritySettingsView.swift */; };
+		SHRDREC02A1B2C3D4E5F6789 /* SharedRecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SHRDREC01A1B2C3D4E5F6789 /* SharedRecordView.swift */; };
+		USRPLC02A1B2C3D4E5F67890 /* UserPlace.swift in Sources */ = {isa = PBXBuildFile; fileRef = USRPLC01A1B2C3D4E5F67890 /* UserPlace.swift */; };
+		USRPLCV02A1B2C3D4E5F6789 /* UserPlacesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = USRPLCV01A1B2C3D4E5F6789 /* UserPlacesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		01DA78D53A168F6F953CAB10 /* AIServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIServiceProtocol.swift; sourceTree = "<group>"; };
-		AUTH001A1B2C3D4E5F67890A /* AuthenticationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
-		PININPUT01A1B2C3D4E5F678 /* PINInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PINInputView.swift; sourceTree = "<group>"; };
-		SECSET01A1B2C3D4E5F67890 /* SecuritySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecuritySettingsView.swift; sourceTree = "<group>"; };
 		0C7C9E0DF1C8C2E3C8D5164B /* WanderColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WanderColors.swift; sourceTree = "<group>"; };
 		0E67E67E11F2FCD5C5FF0ADB /* LookbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookbackView.swift; sourceTree = "<group>"; };
 		103DE727B96D53981C6197C4 /* AIStoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIStoryView.swift; sourceTree = "<group>"; };
@@ -70,27 +74,37 @@
 		4F5C5BBA95CC778655ADDEE3 /* Place.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Place.swift; sourceTree = "<group>"; };
 		5989A12B232DB900FA252CF3 /* OnboardingIntroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingIntroView.swift; sourceTree = "<group>"; };
 		67FA4CD0C634E35AE8A56305 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		HIDDEN001A1B2C3D4E5F6789 /* HiddenRecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiddenRecordsView.swift; sourceTree = "<group>"; };
 		6F8D1BCB0B76A4B78253DAD2 /* ActivityInferenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityInferenceService.swift; sourceTree = "<group>"; };
 		714F818522502D4D1BA656B1 /* QuickModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickModeView.swift; sourceTree = "<group>"; };
 		73183A726FDF526C78A4DEF7 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		74A80A73AF84DC0DF5CDBCA5 /* PhotoSelectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSelectionViewModel.swift; sourceTree = "<group>"; };
 		764FB5507753C9FCEDA6310C /* GeocodingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeocodingService.swift; sourceTree = "<group>"; };
-		7A02BE0AE86E482916C8F103 /* Wander.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Wander.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A02BE0AE86E482916C8F103 /* Wander.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Wander.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7BDC82ABF9DB755ECA0B69E0 /* OnboardingPhotoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPhotoView.swift; sourceTree = "<group>"; };
 		A58893162BD06ECDCDA96B6A /* AnalyzingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzingView.swift; sourceTree = "<group>"; };
 		AADA581AA1B63216B34086C1 /* OnboardingLocationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingLocationView.swift; sourceTree = "<group>"; };
+		AUTH001A1B2C3D4E5F67890A /* AuthenticationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
+		AZURE01A1B2C3D4E5F6789012 /* AzureOpenAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AzureOpenAIService.swift; sourceTree = "<group>"; };
 		B27D468AA704F3E844714452 /* TravelRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelRecord.swift; sourceTree = "<group>"; };
 		B68785E679F65AB40EAF888D /* AnalysisEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisEngine.swift; sourceTree = "<group>"; };
 		B83A53B85B3CB3EFBC9F9389 /* GoogleAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleAIService.swift; sourceTree = "<group>"; };
 		B9F4F32B5C6B9C8CD73F7B41 /* MapDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapDetailView.swift; sourceTree = "<group>"; };
+		CATMGT01A1B2C3D4E5F67890 /* CategoryManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryManagementView.swift; sourceTree = "<group>"; };
 		CC9A94D7767877D47292A5D6 /* WeeklyHighlightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyHighlightView.swift; sourceTree = "<group>"; };
 		D32AB57310AA1E255D0FF460 /* TravelDay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelDay.swift; sourceTree = "<group>"; };
 		D4BDB68CF4F57746D7AF6F6C /* RecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView.swift; sourceTree = "<group>"; };
 		D51B4D96904A88F17FCEDF0C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E299756317EC3EDAF793DD65 /* OpenAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIService.swift; sourceTree = "<group>"; };
+		EXPORT01A1B2C3D4E5F67890 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
 		F11A9995D042E8266AEEF596 /* PhotoItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoItem.swift; sourceTree = "<group>"; };
 		FFFD1D05FE7C12A250BCABE1 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		HIDDEN001A1B2C3D4E5F6789 /* HiddenRecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiddenRecordsView.swift; sourceTree = "<group>"; };
+		PININPUT01A1B2C3D4E5F678 /* PINInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PINInputView.swift; sourceTree = "<group>"; };
+		RECCAT01A1B2C3D4E5F67890 /* RecordCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordCategory.swift; sourceTree = "<group>"; };
+		SECSET01A1B2C3D4E5F67890 /* SecuritySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecuritySettingsView.swift; sourceTree = "<group>"; };
+		SHRDREC01A1B2C3D4E5F6789 /* SharedRecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedRecordView.swift; sourceTree = "<group>"; };
+		USRPLC01A1B2C3D4E5F67890 /* UserPlace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPlace.swift; sourceTree = "<group>"; };
+		USRPLCV01A1B2C3D4E5F6789 /* UserPlacesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPlacesView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -158,8 +172,10 @@
 			children = (
 				F11A9995D042E8266AEEF596 /* PhotoItem.swift */,
 				4F5C5BBA95CC778655ADDEE3 /* Place.swift */,
+				RECCAT01A1B2C3D4E5F67890 /* RecordCategory.swift */,
 				D32AB57310AA1E255D0FF460 /* TravelDay.swift */,
 				B27D468AA704F3E844714452 /* TravelRecord.swift */,
+				USRPLC01A1B2C3D4E5F67890 /* UserPlace.swift */,
 			);
 			path = SwiftData;
 			sourceTree = "<group>";
@@ -189,6 +205,7 @@
 			children = (
 				01DA78D53A168F6F953CAB10 /* AIServiceProtocol.swift */,
 				3DECC3A33EDADF952604AF51 /* AnthropicService.swift */,
+				AZURE01A1B2C3D4E5F6789012 /* AzureOpenAIService.swift */,
 				B83A53B85B3CB3EFBC9F9389 /* GoogleAIService.swift */,
 				E299756317EC3EDAF793DD65 /* OpenAIService.swift */,
 			);
@@ -244,6 +261,14 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		AUTHGRP01A1B2C3D4E5F6789 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				PININPUT01A1B2C3D4E5F678 /* PINInputView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
 		BCCA588619BB51137E6D550D /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -257,6 +282,7 @@
 				751B0D159D1A9B8A354EF868 /* Records */,
 				5D42AAFB293BCA8CB8D82EA2 /* Result */,
 				E536121B41C725BADEE15BAA /* Settings */,
+				SHRDGRP01A1B2C3D4E5F6789 /* Shared */,
 				F33584D27A451B7AE6B71BD7 /* Weekly */,
 			);
 			path = Views;
@@ -284,6 +310,7 @@
 				646136F222FBE8776922806C /* AIService */,
 				0E434F9AB97B40385202037B /* AnalysisService */,
 				AUTH001A1B2C3D4E5F67890A /* AuthenticationManager.swift */,
+				EXPORTGRP01A1B2C3D4E5F678 /* ExportService */,
 				65CA908A962BD01CF4B2D8C8 /* LocationService */,
 			);
 			path = Services;
@@ -292,18 +319,12 @@
 		E536121B41C725BADEE15BAA /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				CATMGT01A1B2C3D4E5F67890 /* CategoryManagementView.swift */,
 				SECSET01A1B2C3D4E5F67890 /* SecuritySettingsView.swift */,
 				67FA4CD0C634E35AE8A56305 /* SettingsView.swift */,
+				USRPLCV01A1B2C3D4E5F6789 /* UserPlacesView.swift */,
 			);
 			path = Settings;
-			sourceTree = "<group>";
-		};
-		AUTHGRP01A1B2C3D4E5F6789 /* Auth */ = {
-			isa = PBXGroup;
-			children = (
-				PININPUT01A1B2C3D4E5F678 /* PINInputView.swift */,
-			);
-			path = Auth;
 			sourceTree = "<group>";
 		};
 		EB08FBA24C38A7B14815BA33 /* PhotoSelection */ = {
@@ -312,6 +333,14 @@
 				4E6FCA8AF89107AA1A681BE8 /* PhotoSelectionView.swift */,
 			);
 			path = PhotoSelection;
+			sourceTree = "<group>";
+		};
+		EXPORTGRP01A1B2C3D4E5F678 /* ExportService */ = {
+			isa = PBXGroup;
+			children = (
+				EXPORT01A1B2C3D4E5F67890 /* ExportService.swift */,
+			);
+			path = ExportService;
 			sourceTree = "<group>";
 		};
 		F2F4ECD0469D370B01FDE9BB /* Products */ = {
@@ -349,11 +378,12 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		"TEMP_A042C72B-AB76-4F61-836C-FED4F24CC846" /* Common */ = {
+		SHRDGRP01A1B2C3D4E5F6789 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				SHRDREC01A1B2C3D4E5F6789 /* SharedRecordView.swift */,
 			);
-			path = Common;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -385,11 +415,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1500;
-				TargetAttributes = {
-					DAEABFB4D177DCC30394FDDE = {
-						DevelopmentTeam = "";
-					};
-				};
 			};
 			buildConfigurationList = F9B4DCBD13A5F3108CE22518 /* Build configuration list for PBXProject "Wander" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -401,7 +426,6 @@
 			);
 			mainGroup = 0E3F068FDAECC148F80E1433;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -432,6 +456,7 @@
 				68296BEF19751744F2E96941 /* AnalysisEngine.swift in Sources */,
 				401F0F1CE1B9EABCD2D71209 /* AnalyzingView.swift in Sources */,
 				95BEE76B3673EB1D875288E1 /* AnthropicService.swift in Sources */,
+				AZURE02A1B2C3D4E5F6789012 /* AzureOpenAIService.swift in Sources */,
 				A25089AD601F47DCC1DA7BF9 /* ClusteringService.swift in Sources */,
 				41E300A4405045DD409D5FA9 /* ContentView.swift in Sources */,
 				82B1B0EAD84505B551706FE2 /* GeocodingService.swift in Sources */,
@@ -456,6 +481,12 @@
 				AUTH002A1B2C3D4E5F67890B /* AuthenticationManager.swift in Sources */,
 				PININPUT02A1B2C3D4E5F678 /* PINInputView.swift in Sources */,
 				SECSET02A1B2C3D4E5F67890 /* SecuritySettingsView.swift in Sources */,
+				RECCAT02A1B2C3D4E5F67890 /* RecordCategory.swift in Sources */,
+				CATMGT02A1B2C3D4E5F67890 /* CategoryManagementView.swift in Sources */,
+				USRPLC02A1B2C3D4E5F67890 /* UserPlace.swift in Sources */,
+				USRPLCV02A1B2C3D4E5F6789 /* UserPlacesView.swift in Sources */,
+				EXPORT02A1B2C3D4E5F67890 /* ExportService.swift in Sources */,
+				SHRDREC02A1B2C3D4E5F6789 /* SharedRecordView.swift in Sources */,
 				06D7B35EF39572C788EEA5E1 /* SettingsView.swift in Sources */,
 				C6B483A846611F5C47805D89 /* SplashView.swift in Sources */,
 				1B778F3F742D51F19AF34113 /* TravelDay.swift in Sources */,
@@ -476,25 +507,22 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "GPS 좌표를 주소로 변환하여 장소 이름을 자동으로 표시합니다.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "생성된 카드 이미지를 사진 앨범에 저장합니다.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "사진의 촬영 시간과 위치 정보를 분석하여 여행 기록을 만들어 드립니다.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XU8HS9JUTS;
+				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zerolive.wander;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -548,8 +576,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Wander;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -618,8 +644,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Wander;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -639,25 +663,22 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "GPS 좌표를 주소로 변환하여 장소 이름을 자동으로 표시합니다.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "생성된 카드 이미지를 사진 앨범에 저장합니다.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "사진의 촬영 시간과 위치 정보를 분석하여 여행 기록을 만들어 드립니다.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XU8HS9JUTS;
+				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zerolive.wander;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;

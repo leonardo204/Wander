@@ -254,7 +254,7 @@ struct HiddenRecordCard: View {
 
                 Spacer()
 
-                RecordTypeBadge(type: record.recordType)
+                RecordCategoryBadge(category: record.category)
             }
 
             Text(record.title)

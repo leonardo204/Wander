@@ -18,6 +18,7 @@ final class KeychainManager {
         case openai = "openai_api_key"
         case anthropic = "anthropic_api_key"
         case google = "google_api_key"
+        case azure = "azure_openai_api_key"
     }
 
     /// API 키 저장
@@ -107,7 +108,7 @@ final class KeychainManager {
     /// 모든 API 키 삭제
     func deleteAllAPIKeys() {
         logger.info("🔐 [Keychain] deleteAllAPIKeys")
-        for type in [APIKeyType.openai, .anthropic, .google] {
+        for type in [APIKeyType.openai, .anthropic, .google, .azure] {
             try? deleteAPIKey(for: type)
         }
     }

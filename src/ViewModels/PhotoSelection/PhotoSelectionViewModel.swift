@@ -198,6 +198,7 @@ class PlaceCluster: Identifiable, Hashable {
     var startTime: Date
     var endTime: Date?
     var photos: [PHAsset] = []
+    var userPlaceMatched: Bool = false  // 사용자 등록 장소와 매칭됨
 
     init(latitude: Double, longitude: Double, startTime: Date) {
         self.latitude = latitude

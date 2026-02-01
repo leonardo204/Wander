@@ -66,6 +66,29 @@ struct SettingsView: View {
                     Text("보안")
                 }
 
+                // Customization Section
+                Section {
+                    NavigationLink(destination: CategoryManagementView()) {
+                        SettingsRow(
+                            icon: "folder.fill",
+                            iconColor: WanderColors.warning,
+                            title: "카테고리 관리",
+                            subtitle: "카테고리 추가, 편집, 숨기기"
+                        )
+                    }
+
+                    NavigationLink(destination: UserPlacesView()) {
+                        SettingsRow(
+                            icon: "mappin.circle.fill",
+                            iconColor: WanderColors.error,
+                            title: "장소 관리",
+                            subtitle: "집, 회사 등 자주 가는 장소"
+                        )
+                    }
+                } header: {
+                    Text("사용자 설정")
+                }
+
                 // Share Settings Section
                 Section {
                     NavigationLink(destination: ShareSettingsView()) {
@@ -251,9 +274,36 @@ struct APIKeyInputView: View {
     @State private var testError: String?
     @State private var hasExistingKey = false
 
+    // Azure specific settings
+    @State private var azureEndpoint = ""
+    @State private var azureDeployment = ""
+    @State private var azureApiVersion = "2024-02-15-preview"
+
     var body: some View {
         NavigationStack {
             Form {
+                // Azure specific configuration
+                if provider == .azure {
+                    Section {
+                        TextField("Endpoint URL", text: $azureEndpoint)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .keyboardType(.URL)
+
+                        TextField("Deployment Name", text: $azureDeployment)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+
+                        TextField("API Version", text: $azureApiVersion)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                    } header: {
+                        Text("Azure 설정")
+                    } footer: {
+                        Text("Azure Portal에서 확인할 수 있습니다.\n예: https://your-resource.openai.azure.com")
+                    }
+                }
+
                 Section {
                     SecureField("API 키 입력", text: $apiKey)
                         .textContentType(.password)
@@ -282,7 +332,7 @@ struct APIKeyInputView: View {
                             }
                         }
                     }
-                    .disabled(apiKey.isEmpty || isTesting)
+                    .disabled(apiKey.isEmpty || isTesting || (provider == .azure && (azureEndpoint.isEmpty || azureDeployment.isEmpty)))
 
                     if let error = testError {
                         Text(error)
@@ -318,12 +368,20 @@ struct APIKeyInputView: View {
                         saveAPIKey()
                         dismiss()
                     }
-                    .disabled(apiKey.isEmpty)
+                    .disabled(apiKey.isEmpty || (provider == .azure && (azureEndpoint.isEmpty || azureDeployment.isEmpty)))
                 }
             }
             .onAppear {
                 hasExistingKey = KeychainManager.shared.hasAPIKey(for: provider.keychainType)
                 logger.info("🔑 [APIKeyInputView] 나타남 - provider: \(provider.displayName), hasExistingKey: \(hasExistingKey)")
+
+                // Load Azure settings if exists
+                if provider == .azure {
+                    let settings = AzureOpenAIService.getSettings()
+                    azureEndpoint = settings.endpoint
+                    azureDeployment = settings.deploymentName
+                    azureApiVersion = settings.apiVersion
+                }
             }
         }
     }
@@ -333,6 +391,15 @@ struct APIKeyInputView: View {
         isTesting = true
         testResult = nil
         testError = nil
+
+        // Save Azure settings first if applicable
+        if provider == .azure {
+            AzureOpenAIService.saveSettings(
+                endpoint: azureEndpoint,
+                deploymentName: azureDeployment,
+                apiVersion: azureApiVersion
+            )
+        }
 
         // Temporarily save the key for testing
         do {
@@ -371,6 +438,15 @@ struct APIKeyInputView: View {
     }
 
     private func saveAPIKey() {
+        // Save Azure settings first if applicable
+        if provider == .azure {
+            AzureOpenAIService.saveSettings(
+                endpoint: azureEndpoint,
+                deploymentName: azureDeployment,
+                apiVersion: azureApiVersion
+            )
+        }
+
         do {
             try KeychainManager.shared.saveAPIKey(apiKey, for: provider.keychainType)
             logger.info("🔑 [APIKeyInputView] API 키 저장 성공 - provider: \(provider.displayName)")

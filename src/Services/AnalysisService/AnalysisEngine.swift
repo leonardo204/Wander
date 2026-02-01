@@ -1,6 +1,7 @@
 import Foundation
 import Photos
 import CoreLocation
+import SwiftData
 import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "AnalysisEngine")
@@ -16,6 +17,9 @@ class AnalysisEngine {
     private let geocodingService = GeocodingService()
     private let clusteringService = ClusteringService()
     private let activityService = ActivityInferenceService()
+
+    /// 사용자 장소 목록 (분석 전 설정)
+    var userPlaces: [UserPlace] = []
 
     // MARK: - Analyze
     func analyze(assets: [PHAsset]) async throws -> AnalysisResult {
@@ -88,16 +92,38 @@ class AnalysisEngine {
             progress = 0.6 + (0.2 * Double(index + 1) / Double(clusters.count))
         }
 
+        // Step 4.5: User place matching
+        if !userPlaces.isEmpty {
+            currentStep = "🏠 등록된 장소 매칭 중..."
+            progress = 0.82
+            let userPlaceCount = self.userPlaces.count
+            logger.info("🔬 [Step 4.5] 사용자 장소 매칭 시작 - 등록 장소: \(userPlaceCount)개")
+
+            for cluster in clusters {
+                if let matchedPlace = findMatchingUserPlace(for: cluster) {
+                    let originalName = cluster.name
+                    cluster.name = matchedPlace.name
+                    cluster.userPlaceMatched = true
+                    logger.info("🔬 [Step 4.5] ✓ 매칭: \(originalName) → \(matchedPlace.name)")
+                }
+            }
+        }
+
         // Step 5: Activity inference
         currentStep = "✨ 활동 유형 분석 중..."
         progress = 0.85
         logger.info("🔬 [Step 5] 활동 추론 시작")
 
         for cluster in clusters {
-            cluster.activityType = activityService.infer(
-                placeType: cluster.placeType,
-                time: cluster.startTime
-            )
+            // 사용자 장소가 매칭된 경우 특별 활동 타입 추론
+            if cluster.userPlaceMatched {
+                cluster.activityType = inferActivityForUserPlace(cluster.name, time: cluster.startTime)
+            } else {
+                cluster.activityType = activityService.infer(
+                    placeType: cluster.placeType,
+                    time: cluster.startTime
+                )
+            }
             logger.info("🔬 [Step 5] \(cluster.name): \(cluster.activityType.displayName)")
         }
 
@@ -181,6 +207,34 @@ class AnalysisEngine {
         }
 
         return totalDistance / 1000 // Convert to km
+    }
+
+    // MARK: - User Place Matching
+    /// 클러스터 좌표와 매칭되는 사용자 장소 찾기 (반경 100m 이내)
+    private func findMatchingUserPlace(for cluster: PlaceCluster) -> UserPlace? {
+        let clusterCoordinate = CLLocationCoordinate2D(
+            latitude: cluster.latitude,
+            longitude: cluster.longitude
+        )
+
+        for userPlace in userPlaces {
+            // 좌표가 설정되지 않은 장소는 건너뛰기
+            guard userPlace.latitude != 0 && userPlace.longitude != 0 else { continue }
+
+            let distance = userPlace.distance(from: clusterCoordinate)
+            if distance <= UserPlace.matchingRadius {
+                return userPlace
+            }
+        }
+
+        return nil
+    }
+
+    /// 사용자 장소에 맞는 활동 타입 추론
+    private func inferActivityForUserPlace(_ placeName: String, time: Date) -> ActivityType {
+        // 사용자 등록 장소는 특별한 추론 없이 기타로 처리
+        // 필요 시 카테고리 확장 후 개선 가능
+        return .other
     }
 }
 

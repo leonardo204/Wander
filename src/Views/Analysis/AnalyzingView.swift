@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "AnalyzingView")
@@ -10,6 +11,7 @@ struct AnalyzingView: View {
     @State private var analysisResult: AnalysisResult?
     @State private var errorMessage: String?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         NavigationStack {
@@ -173,6 +175,18 @@ struct AnalyzingView: View {
     // MARK: - Start Analysis
     private func startAnalysis() async {
         logger.info("🚀 분석 시작 - 사진 \(viewModel.selectedAssets.count)장")
+
+        // 사용자 장소 로드
+        do {
+            let descriptor = FetchDescriptor<UserPlace>(
+                predicate: #Predicate { $0.latitude != 0 && $0.longitude != 0 }
+            )
+            let userPlaces = try modelContext.fetch(descriptor)
+            engine.userPlaces = userPlaces
+            logger.info("🏠 사용자 장소 \(userPlaces.count)개 로드됨")
+        } catch {
+            logger.warning("⚠️ 사용자 장소 로드 실패: \(error.localizedDescription)")
+        }
 
         do {
             let result = try await engine.analyze(assets: viewModel.selectedAssets)

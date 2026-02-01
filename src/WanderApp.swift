@@ -8,6 +8,8 @@ private let logger = Logger(subsystem: "com.zerolive.wander", category: "WanderA
 struct WanderApp: App {
     @AppStorage("isOnboardingCompleted") private var isOnboardingCompleted = false
     @State private var showSplash = true
+    @State private var sharedRecordData: SharedRecordData?
+    @State private var showSharedRecord = false
 
     var sharedModelContainer: ModelContainer = {
         logger.info("🚀 [WanderApp] ModelContainer 생성 시작")
@@ -15,7 +17,9 @@ struct WanderApp: App {
             TravelRecord.self,
             TravelDay.self,
             Place.self,
-            PhotoItem.self
+            PhotoItem.self,
+            RecordCategory.self,
+            UserPlace.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -53,7 +57,49 @@ struct WanderApp: App {
                     }
                 }
             }
+            .onOpenURL { url in
+                handleIncomingURL(url)
+            }
+            .sheet(isPresented: $showSharedRecord) {
+                if let data = sharedRecordData {
+                    SharedRecordView(sharedData: data)
+                }
+            }
         }
         .modelContainer(sharedModelContainer)
+    }
+
+    // MARK: - URL Handling
+    private func handleIncomingURL(_ url: URL) {
+        logger.info("🔗 [WanderApp] URL 수신: \(url.absoluteString)")
+
+        // wander://share?data=BASE64_ENCODED_DATA
+        guard url.scheme == "wander" else {
+            logger.warning("🔗 [WanderApp] 지원하지 않는 URL 스킴: \(url.scheme ?? "nil")")
+            return
+        }
+
+        guard url.host == "share" else {
+            logger.warning("🔗 [WanderApp] 지원하지 않는 URL 호스트: \(url.host ?? "nil")")
+            return
+        }
+
+        // Parse query parameters
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let queryItems = components.queryItems,
+              let dataItem = queryItems.first(where: { $0.name == "data" }),
+              let base64Data = dataItem.value else {
+            logger.error("🔗 [WanderApp] URL에서 데이터를 찾을 수 없음")
+            return
+        }
+
+        // Decode shared data
+        if let decoded = SharedRecordData.decode(from: base64Data) {
+            logger.info("🔗 [WanderApp] 공유 데이터 디코딩 성공: \(decoded.title)")
+            sharedRecordData = decoded
+            showSharedRecord = true
+        } else {
+            logger.error("🔗 [WanderApp] 공유 데이터 디코딩 실패")
+        }
     }
 }

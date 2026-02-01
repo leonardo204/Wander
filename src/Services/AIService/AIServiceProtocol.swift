@@ -6,6 +6,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
     case openai
     case anthropic
     case google
+    case azure
 
     var id: String { rawValue }
 
@@ -14,6 +15,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .openai: return "OpenAI"
         case .anthropic: return "Anthropic"
         case .google: return "Google Gemini"
+        case .azure: return "Azure OpenAI"
         }
     }
 
@@ -22,6 +24,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .openai: return "GPT-4o, GPT-4 Turbo"
         case .anthropic: return "Claude 3.5 Sonnet"
         case .google: return "Gemini Pro, Gemini Flash"
+        case .azure: return "Azure 호스팅 OpenAI"
         }
     }
 
@@ -30,6 +33,7 @@ enum AIProvider: String, CaseIterable, Identifiable {
         case .openai: return .openai
         case .anthropic: return .anthropic
         case .google: return .google
+        case .azure: return .azure
         }
     }
 
@@ -41,7 +45,14 @@ enum AIProvider: String, CaseIterable, Identifiable {
             return URL(string: "https://console.anthropic.com/")
         case .google:
             return URL(string: "https://aistudio.google.com/app/apikey")
+        case .azure:
+            return URL(string: "https://portal.azure.com/")
         }
+    }
+
+    /// Azure OpenAI는 추가 설정이 필요
+    var requiresAdditionalConfig: Bool {
+        self == .azure
     }
 }
 
@@ -81,6 +92,7 @@ struct TravelStoryInput {
 enum AIServiceError: LocalizedError {
     case noAPIKey
     case invalidAPIKey
+    case invalidConfiguration
     case networkError(Error)
     case rateLimitExceeded
     case serverError(Int)
@@ -93,6 +105,8 @@ enum AIServiceError: LocalizedError {
             return "API 키가 설정되지 않았습니다."
         case .invalidAPIKey:
             return "API 키가 유효하지 않습니다."
+        case .invalidConfiguration:
+            return "서비스 설정이 올바르지 않습니다. Endpoint와 Deployment를 확인해 주세요."
         case .networkError(let error):
             return "네트워크 오류: \(error.localizedDescription)"
         case .rateLimitExceeded:
@@ -118,6 +132,8 @@ final class AIServiceFactory {
             return AnthropicService()
         case .google:
             return GoogleAIService()
+        case .azure:
+            return AzureOpenAIService()
         }
     }
 }

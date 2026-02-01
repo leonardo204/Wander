@@ -412,23 +412,75 @@ struct TimelineCard: View {
     }
 }
 
-// MARK: - Share Sheet View (Placeholder)
+// MARK: - Share Sheet View
 struct ShareSheetView: View {
     let result: AnalysisResult
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("includeWatermark") private var includeWatermark = true
+
+    @State private var selectedFormat: ExportFormat = .image
+    @State private var isExporting = false
+    @State private var showActivitySheet = false
+    @State private var exportedImage: UIImage?
+    @State private var exportedText: String = ""
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: WanderSpacing.space4) {
-                Text("공유 옵션")
-                    .font(WanderTypography.title2)
+            VStack(spacing: WanderSpacing.space5) {
+                // Format Selection
+                VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+                    Text("내보내기 형식")
+                        .font(WanderTypography.headline)
+                        .foregroundColor(WanderColors.textPrimary)
 
-                // Share options will be implemented later
-                Text("공유 기능은 Phase 3에서 구현됩니다")
-                    .font(WanderTypography.body)
-                    .foregroundColor(WanderColors.textSecondary)
+                    ForEach(ExportFormat.allCases) { format in
+                        ExportFormatRow(
+                            format: format,
+                            isSelected: selectedFormat == format,
+                            onSelect: { selectedFormat = format }
+                        )
+                    }
+                }
+
+                Divider()
+
+                // Options
+                VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+                    Text("옵션")
+                        .font(WanderTypography.headline)
+                        .foregroundColor(WanderColors.textPrimary)
+
+                    Toggle("워터마크 포함", isOn: $includeWatermark)
+                        .tint(WanderColors.primary)
+
+                    Text("'Wander' 로고가 하단에 표시됩니다.")
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textTertiary)
+                }
+
+                Spacer()
+
+                // Export Button
+                Button(action: performExport) {
+                    HStack {
+                        if isExporting {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        Text(isExporting ? "내보내는 중..." : "내보내기")
+                    }
+                    .font(WanderTypography.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: WanderSpacing.buttonHeight)
+                    .background(WanderColors.primary)
+                    .cornerRadius(WanderSpacing.radiusLarge)
+                }
+                .disabled(isExporting)
             }
-            .padding()
+            .padding(WanderSpacing.screenMargin)
             .navigationTitle("공유하기")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -436,8 +488,118 @@ struct ShareSheetView: View {
                     Button("닫기") { dismiss() }
                 }
             }
+            .sheet(isPresented: $showActivitySheet) {
+                if let image = exportedImage {
+                    ActivityViewController(activityItems: [image])
+                } else if !exportedText.isEmpty {
+                    ActivityViewController(activityItems: [exportedText])
+                }
+            }
         }
     }
+
+    private func performExport() {
+        isExporting = true
+        let exportService = ExportService.shared
+
+        Task {
+            switch selectedFormat {
+            case .image:
+                if let image = await exportService.exportAsImage(result: result, includeWatermark: includeWatermark) {
+                    await MainActor.run {
+                        exportedImage = image
+                        exportedText = ""
+                        isExporting = false
+                        showActivitySheet = true
+                    }
+                }
+
+            case .text:
+                let text = exportService.exportAsText(result: result, includeWatermark: includeWatermark)
+                await MainActor.run {
+                    exportedText = text
+                    exportedImage = nil
+                    isExporting = false
+                    showActivitySheet = true
+                }
+
+            case .markdown:
+                let markdown = exportService.exportAsMarkdown(result: result, includeWatermark: includeWatermark)
+                await MainActor.run {
+                    exportedText = markdown
+                    exportedImage = nil
+                    isExporting = false
+                    showActivitySheet = true
+                }
+
+            case .deeplink:
+                if let message = exportService.createShareMessage(result: result) {
+                    await MainActor.run {
+                        exportedText = message
+                        exportedImage = nil
+                        isExporting = false
+                        showActivitySheet = true
+                    }
+                } else {
+                    await MainActor.run {
+                        isExporting = false
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Export Format Row
+struct ExportFormatRow: View {
+    let format: ExportFormat
+    let isSelected: Bool
+    let onSelect: () -> Void
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: WanderSpacing.space3) {
+                Image(systemName: format.icon)
+                    .font(.system(size: 20))
+                    .foregroundColor(isSelected ? WanderColors.primary : WanderColors.textSecondary)
+                    .frame(width: 28)
+
+                Text(format.displayName)
+                    .font(WanderTypography.body)
+                    .foregroundColor(WanderColors.textPrimary)
+
+                Spacer()
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(WanderColors.primary)
+                } else {
+                    Image(systemName: "circle")
+                        .foregroundColor(WanderColors.border)
+                }
+            }
+            .padding(WanderSpacing.space3)
+            .background(isSelected ? WanderColors.primaryPale : WanderColors.surface)
+            .cornerRadius(WanderSpacing.radiusMedium)
+            .overlay(
+                RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium)
+                    .stroke(isSelected ? WanderColors.primary : WanderColors.border, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Activity View Controller (UIKit Wrapper)
+struct ActivityViewController: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 #Preview {

@@ -37,13 +37,13 @@ struct RecordsView: View {
         case .all:
             break
         case .travel:
-            result = result.filter { $0.recordType == "travel" }
+            result = result.filter { $0.category?.name == "여행" || $0.category == nil }
         case .daily:
-            result = result.filter { $0.recordType == "daily" }
+            result = result.filter { $0.category?.name == "일상" }
         case .weekly:
-            result = result.filter { $0.recordType == "weekly" }
+            result = result.filter { $0.category?.name == "주간" }
         case .business:
-            result = result.filter { $0.recordType == "business" }
+            result = result.filter { $0.category?.name == "출장" }
         }
 
         return result
@@ -239,13 +239,13 @@ struct RecordsView: View {
         case .all:
             return visibleRecords.count
         case .travel:
-            return visibleRecords.filter { $0.recordType == "travel" }.count
+            return visibleRecords.filter { $0.category?.name == "여행" || $0.category == nil }.count
         case .daily:
-            return visibleRecords.filter { $0.recordType == "daily" }.count
+            return visibleRecords.filter { $0.category?.name == "일상" }.count
         case .weekly:
-            return visibleRecords.filter { $0.recordType == "weekly" }.count
+            return visibleRecords.filter { $0.category?.name == "주간" }.count
         case .business:
-            return visibleRecords.filter { $0.recordType == "business" }.count
+            return visibleRecords.filter { $0.category?.name == "출장" }.count
         }
     }
 
@@ -322,7 +322,7 @@ struct RecordListCard: View {
             HStack {
                 DateBadge(date: record.startDate)
                 Spacer()
-                RecordTypeBadge(type: record.recordType)
+                RecordCategoryBadge(category: record.category)
             }
 
             // Title
@@ -450,31 +450,26 @@ struct DateBadge: View {
     }
 }
 
-// MARK: - Record Type Badge
-struct RecordTypeBadge: View {
-    let type: String
+// MARK: - Record Category Badge
+struct RecordCategoryBadge: View {
+    let category: RecordCategory?
 
     var body: some View {
-        Text(typeTitle)
-            .font(WanderTypography.caption2)
-            .foregroundColor(WanderColors.textSecondary)
-            .padding(.horizontal, WanderSpacing.space2)
-            .padding(.vertical, WanderSpacing.space1)
-            .background(WanderColors.surface)
-            .cornerRadius(WanderSpacing.radiusSmall)
-            .overlay(
-                RoundedRectangle(cornerRadius: WanderSpacing.radiusSmall)
-                    .stroke(WanderColors.border, lineWidth: 1)
-            )
-    }
-
-    private var typeTitle: String {
-        switch type {
-        case "travel": return "여행"
-        case "daily": return "일상"
-        case "weekly": return "주간"
-        default: return "기록"
+        HStack(spacing: 4) {
+            Text(category?.icon ?? "✈️")
+                .font(.system(size: 12))
+            Text(category?.name ?? "여행")
         }
+        .font(WanderTypography.caption2)
+        .foregroundColor(WanderColors.textSecondary)
+        .padding(.horizontal, WanderSpacing.space2)
+        .padding(.vertical, WanderSpacing.space1)
+        .background(category?.color.opacity(0.15) ?? WanderColors.primaryPale)
+        .cornerRadius(WanderSpacing.radiusSmall)
+        .overlay(
+            RoundedRectangle(cornerRadius: WanderSpacing.radiusSmall)
+                .stroke(category?.color.opacity(0.3) ?? WanderColors.border, lineWidth: 1)
+        )
     }
 }
 
@@ -1406,10 +1401,13 @@ struct RecordEditView: View {
                     }
 
                     HStack {
-                        Text("유형")
+                        Text("카테고리")
                         Spacer()
-                        Text(recordTypeLabel)
-                            .foregroundColor(WanderColors.textSecondary)
+                        HStack(spacing: 4) {
+                            Text(record.categoryIcon)
+                            Text(record.categoryName)
+                        }
+                        .foregroundColor(WanderColors.textSecondary)
                     }
                 }
 
@@ -1488,15 +1486,6 @@ struct RecordEditView: View {
             } message: {
                 Text("삭제된 기록은 복구할 수 없습니다.")
             }
-        }
-    }
-
-    private var recordTypeLabel: String {
-        switch record.recordType {
-        case "travel": return "여행"
-        case "daily": return "일상"
-        case "weekly": return "주간"
-        default: return "기록"
         }
     }
 
