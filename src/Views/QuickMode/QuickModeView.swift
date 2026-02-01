@@ -11,8 +11,8 @@ struct QuickModeView: View {
     @State private var selectedAssets: [PHAsset] = []
     @State private var isLoading = true
     @State private var showAnalyzing = false
-    @State private var analysisResult: QuickModeResult?
-    @State private var showResult = false
+    @State private var resultToShow: QuickModeResult?  // sheet(item:) 용
+    @State private var pendingResult: QuickModeResult?  // fullScreenCover 닫히는 동안 임시 저장
 
     var body: some View {
         NavigationStack {
@@ -42,36 +42,34 @@ struct QuickModeView: View {
                 logger.info("💬 [QuickMode] 화면 나타남")
                 loadRecentPhotos()
             }
-            .fullScreenCover(isPresented: $showAnalyzing) {
+            .fullScreenCover(isPresented: $showAnalyzing, onDismiss: {
+                // fullScreenCover가 닫힌 후 pendingResult가 있으면 sheet 표시
+                if let result = pendingResult {
+                    logger.info("💬 [QuickMode] fullScreenCover 닫힘 - 결과 sheet 표시 예정: \(result.placeName)")
+                    pendingResult = nil  // 임시 저장 초기화
+                    // 약간의 딜레이 후 sheet 표시 (애니메이션 충돌 방지)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        self.resultToShow = result
+                    }
+                }
+            }) {
                 QuickModeAnalyzingView(
                     selectedAssets: selectedAssets,
                     onComplete: { result in
-                        logger.info("💬 [QuickMode] 분석 완료 - 결과 수신")
-                        self.analysisResult = result
+                        logger.info("💬 [QuickMode] 분석 완료 - 결과 수신: \(result.placeName)")
+                        // fullScreenCover 닫히는 동안 임시 저장
+                        self.pendingResult = result
                         self.showAnalyzing = false
-                        // fullScreenCover 닫힌 후 sheet 열기 (딜레이 필요)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            logger.info("💬 [QuickMode] 결과 화면 표시")
-                            self.showResult = true
-                        }
                     },
                     onCancel: {
                         logger.info("💬 [QuickMode] 분석 취소")
+                        self.pendingResult = nil
                         self.showAnalyzing = false
                     }
                 )
             }
-            .sheet(isPresented: $showResult) {
-                if let result = analysisResult {
-                    QuickModeResultView(result: result)
-                } else {
-                    // Fallback: 결과가 없으면 닫기
-                    Text("결과를 불러올 수 없습니다")
-                        .onAppear {
-                            logger.error("💬 [QuickMode] 결과 없음 - sheet 닫기")
-                            showResult = false
-                        }
-                }
+            .sheet(item: $resultToShow) { result in
+                QuickModeResultView(result: result)
             }
         }
     }
@@ -318,7 +316,8 @@ struct QuickModePhotoCell: View {
 }
 
 // MARK: - Quick Mode Result Model
-struct QuickModeResult {
+struct QuickModeResult: Identifiable {
+    let id = UUID()
     var summary: String
     var placeName: String
     var address: String

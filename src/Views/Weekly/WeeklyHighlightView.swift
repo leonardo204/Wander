@@ -12,8 +12,8 @@ struct WeeklyHighlightView: View {
     @State private var isLoading = true
     @State private var selectedAssets: Set<String> = []
     @State private var showAnalyzing = false
-    @State private var analysisResult: WeeklyResult?
-    @State private var showResult = false
+    @State private var resultToShow: WeeklyResult?  // sheet(item:) 용
+    @State private var pendingResult: WeeklyResult?  // fullScreenCover 닫히는 동안 임시 저장
 
     private let calendar = Calendar.current
 
@@ -45,36 +45,35 @@ struct WeeklyHighlightView: View {
                 logger.info("📅 [Weekly] 화면 나타남")
                 loadWeeklyPhotos()
             }
-            .fullScreenCover(isPresented: $showAnalyzing) {
+            .fullScreenCover(isPresented: $showAnalyzing, onDismiss: {
+                // fullScreenCover가 닫힌 후 pendingResult가 있으면 sheet 표시
+                if let result = pendingResult {
+                    logger.info("📅 [Weekly] fullScreenCover 닫힘 - 결과 sheet 표시 예정")
+                    pendingResult = nil  // 임시 저장 초기화
+                    // 약간의 딜레이 후 sheet 표시 (애니메이션 충돌 방지)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        self.resultToShow = result
+                    }
+                }
+            }) {
                 WeeklyAnalyzingView(
                     weeklyPhotos: weeklyPhotos,
                     selectedAssets: selectedAssets,
                     onComplete: { result in
-                        logger.info("📅 [Weekly] 분석 완료 - 결과 수신")
-                        self.analysisResult = result
+                        logger.info("📅 [Weekly] 분석 완료 - 결과 수신: \(result.dateRange)")
+                        // fullScreenCover 닫히는 동안 임시 저장
+                        self.pendingResult = result
                         self.showAnalyzing = false
-                        // fullScreenCover 닫힌 후 sheet 열기 (딜레이 필요)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            logger.info("📅 [Weekly] 결과 화면 표시")
-                            self.showResult = true
-                        }
                     },
                     onCancel: {
                         logger.info("📅 [Weekly] 분석 취소")
+                        self.pendingResult = nil
                         self.showAnalyzing = false
                     }
                 )
             }
-            .sheet(isPresented: $showResult) {
-                if let result = analysisResult {
-                    WeeklyResultView(result: result)
-                } else {
-                    Text("결과를 불러올 수 없습니다")
-                        .onAppear {
-                            logger.error("📅 [Weekly] 결과 없음 - sheet 닫기")
-                            showResult = false
-                        }
-                }
+            .sheet(item: $resultToShow) { result in
+                WeeklyResultView(result: result)
             }
         }
     }
@@ -389,7 +388,8 @@ struct WeeklyPhotoCell: View {
 }
 
 // MARK: - Weekly Result Model
-struct WeeklyResult {
+struct WeeklyResult: Identifiable {
+    let id = UUID()
     var dateRange: String
     var daySummaries: [DaySummary]
     var totalDistance: Double
