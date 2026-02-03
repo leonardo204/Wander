@@ -4,13 +4,17 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "PhotoSelectionVM")
 
-enum QuickSelectRange {
-    case today
-    case thisWeek
-    case thisMonth
-    case last3Months
-    case all
-    case custom
+enum QuickSelectRange: String, CustomStringConvertible {
+    case today = "오늘"
+    case thisWeek = "이번 주"
+    case thisMonth = "이번 달"
+    case last3Months = "최근 3개월"
+    case all = "전체"
+    case custom = "직접 선택"
+
+    var description: String {
+        return rawValue
+    }
 }
 
 @Observable

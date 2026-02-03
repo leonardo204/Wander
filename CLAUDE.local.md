@@ -333,6 +333,22 @@ grep -n "SCR-010" Ref-Concepts/wander_ui_scenario.md
 
 ---
 
+## xcodegen 주의사항
+
+### DEVELOPMENT_TEAM 설정 유지
+`project.yml`의 `DEVELOPMENT_TEAM` 설정을 **절대 삭제하지 말 것**:
+
+```yaml
+settings:
+  base:
+    DEVELOPMENT_TEAM: "XU8HS9JUTS"  # 삭제 금지!
+```
+
+- 이 설정이 없으면 Signing & Capabilities에서 TEAM이 사라짐
+- 빌드/배포 시 코드 서명 오류 발생
+
+---
+
 ## 구현 완료 상태
 
 - ✅ Phase 1: 기본 구조 (앱 구조, 온보딩, 권한)
@@ -343,4 +359,4 @@ grep -n "SCR-010" Ref-Concepts/wander_ui_scenario.md
 
 ---
 
-*최종 업데이트: 2026-02-01*
+*최종 업데이트: 2026-02-03*

@@ -14,6 +14,13 @@ struct HomeView: View {
     @State private var navigationPath = NavigationPath()
     @State private var savedRecordId: UUID?
 
+    /// 상세 페이지 진입 시 탭바 스와이프 비활성화용 (부모에서 바인딩)
+    @Binding var isNavigationActive: Bool
+
+    init(isNavigationActive: Binding<Bool> = .constant(false)) {
+        _isNavigationActive = isNavigationActive
+    }
+
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ZStack {
@@ -62,7 +69,7 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showPhotoSelection) {
-                PhotoSelectionView(onSaveComplete: { savedRecord in
+                PhotoPickerWithAnalysis(onSaveComplete: { savedRecord in
                     logger.info("🏠 [HomeView] 저장 완료 콜백 받음: \(savedRecord.title)")
                     savedRecordId = savedRecord.id
                 })
@@ -88,6 +95,10 @@ struct HomeView: View {
                         savedRecordId = nil
                     }
                 }
+            }
+            .onChange(of: navigationPath) { _, newPath in
+                // 네비게이션 경로가 비어있지 않으면 상세 페이지에 있음 -> 탭바 스와이프 비활성화
+                isNavigationActive = !newPath.isEmpty
             }
         }
     }

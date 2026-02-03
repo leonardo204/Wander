@@ -1,4 +1,13 @@
 name: Wander
+
+packages:
+  DKImagePickerController:
+    url: https://github.com/zhangao0086/DKImagePickerController
+    branch: develop
+  Parchment:
+    url: https://github.com/rechsteiner/Parchment
+    from: "4.0.0"
+
 options:
   bundleIdPrefix: com.zerolive
   deploymentTarget:
@@ -26,7 +35,7 @@ schemes:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: "XU8HS9JUTS"
     MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: "1"
     INFOPLIST_KEY_CFBundleDisplayName: "Wander"
@@ -40,10 +49,12 @@ targets:
     type: application
     platform: iOS
     supportedDestinations: [iOS]
+    dependencies:
+      - package: DKImagePickerController
+      - package: Parchment
     sources:
       - WanderApp.swift
       - ContentView.swift
-      - App
       - Core
       - Models
       - Services
