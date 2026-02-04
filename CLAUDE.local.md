@@ -89,6 +89,15 @@ Wander/
 │   │   │   ├── AnalysisEngine.swift
 │   │   │   ├── ClusteringService.swift
 │   │   │   └── ActivityInferenceService.swift
+│   │   ├── SmartAnalysis/           ← Wander Intelligence
+│   │   │   ├── SmartAnalysisCoordinator.swift
+│   │   │   ├── VisionAnalysisService.swift
+│   │   │   ├── FastVLMService.swift
+│   │   │   ├── POIService.swift
+│   │   │   ├── TravelDNAService.swift
+│   │   │   ├── MomentScoreService.swift
+│   │   │   ├── StoryWeavingService.swift
+│   │   │   └── InsightEngine.swift
 │   │   ├── ExportService/
 │   │   │   └── ExportService.swift
 │   │   ├── LocationService/
@@ -106,10 +115,18 @@ Wander/
 │   │   │   ├── OnboardingIntroView.swift
 │   │   │   ├── OnboardingPhotoView.swift
 │   │   │   └── OnboardingLocationView.swift
+│   │   ├── Shared/
+│   │   │   └── CustomTabBar.swift       ← 커스텀 하단 탭바
 │   │   ├── Home/
 │   │   │   ├── HomeView.swift
 │   │   │   └── LookbackView.swift
-│   │   ├── PhotoSelection/PhotoSelectionView.swift
+│   │   ├── PhotoSelection/
+│   │   │   ├── PhotoSelectionView.swift
+│   │   │   └── CustomPhotoPicker/   ← 커스텀 사진 피커
+│   │   │       ├── CustomPhotoPickerView.swift
+│   │   │       ├── PhotoPickerWithAnalysis.swift
+│   │   │       ├── PhotoAssetManager.swift
+│   │   │       └── PhotoGridView.swift
 │   │   ├── Analysis/AnalyzingView.swift
 │   │   ├── Result/
 │   │   │   ├── ResultView.swift
@@ -145,7 +162,8 @@ Wander/
 │   ├── screens/
 │   └── prompts/
 │
-└── Ref-docs/                    ← 구버전 참조 문서 (백업용)
+└── Ref-docs/                    ← 기술 문서
+    └── wander_intelligence_algorithm.md  ← 분석 알고리즘 문서
 ```
 
 ---
@@ -161,6 +179,20 @@ Wander/
 | 활동 추론 | 규칙 기반 활동 타입 추론 | `ActivityInferenceService.swift` |
 | AI 스토리 | BYOK AI로 여행 스토리 생성 | `AIStoryView.swift` |
 | 공유/내보내기 | 이미지/텍스트/Markdown 내보내기 | `ExportService.swift` |
+
+### Wander Intelligence (스마트 분석)
+| 서비스 | 설명 | iOS 요구사항 |
+|--------|------|-------------|
+| `SmartAnalysisCoordinator` | 스마트 분석 오케스트레이터 | iOS 17+ |
+| `VisionAnalysisService` | 장면 분류 (Vision Framework) | iOS 17+ |
+| `FastVLMService` | 온디바이스 VLM 분석 | iOS 18.2+ |
+| `POIService` | 주변 핫스팟 검색 (MapKit) | iOS 17+ |
+| `TravelDNAService` | 여행자 성향 분석 | iOS 17+ |
+| `MomentScoreService` | 순간 점수/등급 계산 | iOS 17+ |
+| `StoryWeavingService` | AI 스토리 생성 | iOS 17+ |
+| `InsightEngine` | 인사이트 발견 | iOS 17+ |
+
+> 📄 상세 알고리즘: `Ref-docs/wander_intelligence_algorithm.md`
 
 ### 부가 기능
 | 기능 | 설명 | 관련 파일 |
@@ -318,6 +350,32 @@ private let logger = Logger(subsystem: "com.zerolive.wander", category: "Categor
 
 ---
 
+## 사진 선택 → 분석 흐름
+
+```
+HomeView
+  └→ PhotoPickerWithAnalysis (sheet)
+       └→ CustomPhotoPickerView (커스텀 피커)
+            │   - 날짜 필터 (오늘/이번주/이번달/3개월/전체)
+            │   - Swipe drag 다중 선택
+            │   - PhotoAssetManager로 PHAsset fetch
+            └→ AnalyzingViewWrapper (fullScreenCover, item 기반)
+                 └→ AnalyzingView
+                      └→ AnalysisEngine.analyze()
+                           └→ ResultView (저장/공유)
+```
+
+### 핵심 컴포넌트
+| 컴포넌트 | 역할 |
+|---------|------|
+| `PhotoPickerWithAnalysis` | 피커 + 분석 연결 컨테이너 |
+| `CustomPhotoPickerView` | 날짜 필터링 커스텀 피커 UI |
+| `PhotoAssetManager` | PHAsset fetch/캐싱 관리 |
+| `SelectedPhotosWrapper` | fullScreenCover(item:)용 래퍼 |
+| `AnalyzingViewWrapper` | PHAsset → ViewModel 변환 래퍼 |
+
+---
+
 ## 유용한 명령어
 
 ```bash
@@ -355,8 +413,56 @@ settings:
 - ✅ Phase 2: 핵심 기능 (사진 분석, 타임라인, 지도)
 - ✅ Phase 3: 부가 기능 (공유, 내보내기, 퀵모드)
 - ✅ Phase 4: AI 기능 (BYOK, 스토리 생성)
+- ✅ Phase 5: Wander Intelligence (스마트 분석, iOS 17+)
 - ✅ 추가 기능: 보안 잠금, 카테고리, 숨김 기록, 자주 가는 곳
 
 ---
 
-*최종 업데이트: 2026-02-03*
+## 개발 주의사항
+
+### SwiftUI fullScreenCover 주의
+`fullScreenCover(isPresented:)` 대신 `fullScreenCover(item:)`을 사용해야 합니다:
+```swift
+// ❌ 문제: 클로저가 미리 평가되어 빈 데이터로 초기화될 수 있음
+.fullScreenCover(isPresented: $showAnalysis) {
+    AnalyzingViewWrapper(selectedAssets: selectedAssets, ...)
+}
+
+// ✅ 해결: item이 설정된 시점에만 뷰 생성
+.fullScreenCover(item: $selectedPhotosWrapper) { wrapper in
+    AnalyzingViewWrapper(selectedAssets: wrapper.assets, ...)
+}
+```
+
+### PHImageManager 콜백 주의
+`deliveryMode: .opportunistic`은 콜백을 **두 번** 호출할 수 있어 `withCheckedContinuation` 크래시 유발:
+```swift
+// ❌ 크래시 위험
+options.deliveryMode = .opportunistic
+
+// ✅ 안전: 한 번만 호출
+options.deliveryMode = .fastFormat
+```
+
+### 삭제된 파일 (레거시)
+- ~~`DKImagePickerView.swift`~~ → `CustomPhotoPickerView.swift`로 대체
+- ~~`DKImagePickerRepresentable.swift`~~ → 삭제됨
+- ~~`DKImagePickerController` 패키지~~ → 제거됨
+
+---
+
+## 수정 이력
+
+| 날짜 | 내용 |
+|------|------|
+| 2026-02-04 | 커스텀 탭바 스크롤 문제 수정 (GeometryReader + ZStack 방식) |
+| 2026-02-04 | 모든 탭 하단 패딩 추가 (탭바에 콘텐츠 가려지는 문제 해결) |
+| 2026-02-04 | 기록 상세 페이지 여행동선 지도 클릭 시 팝업 표시 기능 추가 |
+| 2026-02-04 | fullScreenCover(item:) 패턴으로 사진 전달 버그 수정 |
+| 2026-02-04 | DKImagePicker 제거, CustomPhotoPicker로 완전 전환 |
+| 2026-02-04 | PHImageManager 콜백 중복 호출 크래시 수정 |
+| 2026-02-04 | 메타데이터 추출 로깅 개선 |
+
+---
+
+*최종 업데이트: 2026-02-04*

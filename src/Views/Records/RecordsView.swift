@@ -64,24 +64,24 @@ struct RecordsView: View {
                 }
             }
             .background(WanderColors.background)
-            .navigationTitle("기록")
-            .searchable(text: $searchText, prompt: "기록 검색")
+            .navigationTitle("records.title".localized)
+            .searchable(text: $searchText, prompt: "records.search".localized)
             .onAppear {
                 logger.info("📚 [RecordsView] 나타남 - 전체 기록: \(records.count)개")
             }
             .confirmationDialog(
-                "이 기록을 삭제하시겠습니까?",
+                "records.delete.confirm".localized,
                 isPresented: $showDeleteConfirmation,
                 titleVisibility: .visible
             ) {
-                Button("삭제", role: .destructive) {
+                Button("common.delete".localized, role: .destructive) {
                     if let record = recordToDelete {
                         deleteRecord(record)
                     }
                 }
-                Button("취소", role: .cancel) {}
+                Button("common.cancel".localized, role: .cancel) {}
             } message: {
-                Text("삭제된 기록은 복구할 수 없습니다.")
+                Text("records.delete.warning".localized)
             }
             .sheet(isPresented: $showHiddenRecords) {
                 HiddenRecordsView()
@@ -119,16 +119,17 @@ struct RecordsView: View {
                 .font(.system(size: 60))
                 .foregroundColor(WanderColors.textTertiary)
 
-            Text("아직 기록이 없어요")
+            Text("records.empty".localized)
                 .font(WanderTypography.title3)
                 .foregroundColor(WanderColors.textPrimary)
 
-            Text("여행을 기록하고 추억을 저장해 보세요")
+            Text("records.empty.description".localized)
                 .font(WanderTypography.body)
                 .foregroundColor(WanderColors.textSecondary)
 
             Spacer()
         }
+        .padding(.bottom, 70)  // 탭바 높이만큼 여백 확보
     }
 
     // MARK: - No Results View
@@ -140,12 +141,13 @@ struct RecordsView: View {
                 .font(.system(size: 40))
                 .foregroundColor(WanderColors.textTertiary)
 
-            Text("검색 결과가 없습니다")
+            Text("records.noResults".localized)
                 .font(WanderTypography.body)
                 .foregroundColor(WanderColors.textSecondary)
 
             Spacer()
         }
+        .padding(.bottom, 70)  // 탭바 높이만큼 여백 확보
     }
 
     // MARK: - Records List
@@ -161,14 +163,14 @@ struct RecordsView: View {
                         Button {
                             hideRecord(record)
                         } label: {
-                            Label("숨기기", systemImage: "eye.slash")
+                            Label("records.hide".localized, systemImage: "eye.slash")
                         }
 
                         Button(role: .destructive) {
                             recordToDelete = record
                             showDeleteConfirmation = true
                         } label: {
-                            Label("삭제", systemImage: "trash")
+                            Label("common.delete".localized, systemImage: "trash")
                         }
                     }
                 }
@@ -179,7 +181,8 @@ struct RecordsView: View {
                 }
             }
             .padding(.horizontal, WanderSpacing.screenMargin)
-            .padding(.vertical, WanderSpacing.space4)
+            .padding(.top, WanderSpacing.space4)
+            .padding(.bottom, 70)  // 탭바 높이만큼 여백 확보
         }
     }
 
@@ -202,11 +205,11 @@ struct RecordsView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("숨긴 기록")
+                        Text("records.hidden".localized)
                             .font(WanderTypography.headline)
                             .foregroundColor(WanderColors.textPrimary)
 
-                        Text("\(hiddenRecordsCount)개의 기록이 숨겨져 있습니다")
+                        Text("records.hiddenCount".localized(with: hiddenRecordsCount))
                             .font(WanderTypography.caption1)
                             .foregroundColor(WanderColors.textSecondary)
                     }
@@ -272,13 +275,14 @@ enum RecordFilter: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    @MainActor
     var title: String {
         switch self {
-        case .all: return "전체"
-        case .travel: return "여행"
-        case .daily: return "일상"
-        case .weekly: return "주간"
-        case .business: return "출장"
+        case .all: return "records.filter.all".localized
+        case .travel: return "records.filter.travel".localized
+        case .daily: return "records.filter.daily".localized
+        case .weekly: return "records.filter.weekly".localized
+        case .business: return "records.filter.business".localized
         }
     }
 }
@@ -505,16 +509,11 @@ struct RecordDetailFullView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: WanderSpacing.space6) {
-                // Map Section (like ResultView)
+                // Map Section
                 mapSection
 
-                // Stats Section
+                // Stats Section (방문장소, 이동거리, 사진, 일자)
                 statsSection
-
-                // Wander Intelligence Section (if available)
-                if record.hasWanderIntelligence {
-                    wanderIntelligenceSection
-                }
 
                 // Timeline
                 if !record.days.isEmpty {
@@ -528,6 +527,11 @@ struct RecordDetailFullView: View {
 
                 // AI Story Section
                 aiStoryOrButtonSection
+
+                // Wander Intelligence Section (if available)
+                if record.hasWanderIntelligence {
+                    wanderIntelligenceSection
+                }
 
                 // Share Button (at bottom)
                 shareButton
@@ -707,10 +711,13 @@ struct RecordDetailFullView: View {
                 }
             }
 
-            // Mini Map
-            RecordMiniMapView(record: record)
-                .frame(height: 200)
-                .cornerRadius(WanderSpacing.radiusLarge)
+            // Mini Map - 클릭하면 전체 지도 표시
+            Button(action: { showMapDetail = true }) {
+                RecordMiniMapView(record: record)
+                    .frame(height: 200)
+                    .cornerRadius(WanderSpacing.radiusLarge)
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -2154,12 +2161,19 @@ struct RecordEditView: View {
     let record: TravelRecord
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Query(sort: \RecordCategory.order) private var categories: [RecordCategory]
+
     @State private var editedTitle: String
+    @State private var selectedCategoryId: UUID?
     @State private var showDeleteConfirmation = false
+    @State private var showReanalyzeConfirmation = false
+    @State private var hasChanges = false
+    @State private var isReanalyzing = false
 
     init(record: TravelRecord) {
         self.record = record
         self._editedTitle = State(initialValue: record.title)
+        self._selectedCategoryId = State(initialValue: record.category?.id)
     }
 
     var body: some View {
@@ -2167,6 +2181,7 @@ struct RecordEditView: View {
             Form {
                 Section("기본 정보") {
                     TextField("제목", text: $editedTitle)
+                        .onChange(of: editedTitle) { _, _ in hasChanges = true }
 
                     HStack {
                         Text("기간")
@@ -2175,15 +2190,18 @@ struct RecordEditView: View {
                             .foregroundColor(WanderColors.textSecondary)
                     }
 
-                    HStack {
-                        Text("카테고리")
-                        Spacer()
-                        HStack(spacing: 4) {
-                            Text(record.categoryIcon)
-                            Text(record.categoryName)
+                    // 카테고리 선택
+                    Picker("카테고리", selection: $selectedCategoryId) {
+                        Text("없음").tag(nil as UUID?)
+                        ForEach(categories.filter { !$0.isHidden }) { category in
+                            HStack {
+                                Text(category.icon)
+                                Text(category.name)
+                            }
+                            .tag(category.id as UUID?)
                         }
-                        .foregroundColor(WanderColors.textSecondary)
                     }
+                    .onChange(of: selectedCategoryId) { _, _ in hasChanges = true }
                 }
 
                 Section("통계") {
@@ -2211,7 +2229,7 @@ struct RecordEditView: View {
 
                 Section("타임라인") {
                     ForEach(record.days.sorted { $0.dayNumber < $1.dayNumber }) { day in
-                        NavigationLink(destination: DayEditView(day: day)) {
+                        NavigationLink(destination: DayEditView(day: day, onPlaceChanged: { hasChanges = true })) {
                             HStack {
                                 Text(formatDayDate(day.date))
                                     .font(WanderTypography.headline)
@@ -2221,6 +2239,22 @@ struct RecordEditView: View {
                                     .foregroundColor(WanderColors.textSecondary)
                             }
                         }
+                    }
+                }
+
+                if record.hasWanderIntelligence {
+                    Section {
+                        Button(action: { showReanalyzeConfirmation = true }) {
+                            HStack {
+                                Spacer()
+                                Label("Wander Intelligence 재분석", systemImage: "sparkles")
+                                    .foregroundColor(WanderColors.primary)
+                                Spacer()
+                            }
+                        }
+                        .disabled(isReanalyzing)
+                    } footer: {
+                        Text("수정된 장소 정보를 바탕으로 여행 점수, DNA, 인사이트를 다시 계산합니다.")
                     }
                 }
 
@@ -2242,10 +2276,14 @@ struct RecordEditView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("저장") {
-                        saveChanges()
-                        dismiss()
+                        if hasChanges && record.hasWanderIntelligence {
+                            showReanalyzeConfirmation = true
+                        } else {
+                            saveChanges(reanalyze: false)
+                            dismiss()
+                        }
                     }
-                    .disabled(editedTitle.isEmpty)
+                    .disabled(editedTitle.isEmpty || isReanalyzing)
                 }
             }
             .confirmationDialog(
@@ -2261,6 +2299,41 @@ struct RecordEditView: View {
             } message: {
                 Text("삭제된 기록은 복구할 수 없습니다.")
             }
+            .confirmationDialog(
+                "Wander Intelligence 재분석",
+                isPresented: $showReanalyzeConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("재분석 후 저장") {
+                    saveChanges(reanalyze: true)
+                    dismiss()
+                }
+                Button("그냥 저장") {
+                    saveChanges(reanalyze: false)
+                    dismiss()
+                }
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("수정된 정보로 여행 점수, DNA, 인사이트를 다시 계산할까요?")
+            }
+            .overlay {
+                if isReanalyzing {
+                    ZStack {
+                        Color.black.opacity(0.3)
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                            Text("재분석 중...")
+                                .font(WanderTypography.body)
+                                .foregroundColor(.white)
+                        }
+                        .padding(32)
+                        .background(Color.black.opacity(0.7))
+                        .cornerRadius(16)
+                    }
+                    .ignoresSafeArea()
+                }
+            }
         }
     }
 
@@ -2270,17 +2343,149 @@ struct RecordEditView: View {
         return "\(formatter.string(from: record.startDate)) ~ \(formatter.string(from: record.endDate))"
     }
 
-    private func saveChanges() {
+    private func saveChanges(reanalyze: Bool) {
         record.title = editedTitle
         record.updatedAt = Date()
-        try? modelContext.save()
-        logger.info("📝 [RecordEditView] 기록 저장됨: \(editedTitle)")
+
+        // 카테고리 변경
+        if let categoryId = selectedCategoryId {
+            record.category = categories.first { $0.id == categoryId }
+        } else {
+            record.category = nil
+        }
+
+        if reanalyze {
+            isReanalyzing = true
+            Task {
+                await reanalyzeWanderIntelligence()
+                await MainActor.run {
+                    isReanalyzing = false
+                    try? modelContext.save()
+                    logger.info("📝 [RecordEditView] 기록 저장됨 (재분석 완료): \(editedTitle)")
+                }
+            }
+        } else {
+            try? modelContext.save()
+            logger.info("📝 [RecordEditView] 기록 저장됨: \(editedTitle)")
+        }
+    }
+
+    private func reanalyzeWanderIntelligence() async {
+        logger.info("🔄 [RecordEditView] Wander Intelligence 재분석 시작")
+
+        // 저장된 데이터로 PlaceCluster 배열 생성
+        var clusters: [PlaceCluster] = []
+        for day in record.days {
+            for place in day.places {
+                let cluster = PlaceCluster(
+                    latitude: place.latitude,
+                    longitude: place.longitude,
+                    startTime: place.startTime
+                )
+                cluster.endTime = place.endTime ?? place.startTime
+                cluster.name = place.name
+                cluster.address = place.address
+                cluster.activityType = activityTypeFromLabel(place.activityLabel)
+                clusters.append(cluster)
+            }
+        }
+
+        guard !clusters.isEmpty else {
+            logger.warning("⚠️ [RecordEditView] 재분석할 장소가 없음")
+            return
+        }
+
+        // 빈 scene categories 배열 (재분석 시 사진이 없으므로)
+        let sceneCategories: [VisionAnalysisService.SceneCategory?] = clusters.map { _ in nil }
+
+        // TravelDNA 재계산
+        let dnaService = TravelDNAService()
+        let newDNA = dnaService.analyzeDNA(from: clusters, sceneCategories: sceneCategories)
+
+        // MomentScore 재계산
+        let scoreService = MomentScoreService()
+        var placeScores: [MomentScoreService.MomentScore] = []
+
+        for cluster in clusters {
+            let score = scoreService.calculateScore(
+                for: cluster,
+                sceneCategory: nil,
+                nearbyHotspots: nil,
+                allClusters: clusters
+            )
+            placeScores.append(score)
+        }
+
+        let tripScore = scoreService.calculateTripScore(momentScores: placeScores)
+
+        // Insight 재계산
+        let insightEngine = InsightEngine()
+        let insightContext = InsightEngine.AnalysisContext(
+            clusters: clusters,
+            sceneCategories: sceneCategories,
+            momentScores: placeScores,
+            travelDNA: newDNA,
+            totalDistance: record.totalDistance,
+            totalPhotos: record.photoCount
+        )
+        let newInsights = insightEngine.discoverInsights(from: insightContext)
+
+        // Story 재생성
+        let storyService = StoryWeavingService()
+        let storyContext = StoryWeavingService.StoryContext(
+            clusters: clusters,
+            travelDNA: newDNA,
+            momentScores: placeScores,
+            sceneDescriptions: [],
+            startDate: record.startDate,
+            endDate: record.endDate,
+            totalDistance: record.totalDistance,
+            photoCount: record.photoCount
+        )
+        let newStory = storyService.generateStory(from: storyContext)
+
+        // 기록 업데이트
+        await MainActor.run {
+            // TravelDNA 저장
+            record.travelDNA = newDNA
+
+            // TripScore 저장
+            record.tripScore = tripScore
+
+            // Insights 저장
+            record.insights = newInsights
+
+            // Story 저장
+            record.travelStory = newStory
+
+            logger.info("✅ [RecordEditView] Wander Intelligence 재분석 완료")
+            logger.info("   - 여행 점수: \(tripScore.averageScore)점")
+            logger.info("   - 여행자 DNA: \(newDNA.primaryType.koreanName)")
+            logger.info("   - 인사이트: \(newInsights.count)개")
+        }
     }
 
     private func deleteRecord() {
         modelContext.delete(record)
         try? modelContext.save()
         logger.info("🗑️ [RecordEditView] 기록 삭제됨")
+    }
+
+    /// 한글 활동 라벨을 ActivityType으로 변환
+    private func activityTypeFromLabel(_ label: String) -> ActivityType {
+        switch label {
+        case "카페": return .cafe
+        case "식사": return .restaurant
+        case "해변": return .beach
+        case "등산": return .mountain
+        case "관광": return .tourist
+        case "쇼핑": return .shopping
+        case "문화": return .culture
+        case "공항": return .airport
+        case "숙소": return .accommodation
+        case "자연": return .nature
+        default: return .other
+        }
     }
 
     private func formatDayDate(_ date: Date) -> String {
@@ -2294,12 +2499,13 @@ struct RecordEditView: View {
 // MARK: - Day Edit View
 struct DayEditView: View {
     let day: TravelDay
+    var onPlaceChanged: (() -> Void)?
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         List {
             ForEach(day.places.sorted { $0.order < $1.order }) { place in
-                NavigationLink(destination: PlaceEditView(place: place)) {
+                NavigationLink(destination: PlaceEditView(place: place, onChanged: onPlaceChanged)) {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(place.name)
@@ -2322,6 +2528,7 @@ struct DayEditView: View {
                     place.order = index
                 }
                 try? modelContext.save()
+                onPlaceChanged?()
             }
         }
         .navigationTitle(formatDayDate(day.date))
@@ -2347,14 +2554,16 @@ struct DayEditView: View {
 // MARK: - Place Edit View
 struct PlaceEditView: View {
     let place: Place
+    var onChanged: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @State private var editedName: String
     @State private var editedMemo: String
     @State private var editedActivityLabel: String
 
-    init(place: Place) {
+    init(place: Place, onChanged: (() -> Void)? = nil) {
         self.place = place
+        self.onChanged = onChanged
         self._editedName = State(initialValue: place.name)
         self._editedMemo = State(initialValue: place.memo ?? "")
         self._editedActivityLabel = State(initialValue: place.activityLabel)
@@ -2448,6 +2657,7 @@ struct PlaceEditView: View {
         }
 
         try? modelContext.save()
+        onChanged?()
         logger.info("📝 [PlaceEditView] 장소 저장됨: \(editedName)")
     }
 }

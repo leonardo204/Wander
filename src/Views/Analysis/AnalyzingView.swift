@@ -39,7 +39,7 @@ struct AnalyzingView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     if !navigateToResult {
-                        Button("취소") {
+                        Button("common.cancel".localized) {
                             dismiss()
                         }
                         .foregroundColor(WanderColors.textSecondary)
@@ -134,7 +134,7 @@ struct AnalyzingView: View {
                     .cornerRadius(WanderSpacing.radiusSmall)
                 }
 
-                Text("분석 중...")
+                Text("analysis.analyzing".localized)
                     .font(WanderTypography.title2)
                     .foregroundColor(WanderColors.textPrimary)
 
@@ -151,7 +151,7 @@ struct AnalyzingView: View {
             }
 
             // Photo Count
-            Text("\(viewModel.selectedAssets.count)장의 사진 분석 중")
+            Text("analysis.photoCount".localized(with: viewModel.selectedAssets.count))
                 .font(WanderTypography.caption1)
                 .foregroundColor(WanderColors.textTertiary)
 
@@ -245,7 +245,7 @@ struct AnalyzingView: View {
                 .font(.system(size: 60))
                 .foregroundColor(WanderColors.warning)
 
-            Text("분석 실패")
+            Text("analysis.failed".localized)
                 .font(WanderTypography.title2)
                 .foregroundColor(WanderColors.textPrimary)
 
@@ -257,7 +257,7 @@ struct AnalyzingView: View {
             Button(action: {
                 dismiss()
             }) {
-                Text("돌아가기")
+                Text("analysis.goBack".localized)
                     .font(WanderTypography.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -275,7 +275,7 @@ struct AnalyzingView: View {
             Image(systemName: "lock.shield.fill")
                 .foregroundColor(WanderColors.success)
 
-            Text("모든 처리는 기기 내에서 이루어집니다")
+            Text("analysis.privacyNote".localized)
                 .font(WanderTypography.caption1)
                 .foregroundColor(WanderColors.textSecondary)
         }

@@ -7,26 +7,37 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var isNavigationActive = false  // 상세 페이지 진입 시 탭바 스와이프 비활성화용
 
+    /// 탭바 높이 (safe area 포함)
+    private let tabBarHeight: CGFloat = 49
+
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // 페이지 콘텐츠
-            TabView(selection: $selectedTab) {
-                HomeView(isNavigationActive: $isNavigationActive)
-                    .tag(0)
+        GeometryReader { geometry in
+            ZStack(alignment: .bottom) {
+                // 페이지 콘텐츠
+                TabView(selection: $selectedTab) {
+                    HomeView(isNavigationActive: $isNavigationActive)
+                        .tag(0)
 
-                RecordsView()
-                    .tag(1)
+                    RecordsView()
+                        .tag(1)
 
-                SettingsView()
-                    .tag(2)
+                    SettingsView()
+                        .tag(2)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))  // 스와이프 전환, 인디케이터 숨김
+                .animation(.easeInOut(duration: 0.2), value: selectedTab)
+                .allowsHitTesting(true)  // 항상 터치 허용
+                .scrollDisabled(isNavigationActive)  // 상세 페이지에서는 탭 스와이프만 비활성화
+
+                // 커스텀 하단 탭바
+                VStack(spacing: 0) {
+                    CustomTabBar(selectedIndex: $selectedTab)
+                    // Safe area bottom 영역 채우기
+                    Color(WanderColors.surface)
+                        .frame(height: geometry.safeAreaInsets.bottom)
+                }
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))  // 스와이프 전환, 인디케이터 숨김
-            .animation(.easeInOut(duration: 0.2), value: selectedTab)
-            .allowsHitTesting(true)  // 항상 터치 허용
-            .scrollDisabled(isNavigationActive)  // 상세 페이지에서는 탭 스와이프만 비활성화
-
-            // 커스텀 하단 탭바
-            CustomTabBar(selectedIndex: $selectedTab)
+            .ignoresSafeArea(edges: .bottom)
         }
         .ignoresSafeArea(.keyboard)
         .onAppear {

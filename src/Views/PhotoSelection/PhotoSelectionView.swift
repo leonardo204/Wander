@@ -182,8 +182,8 @@ struct PhotoSelectionView: View {
             .padding(.vertical, WanderSpacing.space2)
             .background(WanderColors.surface)
 
-            // Photo grid
-            GeometryReader { outerGeometry in
+            // Photo grid with unified coordinate space
+            ScrollViewReader { scrollProxy in
                 ScrollView {
                     LazyVGrid(columns: [
                         GridItem(.flexible(), spacing: 2),
@@ -220,7 +220,7 @@ struct PhotoSelectionView: View {
                                     Color.clear
                                         .preference(
                                             key: PhotoFramePreferenceKey.self,
-                                            value: [asset.localIdentifier: geometry.frame(in: .named("photoGrid"))]
+                                            value: [asset.localIdentifier: geometry.frame(in: .global)]
                                         )
                                 }
                             )
@@ -228,16 +228,15 @@ struct PhotoSelectionView: View {
                     }
                     .padding(.bottom, 100) // Extra padding for scroll
                 }
-                .coordinateSpace(name: "photoGrid")
                 .scrollDisabled(longPressActivated) // Disable scroll during drag selection mode
                 .onPreferenceChange(PhotoFramePreferenceKey.self) { frames in
                     photoFrames = frames
                 }
                 .simultaneousGesture(
-                    DragGesture(minimumDistance: 1)
+                    DragGesture(coordinateSpace: .global)
                         .onChanged { value in
                             if longPressActivated {
-                                handleDragChanged(value: value, in: outerGeometry)
+                                handleDragChanged(location: value.location)
                             }
                         }
                         .onEnded { _ in
@@ -248,18 +247,17 @@ struct PhotoSelectionView: View {
         }
     }
 
-    // Photo frames for hit testing
+    // Photo frames for hit testing (in global coordinate space)
     @State private var photoFrames: [String: CGRect] = [:]
 
-    private func handleDragChanged(value: DragGesture.Value, in geometry: GeometryProxy) {
+    private func handleDragChanged(location: CGPoint) {
         if !isDragging {
             // Start dragging
             isDragging = true
             logger.info("📷 [PhotoSelection] 드래그 시작 - deselect mode: \(dragStartedOnSelected)")
         }
 
-        // Find asset at current drag location
-        let location = value.location
+        // Find asset at current drag location (using global coordinates)
         if let assetId = findAsset(at: location) {
             if !photosSelectedDuringDrag.contains(assetId) {
                 photosSelectedDuringDrag.insert(assetId)

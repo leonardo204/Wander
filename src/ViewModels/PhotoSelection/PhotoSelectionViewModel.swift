@@ -185,8 +185,80 @@ struct AnalysisResult {
     var totalDistance: Double = 0
     var photoCount: Int = 0
 
+    /// 스마트 분석 결과 (iOS 17+)
+    var smartAnalysisResult: SmartAnalysisCoordinator.SmartAnalysisResult?
+
+    // MARK: - Wander Intelligence Results
+
+    /// 여행자 DNA 분석 결과
+    var travelDNA: TravelDNAService.TravelDNA?
+
+    /// 각 장소별 MomentScore
+    var momentScores: [MomentScoreService.MomentScore] = []
+
+    /// 전체 여행 점수
+    var tripScore: MomentScoreService.TripOverallScore?
+
+    /// AI 스토리
+    var travelStory: StoryWeavingService.TravelStory?
+
+    /// 발견된 인사이트
+    var insights: [InsightEngine.TravelInsight] = []
+
+    /// 인사이트 요약
+    var insightSummary: InsightEngine.InsightSummary?
+
     var placeCount: Int {
         places.count
+    }
+
+    /// 스마트 서브타이틀 (있으면 사용, 없으면 기본 생성)
+    var subtitle: String {
+        if let smart = smartAnalysisResult {
+            return smart.smartSubtitle
+        }
+        // 기본 서브타이틀
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "M월 d일"
+        return "\(formatter.string(from: startDate)) · \(placeCount)곳"
+    }
+
+    /// 분석 레벨 표시
+    var analysisLevelBadge: String? {
+        guard let level = smartAnalysisResult?.analysisLevel else { return nil }
+        switch level {
+        case .basic: return nil
+        case .smart: return "스마트 분석"
+        case .advanced: return "AI 분석"
+        }
+    }
+
+    /// 지배적인 장면 카테고리
+    var dominantScene: VisionAnalysisService.SceneCategory? {
+        smartAnalysisResult?.dominantScene
+    }
+
+    /// 하이라이트 순간 (가장 높은 점수 장소)
+    var highlightMoment: (place: PlaceCluster, score: MomentScoreService.MomentScore)? {
+        guard !momentScores.isEmpty, momentScores.count == places.count else { return nil }
+        if let maxIndex = momentScores.indices.max(by: { momentScores[$0].totalScore < momentScores[$1].totalScore }) {
+            return (places[maxIndex], momentScores[maxIndex])
+        }
+        return nil
+    }
+
+    /// 전설적인 순간들
+    var legendaryMoments: [(place: PlaceCluster, score: MomentScoreService.MomentScore)] {
+        guard momentScores.count == places.count else { return [] }
+        return zip(places, momentScores)
+            .filter { $0.1.grade == .legendary }
+            .map { ($0.0, $0.1) }
+    }
+
+    /// 획득한 모든 배지
+    var allBadges: [MomentScoreService.SpecialBadge] {
+        Array(Set(momentScores.flatMap { $0.specialBadges }))
     }
 }
 
@@ -204,6 +276,20 @@ class PlaceCluster: Identifiable, Hashable {
     var photos: [PHAsset] = []
     var userPlaceMatched: Bool = false  // 사용자 등록 장소와 매칭됨
 
+    // MARK: - Smart Analysis Results (iOS 17+)
+
+    /// Vision 분석 장면 카테고리
+    var sceneCategory: VisionAnalysisService.SceneCategory?
+
+    /// Vision 분석 신뢰도
+    var sceneConfidence: Float?
+
+    /// 주변 핫스팟 (카페, 맛집, 명소)
+    var nearbyHotspots: POIService.NearbyHotspots?
+
+    /// POI 기반 더 나은 장소명
+    var betterName: String?
+
     init(latitude: Double, longitude: Double, startTime: Date) {
         self.latitude = latitude
         self.longitude = longitude
@@ -212,6 +298,21 @@ class PlaceCluster: Identifiable, Hashable {
 
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+
+    /// 클러스터 중심 좌표 (coordinate의 별칭, InsightEngine 호환성)
+    var centerCoordinate: CLLocationCoordinate2D {
+        coordinate
+    }
+
+    /// 최종 표시용 이름 (betterName 우선)
+    var displayName: String {
+        betterName ?? name
+    }
+
+    /// 최종 표시용 이모지 (sceneCategory 우선)
+    var displayEmoji: String {
+        sceneCategory?.emoji ?? activityType.emoji
     }
 
     func addPhoto(_ asset: PHAsset) {
@@ -243,6 +344,11 @@ enum ActivityType: String, CaseIterable, Identifiable {
     case shopping
     case culture
     case airport
+    case nature
+    case nightlife
+    case transportation
+    case accommodation
+    case unknown
     case other
 
     var id: String { rawValue }
@@ -257,6 +363,11 @@ enum ActivityType: String, CaseIterable, Identifiable {
         case .shopping: return "🛍️"
         case .culture: return "🎭"
         case .airport: return "✈️"
+        case .nature: return "🌲"
+        case .nightlife: return "🌙"
+        case .transportation: return "🚗"
+        case .accommodation: return "🏨"
+        case .unknown: return "📍"
         case .other: return "📍"
         }
     }
@@ -271,6 +382,11 @@ enum ActivityType: String, CaseIterable, Identifiable {
         case .shopping: return "쇼핑"
         case .culture: return "문화"
         case .airport: return "공항"
+        case .nature: return "자연"
+        case .nightlife: return "나이트라이프"
+        case .transportation: return "이동"
+        case .accommodation: return "숙소"
+        case .unknown: return "기타"
         case .other: return "기타"
         }
     }
@@ -285,6 +401,11 @@ enum ActivityType: String, CaseIterable, Identifiable {
         case .shopping: return WanderColors.activityShopping
         case .culture: return WanderColors.activityCulture
         case .airport: return WanderColors.activityAirport
+        case .nature: return WanderColors.activityMountain
+        case .nightlife: return WanderColors.activityCulture
+        case .transportation: return WanderColors.activityAirport
+        case .accommodation: return WanderColors.surface
+        case .unknown: return WanderColors.surface
         case .other: return WanderColors.surface
         }
     }

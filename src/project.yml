@@ -1,9 +1,6 @@
 name: Wander
 
 packages:
-  DKImagePickerController:
-    url: https://github.com/zhangao0086/DKImagePickerController
-    branch: develop
   Parchment:
     url: https://github.com/rechsteiner/Parchment
     from: "4.0.0"
@@ -15,6 +12,8 @@ options:
   xcodeVersion: "15.0"
   groupSortPosition: top
   defaultConfig: Debug
+  developmentLanguage: ko
+  localizedStringSwiftUISupport: true
 
 schemes:
   Wander:
@@ -50,7 +49,6 @@ targets:
     platform: iOS
     supportedDestinations: [iOS]
     dependencies:
-      - package: DKImagePickerController
       - package: Parchment
     sources:
       - WanderApp.swift

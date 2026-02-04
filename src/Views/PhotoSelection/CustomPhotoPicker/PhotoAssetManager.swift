@@ -103,7 +103,8 @@ class PhotoAssetManager: ObservableObject {
     func loadThumbnail(for asset: PHAsset, targetSize: CGSize) async -> UIImage? {
         await withCheckedContinuation { continuation in
             let options = PHImageRequestOptions()
-            options.deliveryMode = .opportunistic
+            // fastFormat: 콜백이 한 번만 호출됨 (opportunistic은 저품질/고품질 두 번 호출 가능)
+            options.deliveryMode = .fastFormat
             options.resizeMode = .fast
             options.isNetworkAccessAllowed = true
             options.isSynchronous = false

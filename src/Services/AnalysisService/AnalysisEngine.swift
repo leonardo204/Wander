@@ -325,8 +325,63 @@ class AnalysisEngine {
 
     /// 사용자 장소에 맞는 활동 타입 추론
     private func inferActivityForUserPlace(_ placeName: String, time: Date) -> ActivityType {
-        // 사용자 등록 장소는 특별한 추론 없이 기타로 처리
-        // 필요 시 카테고리 확장 후 개선 가능
+        let lowerName = placeName.lowercased()
+        let hour = Calendar.current.component(.hour, from: time)
+
+        // 집 - 시간대별 활동 추론
+        if lowerName.contains("집") || lowerName.contains("home") || lowerName.contains("🏠") {
+            if hour >= 6 && hour < 9 {
+                return .other // 아침 준비
+            } else if hour >= 22 || hour < 6 {
+                return .accommodation // 휴식/수면
+            } else {
+                return .other // 일반 시간
+            }
+        }
+
+        // 회사/학교 - 근무/학업
+        if lowerName.contains("회사") || lowerName.contains("학교") || lowerName.contains("사무실") ||
+           lowerName.contains("office") || lowerName.contains("work") || lowerName.contains("school") ||
+           lowerName.contains("🏢") || lowerName.contains("🏫") {
+            return .other // 근무/학업
+        }
+
+        // 병원
+        if lowerName.contains("병원") || lowerName.contains("hospital") || lowerName.contains("🏥") {
+            return .other
+        }
+
+        // 카페
+        if lowerName.contains("카페") || lowerName.contains("커피") || lowerName.contains("cafe") ||
+           lowerName.contains("coffee") || lowerName.contains("☕") {
+            return .cafe
+        }
+
+        // 식당/맛집
+        if lowerName.contains("식당") || lowerName.contains("맛집") || lowerName.contains("레스토랑") ||
+           lowerName.contains("restaurant") || lowerName.contains("🍽️") {
+            return .restaurant
+        }
+
+        // 헬스장/체육관
+        if lowerName.contains("헬스") || lowerName.contains("체육관") || lowerName.contains("gym") ||
+           lowerName.contains("fitness") || lowerName.contains("🏟️") {
+            return .tourist
+        }
+
+        // 공원/자연
+        if lowerName.contains("공원") || lowerName.contains("산") || lowerName.contains("park") ||
+           lowerName.contains("🌳") || lowerName.contains("🏔️") || lowerName.contains("🏖️") {
+            return .nature
+        }
+
+        // 마트/쇼핑
+        if lowerName.contains("마트") || lowerName.contains("쇼핑") || lowerName.contains("백화점") ||
+           lowerName.contains("mart") || lowerName.contains("shopping") ||
+           lowerName.contains("🏪") || lowerName.contains("🏬") {
+            return .shopping
+        }
+
         return .other
     }
 }

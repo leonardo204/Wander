@@ -41,7 +41,7 @@ struct HomeView: View {
                         }
                         .padding(.horizontal, WanderSpacing.screenMargin)
                         .padding(.top, WanderSpacing.space4)
-                        .padding(.bottom, records.isEmpty ? WanderSpacing.space4 : 80) // FAB 공간 확보
+                        .padding(.bottom, records.isEmpty ? WanderSpacing.space4 : 70) // FAB 공간 확보
                     }
                     .background(WanderColors.background)
 
@@ -53,7 +53,7 @@ struct HomeView: View {
                                 Spacer()
                                 fabButton
                                     .padding(.trailing, WanderSpacing.screenMargin)
-                                    .padding(.bottom, WanderSpacing.space4)
+                                    .padding(.bottom, WanderSpacing.space6)
                             }
                         }
                     }
@@ -117,10 +117,10 @@ struct HomeView: View {
     // MARK: - Greeting Section
     private var greetingSection: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space1) {
-            Text("오늘 어떤 이야기를")
+            Text("home.greeting.line1".localized)
                 .font(WanderTypography.title2)
                 .foregroundColor(WanderColors.textPrimary)
-            Text("만들어 볼까요?")
+            Text("home.greeting.line2".localized)
                 .font(WanderTypography.title2)
                 .foregroundColor(WanderColors.textPrimary)
         }
@@ -148,8 +148,8 @@ struct HomeView: View {
             // 지금 뭐해?
             QuickActionCard(
                 icon: "bubble.left.fill",
-                title: "지금 뭐해?",
-                subtitle: "사진 몇 장으로\n바로 공유",
+                title: "home.quickMode".localized,
+                subtitle: "home.quickMode.subtitle".localized,
                 backgroundColor: WanderColors.primaryPale
             ) {
                 showQuickMode = true
@@ -158,8 +158,8 @@ struct HomeView: View {
             // 돌아보기
             QuickActionCard(
                 icon: "arrow.counterclockwise",
-                title: "돌아보기",
-                subtitle: "자동 하이라이트\n생성",
+                title: "home.lookback".localized,
+                subtitle: "home.lookback.subtitle".localized,
                 backgroundColor: WanderColors.primaryPale,
                 showPeriodBadge: true
             ) {
@@ -171,7 +171,7 @@ struct HomeView: View {
     // MARK: - Recent Records Section
     private var recentRecordsSection: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space4) {
-            Text("최근 기록")
+            Text("home.recentRecords".localized)
                 .font(WanderTypography.title2)
                 .foregroundColor(WanderColors.textPrimary)
 
@@ -194,11 +194,11 @@ struct HomeView: View {
                 .frame(height: 150)
 
             VStack(spacing: WanderSpacing.space2) {
-                Text("아직 기록이 없어요")
+                Text("home.empty.title".localized)
                     .font(WanderTypography.title3)
                     .foregroundColor(WanderColors.textPrimary)
 
-                Text("첫 번째 여행을 기록해 보세요")
+                Text("home.empty.subtitle".localized)
                     .font(WanderTypography.body)
                     .foregroundColor(WanderColors.textSecondary)
             }
@@ -208,7 +208,7 @@ struct HomeView: View {
             }) {
                 HStack(spacing: WanderSpacing.space2) {
                     Image(systemName: "plus")
-                    Text("여행 기록 만들기")
+                    Text("home.createRecord".localized)
                 }
                 .font(WanderTypography.headline)
                 .foregroundColor(.white)

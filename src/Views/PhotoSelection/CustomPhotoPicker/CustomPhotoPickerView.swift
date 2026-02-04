@@ -4,8 +4,8 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "CustomPhotoPicker")
 
-/// 커스텀 사진 피커 - DKImagePickerController 대체
-/// - Recents 앨범 없음 (날짜 필터링된 사진만 표시)
+/// 커스텀 사진 피커
+/// - 날짜 필터링된 사진만 표시 (Recents 앨범 없음)
 /// - Swipe drag 선택 지원
 /// - 날짜 필터: 오늘, 이번 주, 이번 달, 최근 3개월, 전체
 struct CustomPhotoPickerView: View {
@@ -278,7 +278,7 @@ struct CustomPhotoPickerView: View {
 
         logger.info("📷 [CustomPhotoPicker] 선택 완료: \(selectedPHAssets.count)장")
         onSelect?(selectedPHAssets)
-        dismiss()
+        // dismiss()를 여기서 호출하지 않음 - AnalyzingView/ResultView가 완료된 후 PhotoPickerWithAnalysis에서 닫음
     }
 
     private func openSettings() {

@@ -112,6 +112,21 @@ class ActivityInferenceService {
         case .airport:
             return "공항"
 
+        case .nature:
+            return "자연 탐방"
+
+        case .nightlife:
+            return "야간 활동"
+
+        case .transportation:
+            return "이동"
+
+        case .accommodation:
+            return "숙소"
+
+        case .unknown:
+            return "기타"
+
         case .other:
             return "방문"
         }

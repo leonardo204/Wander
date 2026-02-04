@@ -9,39 +9,43 @@ struct CustomTabBar: View {
 
     @Binding var selectedIndex: Int
 
-    private let tabs: [(icon: String, selectedIcon: String, title: String)] = [
-        ("house", "house.fill", "홈"),
-        ("book", "book.fill", "기록"),
-        ("gearshape", "gearshape.fill", "설정")
-    ]
+    private var tabs: [(icon: String, selectedIcon: String, titleKey: String)] {
+        [
+            ("house", "house.fill", "tab.home"),
+            ("book", "book.fill", "tab.records"),
+            ("gearshape", "gearshape.fill", "tab.settings")
+        ]
+    }
 
     // MARK: - Body
 
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(0..<tabs.count, id: \.self) { index in
-                TabBarItem(
-                    icon: selectedIndex == index ? tabs[index].selectedIcon : tabs[index].icon,
-                    title: tabs[index].title,
-                    isSelected: selectedIndex == index
-                ) {
-                    if selectedIndex != index {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            selectedIndex = index
+        VStack(spacing: 0) {
+            // 상단 구분선
+            Rectangle()
+                .fill(WanderColors.border)
+                .frame(height: 0.5)
+
+            // 탭바 아이템들
+            HStack(spacing: 0) {
+                ForEach(0..<tabs.count, id: \.self) { index in
+                    TabBarItem(
+                        icon: selectedIndex == index ? tabs[index].selectedIcon : tabs[index].icon,
+                        title: tabs[index].titleKey.localized,
+                        isSelected: selectedIndex == index
+                    ) {
+                        if selectedIndex != index {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                selectedIndex = index
+                            }
+                            logger.info("🚀 [CustomTabBar] 탭 선택: \(tabs[index].titleKey)")
                         }
-                        logger.info("🚀 [CustomTabBar] 탭 선택: \(tabs[index].title)")
                     }
                 }
             }
+            .frame(height: 49)  // iOS 표준 탭바 높이
         }
-        .frame(height: 49)  // iOS 표준 탭바 높이
         .background(WanderColors.surface)
-        .overlay(
-            Rectangle()
-                .fill(WanderColors.border)
-                .frame(height: 0.5),
-            alignment: .top
-        )
     }
 }
 

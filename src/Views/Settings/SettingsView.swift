@@ -68,12 +68,21 @@ struct SettingsView: View {
 
                 // Customization Section
                 Section {
+                    NavigationLink(destination: LanguageSettingsView()) {
+                        SettingsRow(
+                            icon: "globe",
+                            iconColor: WanderColors.info,
+                            title: "settings.language".localized,
+                            subtitle: LanguageManager.shared.currentLanguage.displayName
+                        )
+                    }
+
                     NavigationLink(destination: CategoryManagementView()) {
                         SettingsRow(
                             icon: "folder.fill",
                             iconColor: WanderColors.warning,
-                            title: "카테고리 관리",
-                            subtitle: "카테고리 추가, 편집, 숨기기"
+                            title: "settings.categoryManagement".localized,
+                            subtitle: "settings.categoryManagement.description".localized
                         )
                     }
 
@@ -81,12 +90,12 @@ struct SettingsView: View {
                         SettingsRow(
                             icon: "mappin.circle.fill",
                             iconColor: WanderColors.error,
-                            title: "장소 관리",
-                            subtitle: "집, 회사 등 자주 가는 장소"
+                            title: "settings.placeManagement".localized,
+                            subtitle: "settings.placeManagement.description".localized
                         )
                     }
                 } header: {
-                    Text("사용자 설정")
+                    Text("settings.section.customization".localized)
                 }
 
                 // Share Settings Section
@@ -132,6 +141,7 @@ struct SettingsView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .contentMargins(.bottom, 70, for: .scrollContent)  // 탭바 높이만큼 여백 확보
             .navigationTitle("설정")
             .onAppear {
                 logger.info("⚙️ [SettingsView] 설정 화면 나타남")
@@ -805,6 +815,73 @@ struct ShareSettingsView: View {
     }
 }
 
+// MARK: - Language Settings View
+struct LanguageSettingsView: View {
+    @State private var languageManager = LanguageManager.shared
+    @State private var showRestartAlert = false
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(LanguageManager.Language.allCases) { language in
+                    Button(action: {
+                        selectLanguage(language)
+                    }) {
+                        HStack(spacing: WanderSpacing.space3) {
+                            Text(language.flag)
+                                .font(.system(size: 24))
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(language.displayName)
+                                    .font(WanderTypography.body)
+                                    .foregroundColor(WanderColors.textPrimary)
+
+                                if language == .system {
+                                    Text("settings.language.systemDescription".localized)
+                                        .font(WanderTypography.caption1)
+                                        .foregroundColor(WanderColors.textSecondary)
+                                }
+                            }
+
+                            Spacer()
+
+                            if languageManager.currentLanguage == language {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(WanderColors.primary)
+                                    .fontWeight(.semibold)
+                            }
+                        }
+                        .padding(.vertical, WanderSpacing.space1)
+                    }
+                    .buttonStyle(.plain)
+                }
+            } header: {
+                Text("settings.language.select".localized)
+            } footer: {
+                Text("settings.language.footer".localized)
+                    .font(WanderTypography.caption1)
+            }
+        }
+        .navigationTitle("settings.language".localized)
+        .alert("settings.language.restartRequired".localized, isPresented: $showRestartAlert) {
+            Button("common.ok".localized, role: .cancel) { }
+        } message: {
+            Text("settings.language.restartMessage".localized)
+        }
+        .onAppear {
+            logger.info("🌐 [LanguageSettingsView] 언어 설정 화면 나타남 - 현재: \(languageManager.currentLanguage.displayName)")
+        }
+    }
+
+    private func selectLanguage(_ language: LanguageManager.Language) {
+        if languageManager.currentLanguage != language {
+            languageManager.currentLanguage = language
+            showRestartAlert = true
+            logger.info("🌐 [LanguageSettingsView] 언어 변경: \(language.displayName)")
+        }
+    }
+}
+
 // MARK: - About View
 struct AboutView: View {
     var body: some View {
@@ -820,7 +897,7 @@ struct AboutView: View {
                         Text("Wander")
                             .font(WanderTypography.title1)
 
-                        Text("버전 1.0.0")
+                        Text("settings.version".localized + " 1.0.0")
                             .font(WanderTypography.caption1)
                             .foregroundColor(WanderColors.textSecondary)
                     }
@@ -830,14 +907,14 @@ struct AboutView: View {
             }
 
             Section {
-                Text("Wander는 100% 온디바이스로 동작하며, 사용자의 데이터를 서버로 전송하지 않습니다.")
+                Text("settings.privacyNote".localized)
                     .font(WanderTypography.caption1)
                     .foregroundColor(WanderColors.textSecondary)
             } header: {
-                Text("프라이버시")
+                Text("settings.privacy".localized)
             }
         }
-        .navigationTitle("앱 정보")
+        .navigationTitle("settings.appInfo".localized)
     }
 }
 
