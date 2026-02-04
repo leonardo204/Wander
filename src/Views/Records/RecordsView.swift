@@ -607,8 +607,7 @@ struct RecordDetailFullView: View {
             Text(record.isHidden ? "기록 목록에 다시 표시됩니다." : "숨긴 기록은 별도 섹션에서 확인할 수 있습니다.")
         }
         .sheet(isPresented: $showShareSheet) {
-            RecordShareSheetView(record: record)
-                .presentationDetents([.large])
+            ShareFlowView(record: record)
         }
         .sheet(isPresented: $showAIStorySheet) {
             AIStoryView(record: record)

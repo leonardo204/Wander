@@ -14,6 +14,7 @@
 		162526B63217224392D9C2A4 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEE8AE4F756798668F7908BA /* AuthenticationManager.swift */; };
 		1B778F3F742D51F19AF34113 /* TravelDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = D32AB57310AA1E255D0FF460 /* TravelDay.swift */; };
 		1F0D588284A12A308B3E26A4 /* Parchment in Frameworks */ = {isa = PBXBuildFile; productRef = BA7A184A0033F895D75B92DC /* Parchment */; };
+		1F7472DAD56B0A7CD02823E2 /* SharePreviewEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DA986D2A04DEACCF8CA79BC /* SharePreviewEditorView.swift */; };
 		2007C00381E804521F30B32F /* CustomTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B6FAB7EB462FD834AECFD82 /* CustomTabBar.swift */; };
 		218898B6406DB973013FF149 /* PINInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AADF1D249A64201CBBE0C0E /* PINInputView.swift */; };
 		2C44996E0D5C53D1AC99D108 /* PhotoAssetManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF96E387E814CDBFBEB8B48D /* PhotoAssetManager.swift */; };
@@ -35,6 +36,7 @@
 		68296BEF19751744F2E96941 /* AnalysisEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68785E679F65AB40EAF888D /* AnalysisEngine.swift */; };
 		68C9C4F8DBDD77FAF0329C54 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D159347FCDC44AD0120B147 /* HomeView.swift */; };
 		6A01487B492939612E6BDEDA /* AIStoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103DE727B96D53981C6197C4 /* AIStoryView.swift */; };
+		6A13DEE7D2114E8B0B08F085 /* ShareOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 486B453BE75AAE359852A572 /* ShareOptionsView.swift */; };
 		6D19CF3CAE6452A471969657 /* TravelDNAService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 953B95F6FB0056049B156B74 /* TravelDNAService.swift */; };
 		727F27153B4A5097AED8BCF1 /* VisionAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AB95868705E6631BD09FC9E /* VisionAnalysisService.swift */; };
 		751A2972E76920FF3D6FB66B /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73183A726FDF526C78A4DEF7 /* KeychainManager.swift */; };
@@ -45,12 +47,16 @@
 		7FA3DD3142179C0493845CF3 /* UserPlacesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F46543A2C21475AB01A6987 /* UserPlacesView.swift */; };
 		82B1B0EAD84505B551706FE2 /* GeocodingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 764FB5507753C9FCEDA6310C /* GeocodingService.swift */; };
 		85A936E43597E7A8B753BDEE /* SmartAnalysisCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 217433C96F4EFEB3A3EBBB27 /* SmartAnalysisCoordinator.swift */; };
+		86D51E37AF66682FE7CF7DAA /* ShareFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C30BB36C55D44C9BCF95AD9 /* ShareFlowView.swift */; };
 		8D3C0983E0024D1EEFAC3235 /* HiddenRecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 633958D39C0ED4A820EA8046 /* HiddenRecordsView.swift */; };
 		917A09663D46342EF150944B /* ActivityInferenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F8D1BCB0B76A4B78253DAD2 /* ActivityInferenceService.swift */; };
 		95BEE76B3673EB1D875288E1 /* AnthropicService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DECC3A33EDADF952604AF51 /* AnthropicService.swift */; };
 		9D7E270A4419591FCC9418C1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1FA3A94673E649CAB283D798 /* Assets.xcassets */; };
+		9DFD0BD1ABE5CF7C1A97A2D8 /* GlassPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7899308E90808D7AB5000657 /* GlassPanelView.swift */; };
 		A25089AD601F47DCC1DA7BF9 /* ClusteringService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3881765410920805E8E63290 /* ClusteringService.swift */; };
 		A830C878DD79B7DED7A1E419 /* MomentScoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65CB7F9E05FBA5F785330A38 /* MomentScoreService.swift */; };
+		AC0989B60AB5E39B03A638C8 /* ShareModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8323C36CCA16E5E2018936CE /* ShareModels.swift */; };
+		AD8089F39332743D54BC5373 /* InstagramShareService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E587CE64F598B63878AB1B /* InstagramShareService.swift */; };
 		ADA3D6A857DA9EEC387D8F0B /* PhotoSelectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A80A73AF84DC0DF5CDBCA5 /* PhotoSelectionViewModel.swift */; };
 		B5F696A7583039A273513F5C /* AzureOpenAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0D677907DE08E099A36103 /* AzureOpenAIService.swift */; };
 		B88F11C8EC476D3DB4D26194 /* Place.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5C5BBA95CC778655ADDEE3 /* Place.swift */; };
@@ -62,12 +68,14 @@
 		C7E4338EA3FBE76496BC86C4 /* OnboardingContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236FC67B2D5FE36573239035 /* OnboardingContainerView.swift */; };
 		CCEEFA6983C1676E8B07FC6D /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 98E898EF07588C98501E6037 /* Localizable.xcstrings */; };
 		DD5E5C90C447500CA14D82D4 /* LanguageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7101F75FAB06B605759C632D /* LanguageManager.swift */; };
+		DE4139108959127C9900DBF0 /* ShareImageGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 751124C98B015F66377C62DE /* ShareImageGenerator.swift */; };
 		E55B852473000EF498F1B0EA /* RecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4BDB68CF4F57746D7AF6F6C /* RecordsView.swift */; };
 		EC8FD13F7F236756CACF0EEF /* WeeklyHighlightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC9A94D7767877D47292A5D6 /* WeeklyHighlightView.swift */; };
 		ED9CC1319A16AD28CA5EC02F /* LookbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E67E67E11F2FCD5C5FF0ADB /* LookbackView.swift */; };
 		F053FEAC293BBEFDFA6F1A06 /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CE9F664E03D6DBD0C97AE6E /* ResultView.swift */; };
 		F0B56A8F65147DECD8344DA3 /* TravelRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27D468AA704F3E844714452 /* TravelRecord.swift */; };
 		F0EEF6703154148EC1994A3B /* MapDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9F4F32B5C6B9C8CD73F7B41 /* MapDetailView.swift */; };
+		F2B3853DC9B0AFEFAEDFC733 /* ShareService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAF5AC597C2A3E28FC12017 /* ShareService.swift */; };
 		F53C6AFADF1BCE1C4B2CAC98 /* QuickModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 714F818522502D4D1BA656B1 /* QuickModeView.swift */; };
 		FA83756C2DCE71CA3DEF2678 /* AIServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01DA78D53A168F6F953CAB10 /* AIServiceProtocol.swift */; };
 		FF32092CD15E0A707B20C7E8 /* WanderApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10F5AF74E8976C19CA1F2931 /* WanderApp.swift */; };
@@ -94,9 +102,11 @@
 		332FA1629C7E84DF34729782 /* SmartTitleGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartTitleGenerator.swift; sourceTree = "<group>"; };
 		3881765410920805E8E63290 /* ClusteringService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClusteringService.swift; sourceTree = "<group>"; };
 		3DECC3A33EDADF952604AF51 /* AnthropicService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnthropicService.swift; sourceTree = "<group>"; };
+		486B453BE75AAE359852A572 /* ShareOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareOptionsView.swift; sourceTree = "<group>"; };
 		4AADF1D249A64201CBBE0C0E /* PINInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PINInputView.swift; sourceTree = "<group>"; };
 		4E6FCA8AF89107AA1A681BE8 /* PhotoSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSelectionView.swift; sourceTree = "<group>"; };
 		4F5C5BBA95CC778655ADDEE3 /* Place.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Place.swift; sourceTree = "<group>"; };
+		51E587CE64F598B63878AB1B /* InstagramShareService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstagramShareService.swift; sourceTree = "<group>"; };
 		552F612D89E707B00B2EA8D2 /* StoryWeavingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryWeavingService.swift; sourceTree = "<group>"; };
 		5989A12B232DB900FA252CF3 /* OnboardingIntroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingIntroView.swift; sourceTree = "<group>"; };
 		5F710E0F68D4E2FCA3CC8365 /* CustomPhotoPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPhotoPickerView.swift; sourceTree = "<group>"; };
@@ -109,14 +119,20 @@
 		71CCF170B02A5EE2835C319B /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
 		73183A726FDF526C78A4DEF7 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		74A80A73AF84DC0DF5CDBCA5 /* PhotoSelectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSelectionViewModel.swift; sourceTree = "<group>"; };
+		751124C98B015F66377C62DE /* ShareImageGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareImageGenerator.swift; sourceTree = "<group>"; };
 		764FB5507753C9FCEDA6310C /* GeocodingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeocodingService.swift; sourceTree = "<group>"; };
+		7899308E90808D7AB5000657 /* GlassPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassPanelView.swift; sourceTree = "<group>"; };
 		7A02BE0AE86E482916C8F103 /* Wander.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Wander.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7AB95868705E6631BD09FC9E /* VisionAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionAnalysisService.swift; sourceTree = "<group>"; };
 		7B0D677907DE08E099A36103 /* AzureOpenAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AzureOpenAIService.swift; sourceTree = "<group>"; };
 		7BDC82ABF9DB755ECA0B69E0 /* OnboardingPhotoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPhotoView.swift; sourceTree = "<group>"; };
+		7CAF5AC597C2A3E28FC12017 /* ShareService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareService.swift; sourceTree = "<group>"; };
+		8323C36CCA16E5E2018936CE /* ShareModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareModels.swift; sourceTree = "<group>"; };
+		8C30BB36C55D44C9BCF95AD9 /* ShareFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareFlowView.swift; sourceTree = "<group>"; };
 		8D7C9C8E5EAD16FB1DAE1505 /* POIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = POIService.swift; sourceTree = "<group>"; };
 		953B95F6FB0056049B156B74 /* TravelDNAService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelDNAService.swift; sourceTree = "<group>"; };
 		98E898EF07588C98501E6037 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		9DA986D2A04DEACCF8CA79BC /* SharePreviewEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharePreviewEditorView.swift; sourceTree = "<group>"; };
 		A36ACDDAC531F92F047DB92A /* UserPlace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserPlace.swift; sourceTree = "<group>"; };
 		A58893162BD06ECDCDA96B6A /* AnalyzingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzingView.swift; sourceTree = "<group>"; };
 		AADA581AA1B63216B34086C1 /* OnboardingLocationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingLocationView.swift; sourceTree = "<group>"; };
@@ -329,6 +345,25 @@
 			path = ExportService;
 			sourceTree = "<group>";
 		};
+		A063E372E19961A025E73E26 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				7899308E90808D7AB5000657 /* GlassPanelView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		B6B09BC30D8B485ABB3AB14C /* Share */ = {
+			isa = PBXGroup;
+			children = (
+				A063E372E19961A025E73E26 /* Components */,
+				8C30BB36C55D44C9BCF95AD9 /* ShareFlowView.swift */,
+				486B453BE75AAE359852A572 /* ShareOptionsView.swift */,
+				9DA986D2A04DEACCF8CA79BC /* SharePreviewEditorView.swift */,
+			);
+			path = Share;
+			sourceTree = "<group>";
+		};
 		BCCA588619BB51137E6D550D /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -342,6 +377,7 @@
 				751B0D159D1A9B8A354EF868 /* Records */,
 				5D42AAFB293BCA8CB8D82EA2 /* Result */,
 				E536121B41C725BADEE15BAA /* Settings */,
+				B6B09BC30D8B485ABB3AB14C /* Share */,
 				EF49F1CA2DA5DFE06CABC3B1 /* Shared */,
 				F33584D27A451B7AE6B71BD7 /* Weekly */,
 			);
@@ -384,6 +420,7 @@
 				0E434F9AB97B40385202037B /* AnalysisService */,
 				9968828D6C069F777955D068 /* ExportService */,
 				65CA908A962BD01CF4B2D8C8 /* LocationService */,
+				FAC338EA936438957F037D82 /* ShareService */,
 				4CBAD50B4E2331584995066F /* SmartAnalysis */,
 				BEE8AE4F756798668F7908BA /* AuthenticationManager.swift */,
 			);
@@ -452,6 +489,17 @@
 				4634F62FDD4ADC77AE6CA4B0 /* SwiftData */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		FAC338EA936438957F037D82 /* ShareService */ = {
+			isa = PBXGroup;
+			children = (
+				51E587CE64F598B63878AB1B /* InstagramShareService.swift */,
+				751124C98B015F66377C62DE /* ShareImageGenerator.swift */,
+				8323C36CCA16E5E2018936CE /* ShareModels.swift */,
+				7CAF5AC597C2A3E28FC12017 /* ShareService.swift */,
+			);
+			path = ShareService;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -547,10 +595,12 @@
 				C53B7C710889875841C14F36 /* ExportService.swift in Sources */,
 				C0D55F75B0FAAE1CAF3AFBDB /* FastVLMService.swift in Sources */,
 				82B1B0EAD84505B551706FE2 /* GeocodingService.swift in Sources */,
+				9DFD0BD1ABE5CF7C1A97A2D8 /* GlassPanelView.swift in Sources */,
 				154B8870CE80CF4AD29D8226 /* GoogleAIService.swift in Sources */,
 				8D3C0983E0024D1EEFAC3235 /* HiddenRecordsView.swift in Sources */,
 				68C9C4F8DBDD77FAF0329C54 /* HomeView.swift in Sources */,
 				662C1DF240D714D991D4E734 /* InsightEngine.swift in Sources */,
+				AD8089F39332743D54BC5373 /* InstagramShareService.swift in Sources */,
 				751A2972E76920FF3D6FB66B /* KeychainManager.swift in Sources */,
 				DD5E5C90C447500CA14D82D4 /* LanguageManager.swift in Sources */,
 				ED9CC1319A16AD28CA5EC02F /* LookbackView.swift in Sources */,
@@ -576,6 +626,12 @@
 				F053FEAC293BBEFDFA6F1A06 /* ResultView.swift in Sources */,
 				314C73C7451053F4575F1682 /* SecuritySettingsView.swift in Sources */,
 				06D7B35EF39572C788EEA5E1 /* SettingsView.swift in Sources */,
+				86D51E37AF66682FE7CF7DAA /* ShareFlowView.swift in Sources */,
+				DE4139108959127C9900DBF0 /* ShareImageGenerator.swift in Sources */,
+				AC0989B60AB5E39B03A638C8 /* ShareModels.swift in Sources */,
+				6A13DEE7D2114E8B0B08F085 /* ShareOptionsView.swift in Sources */,
+				1F7472DAD56B0A7CD02823E2 /* SharePreviewEditorView.swift in Sources */,
+				F2B3853DC9B0AFEFAEDFC733 /* ShareService.swift in Sources */,
 				5D3970760A5FBB3B71277401 /* SharedRecordView.swift in Sources */,
 				85A936E43597E7A8B753BDEE /* SmartAnalysisCoordinator.swift in Sources */,
 				782B5A556318C0E5AD610FDD /* SmartTitleGenerator.swift in Sources */,
@@ -603,15 +659,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "GPS 좌표를 주소로 변환하여 장소 이름을 자동으로 표시합니다.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "생성된 카드 이미지를 사진 앨범에 저장합니다.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "사진의 촬영 시간과 위치 정보를 분석하여 여행 기록을 만들어 드립니다.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -766,15 +815,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "GPS 좌표를 주소로 변환하여 장소 이름을 자동으로 표시합니다.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "생성된 카드 이미지를 사진 앨범에 저장합니다.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "사진의 촬영 시간과 위치 정보를 분석하여 여행 기록을 만들어 드립니다.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

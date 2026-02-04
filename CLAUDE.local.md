@@ -100,6 +100,11 @@ Wander/
 │   │   │   └── InsightEngine.swift
 │   │   ├── ExportService/
 │   │   │   └── ExportService.swift
+│   │   ├── ShareService/            ← SNS 공유 서비스 (신규)
+│   │   │   ├── ShareModels.swift
+│   │   │   ├── ShareService.swift
+│   │   │   ├── ShareImageGenerator.swift
+│   │   │   └── InstagramShareService.swift
 │   │   ├── LocationService/
 │   │   │   └── GeocodingService.swift
 │   │   └── AuthenticationManager.swift
@@ -142,6 +147,12 @@ Wander/
 │   │   │   ├── SecuritySettingsView.swift
 │   │   │   ├── CategoryManagementView.swift
 │   │   │   └── UserPlacesView.swift
+│   │   ├── Share/                   ← SNS 공유 UI (신규)
+│   │   │   ├── ShareFlowView.swift
+│   │   │   ├── ShareOptionsView.swift
+│   │   │   ├── SharePreviewEditorView.swift
+│   │   │   └── Components/
+│   │   │       └── GlassPanelView.swift
 │   │   ├── Auth/PINInputView.swift
 │   │   └── Shared/SharedRecordView.swift
 │   │
@@ -178,7 +189,8 @@ Wander/
 | 역지오코딩 | 좌표 → 주소 변환 | `GeocodingService.swift` |
 | 활동 추론 | 규칙 기반 활동 타입 추론 | `ActivityInferenceService.swift` |
 | AI 스토리 | BYOK AI로 여행 스토리 생성 | `AIStoryView.swift` |
-| 공유/내보내기 | 이미지/텍스트/Markdown 내보내기 | `ExportService.swift` |
+| SNS 공유 | Instagram Feed/Stories, 글래스모피즘 템플릿 | `ShareService/`, `Views/Share/` |
+| 내보내기 | 이미지/Markdown 내보내기 | `ExportService.swift` |
 
 ### Wander Intelligence (스마트 분석)
 | 서비스 | 설명 | iOS 요구사항 |

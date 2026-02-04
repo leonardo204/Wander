@@ -29,6 +29,11 @@
 	</array>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.travel</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram</string>
+		<string>instagram-stories</string>
+	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>사진의 촬영 시간과 위치 정보를 분석하여 여행 기록을 만들어 드립니다.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
