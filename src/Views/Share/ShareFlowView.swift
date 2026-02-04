@@ -7,8 +7,9 @@ private let logger = Logger(subsystem: "com.zerolive.wander", category: "ShareFl
 // MARK: - 공유 플로우 단계
 
 enum ShareFlowStep: Int, CaseIterable {
-    case selectDestination = 0  // 공유 대상 선택
-    case editPreview = 1        // 미리보기 + 편집
+    case selectDestination = 0  // Step 1: 공유 대상 선택
+    case editOptions = 1        // Step 2: 편집 (템플릿/사진/캡션/해시태그)
+    case finalPreview = 2       // Step 3: 최종 미리보기 + 공유
 }
 
 // MARK: - 공유 플로우 뷰
@@ -47,8 +48,19 @@ struct ShareFlowView: View {
                             removal: .move(edge: .leading)
                         ))
 
-                    case .editPreview:
-                        SharePreviewEditorView(
+                    case .editOptions:
+                        ShareEditOptionsView(
+                            viewModel: viewModel,
+                            onNext: { viewModel.goToNextStep() },
+                            onBack: { viewModel.goToPreviousStep() }
+                        )
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing),
+                            removal: .move(edge: .leading)
+                        ))
+
+                    case .finalPreview:
+                        ShareFinalPreviewView(
                             viewModel: viewModel,
                             onShare: { await viewModel.share() },
                             onBack: { viewModel.goToPreviousStep() }
@@ -324,13 +336,16 @@ final class ShareFlowViewModel: ObservableObject {
         }
 
         do {
-            try await shareService.shareGeneral(
+            let completed = try await shareService.shareGeneral(
                 photos: selectedPhotos,
                 data: record,
                 configuration: configuration,
                 from: rootVC
             )
-            shouldDismiss = true
+            // 공유 완료 시에만 dismiss (취소 시에는 유지)
+            if completed {
+                shouldDismiss = true
+            }
         } catch {
             showError(ShareError.unknown(error))
         }
@@ -342,18 +357,22 @@ final class ShareFlowViewModel: ObservableObject {
             return
         }
 
-        // 이미지 생성
+        // 이미지 생성 (여러 장 생성 후 첫 번째만 사용 - Instagram API 제한)
         var feedConfig = configuration
         feedConfig.destination = .instagramFeed
 
-        let image = try await ShareImageGenerator.shared.generateImage(
+        let images = try await ShareImageGenerator.shared.generateImages(
             photos: selectedPhotos,
             data: record,
             configuration: feedConfig
         )
 
-        // 안내 화면 표시 전 준비
-        pendingInstagramImage = image
+        guard let firstImage = images.first else {
+            throw ShareError.imageGenerationFailed
+        }
+
+        // 안내 화면 표시 전 준비 (Instagram은 1장만 공유 가능)
+        pendingInstagramImage = firstImage
         pendingInstagramCaption = configuration.clipboardText
         showInstagramGuidance = true
     }

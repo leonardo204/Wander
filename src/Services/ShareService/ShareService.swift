@@ -27,50 +27,132 @@ final class ShareService: ObservableObject {
 
     // MARK: - Public Methods
 
-    /// 일반 공유 (UIActivityViewController)
+    /// 일반 공유 (UIActivityViewController) - 여러 이미지 지원
+    /// - Returns: 공유 완료 여부 (true: 공유 성공, false: 취소)
     @MainActor
     func shareGeneral(
         photos: [UIImage],
         data: ShareableData,
         configuration: ShareConfiguration,
         from viewController: UIViewController
-    ) async throws {
+    ) async throws -> Bool {
         logger.info("📤 [ShareService] 일반 공유 시작")
         isLoading = true
 
         defer { isLoading = false }
 
-        // 이미지 생성
-        let shareImage = try await imageGenerator.generateImage(
+        // 여러 이미지 생성
+        let shareImages = try await imageGenerator.generateImages(
             photos: photos,
             data: data,
             configuration: configuration
         )
 
-        // UIActivityViewController 표시
-        let activityItems: [Any] = [shareImage]
-        let activityVC = UIActivityViewController(
-            activityItems: activityItems,
-            applicationActivities: nil
-        )
+        logger.info("📤 [ShareService] 공유할 이미지 \(shareImages.count)장 생성됨")
 
-        // iPad 대응
-        if let popoverController = activityVC.popoverPresentationController {
-            popoverController.sourceView = viewController.view
-            popoverController.sourceRect = CGRect(
-                x: viewController.view.bounds.midX,
-                y: viewController.view.bounds.midY,
-                width: 0,
-                height: 0
+        // 이미지를 임시 파일로 저장 (메모리 효율성)
+        let tempURLs = try await saveImagesToTempFiles(shareImages)
+        logger.info("📤 [ShareService] 이미지를 임시 파일로 저장 완료 - \(tempURLs.count)개 파일")
+
+        // 최상위 presented view controller 찾기 (Sheet 위에서 표시하기 위해)
+        let presentingVC = findTopmostViewController(from: viewController)
+
+        // UIActivityViewController 표시 및 완료 대기
+        return await withCheckedContinuation { continuation in
+            // URL을 activityItems에 추가 (메모리 효율적)
+            let activityItems: [Any] = tempURLs
+            let activityVC = UIActivityViewController(
+                activityItems: activityItems,
+                applicationActivities: nil
             )
-            popoverController.permittedArrowDirections = []
-        }
 
-        viewController.present(activityVC, animated: true)
-        logger.info("📤 [ShareService] UIActivityViewController 표시됨")
+            // 완료 핸들러 - 공유 완료 또는 취소 시 호출
+            activityVC.completionWithItemsHandler = { [tempURLs] activityType, completed, _, error in
+                // 공유 완료 후 임시 파일 삭제
+                self.cleanupTempFiles(tempURLs)
+
+                if let error = error {
+                    logger.error("📤 [ShareService] 공유 에러: \(error.localizedDescription)")
+                    continuation.resume(returning: false)
+                } else if completed {
+                    logger.info("📤 [ShareService] 공유 완료: \(activityType?.rawValue ?? "unknown") - \(tempURLs.count)장")
+                    continuation.resume(returning: true)
+                } else {
+                    logger.info("📤 [ShareService] 공유 취소됨")
+                    continuation.resume(returning: false)
+                }
+            }
+
+            // iPad 대응
+            if let popoverController = activityVC.popoverPresentationController {
+                popoverController.sourceView = presentingVC.view
+                popoverController.sourceRect = CGRect(
+                    x: presentingVC.view.bounds.midX,
+                    y: presentingVC.view.bounds.midY,
+                    width: 0,
+                    height: 0
+                )
+                popoverController.permittedArrowDirections = []
+            }
+
+            // 이미 다른 것을 presenting 중인지 확인
+            if presentingVC.presentedViewController != nil {
+                logger.warning("📤 [ShareService] 이미 다른 뷰를 표시 중 - 공유 취소")
+                self.cleanupTempFiles(tempURLs)
+                continuation.resume(returning: false)
+                return
+            }
+
+            presentingVC.present(activityVC, animated: true)
+            logger.info("📤 [ShareService] UIActivityViewController 표시됨 - \(tempURLs.count)장 이미지 (파일)")
+        }
     }
 
-    /// Instagram Feed 공유
+    /// 이미지를 임시 파일로 저장
+    private func saveImagesToTempFiles(_ images: [UIImage]) async throws -> [URL] {
+        var urls: [URL] = []
+        let tempDir = FileManager.default.temporaryDirectory
+
+        for (index, image) in images.enumerated() {
+            let fileName = "wander_share_\(index)_\(Date().timeIntervalSince1970).jpg"
+            let fileURL = tempDir.appendingPathComponent(fileName)
+
+            // JPEG 압축 (품질 70% - 공유용으로 충분)
+            guard let imageData = image.jpegData(compressionQuality: 0.70) else {
+                logger.error("📤 [ShareService] 이미지 변환 실패: \(index)")
+                continue
+            }
+
+            try imageData.write(to: fileURL)
+            urls.append(fileURL)
+            logger.info("📤 [ShareService] 임시 파일 저장: \(fileName) (\(imageData.count / 1024)KB)")
+        }
+
+        return urls
+    }
+
+    /// 임시 파일 삭제
+    private func cleanupTempFiles(_ urls: [URL]) {
+        for url in urls {
+            do {
+                try FileManager.default.removeItem(at: url)
+                logger.info("📤 [ShareService] 임시 파일 삭제: \(url.lastPathComponent)")
+            } catch {
+                logger.warning("📤 [ShareService] 임시 파일 삭제 실패: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    /// 최상위 presented view controller 찾기
+    private func findTopmostViewController(from viewController: UIViewController) -> UIViewController {
+        var topVC = viewController
+        while let presented = topVC.presentedViewController {
+            topVC = presented
+        }
+        return topVC
+    }
+
+    /// Instagram Feed 공유 (여러 이미지 지원)
     @MainActor
     func shareToInstagramFeed(
         photos: [UIImage],
@@ -86,19 +168,24 @@ final class ShareService: ObservableObject {
         var feedConfig = configuration
         feedConfig.destination = .instagramFeed
 
-        let shareImage = try await imageGenerator.generateImage(
+        let shareImages = try await imageGenerator.generateImages(
             photos: photos,
             data: data,
             configuration: feedConfig
         )
 
-        // Instagram Feed 공유 (캡션은 클립보드로)
+        // Instagram Feed 공유 - 첫 번째 이미지만 (Instagram API 제한)
+        // 여러 장일 경우 사용자가 수동으로 추가해야 함
+        guard let firstImage = shareImages.first else {
+            throw ShareError.imageGenerationFailed
+        }
+
         try await instagramService.shareToFeed(
-            image: shareImage,
+            image: firstImage,
             caption: configuration.clipboardText
         )
 
-        logger.info("📤 [ShareService] Instagram Feed 공유 완료")
+        logger.info("📤 [ShareService] Instagram Feed 공유 완료 - \(shareImages.count)장 중 1장")
     }
 
     /// Instagram Stories 공유

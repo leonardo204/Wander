@@ -1,30 +1,25 @@
 import SwiftUI
 import os.log
 
-private let logger = Logger(subsystem: "com.zerolive.wander", category: "SharePreviewEditorView")
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "ShareEditOptionsView")
 
-// MARK: - 공유 미리보기 + 편집 뷰
+// MARK: - 공유 편집 옵션 뷰 (Step 2)
 
-/// 공유 이미지 미리보기 및 편집(템플릿, 사진, 캡션, 해시태그) 뷰
-struct SharePreviewEditorView: View {
+/// 템플릿 선택, 사진 선택, 캡션/해시태그 편집 뷰
+/// 실제 이미지 생성은 다음 단계(ShareFinalPreviewView)에서 수행
+struct ShareEditOptionsView: View {
     @ObservedObject var viewModel: ShareFlowViewModel
-    let onShare: () async -> Void
+    let onNext: () -> Void
     let onBack: () -> Void
-
-    @State private var previewImage: UIImage?
-    @State private var isGeneratingPreview = false
 
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: WanderSpacing.space5) {
-                    // 미리보기 이미지
-                    previewSection
-
-                    // 템플릿 선택
+                    // 템플릿 선택 (기본 미리보기)
                     templatePickerSection
 
-                    // 사진 선택/순서
+                    // 사진 선택
                     photoSelectionSection
 
                     // 캡션 편집
@@ -40,68 +35,20 @@ struct SharePreviewEditorView: View {
             // 하단 버튼
             bottomButtons
         }
-        .onChange(of: viewModel.configuration.templateStyle) { _, _ in
-            Task { await generatePreview() }
-        }
-        .onChange(of: viewModel.loadedPhotos) { _, _ in
-            Task { await generatePreview() }
-        }
-        .task {
-            await generatePreview()
-        }
     }
 
-    // MARK: - Preview Section
-
-    private var previewSection: some View {
-        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
-            Text("미리보기")
-                .font(WanderTypography.headline)
-                .foregroundColor(WanderColors.textPrimary)
-
-            ZStack {
-                if let image = previewImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .cornerRadius(WanderSpacing.radiusLarge)
-                        .shadow(color: .black.opacity(0.1), radius: 10, y: 5)
-                } else {
-                    RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge)
-                        .fill(WanderColors.primaryPale)
-                        .aspectRatio(viewModel.configuration.destination.aspectRatio, contentMode: .fit)
-                        .overlay(
-                            VStack(spacing: WanderSpacing.space3) {
-                                if isGeneratingPreview {
-                                    ProgressView()
-                                        .tint(WanderColors.primary)
-                                } else {
-                                    Image(systemName: "photo")
-                                        .font(.system(size: 40))
-                                        .foregroundColor(WanderColors.primary)
-                                }
-                                Text(isGeneratingPreview ? "생성 중..." : "사진을 선택하세요")
-                                    .font(WanderTypography.body)
-                                    .foregroundColor(WanderColors.textSecondary)
-                            }
-                        )
-                }
-            }
-            .frame(maxHeight: 400)
-        }
-    }
-
-    // MARK: - Template Picker Section
+    // MARK: - Template Picker Section (기본 템플릿 미리보기)
 
     private var templatePickerSection: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space3) {
-            Text("스타일")
+            Text("스타일 선택")
                 .font(WanderTypography.headline)
                 .foregroundColor(WanderColors.textPrimary)
 
+            // 템플릿 카드 (기본 미리보기)
             HStack(spacing: WanderSpacing.space3) {
                 ForEach(ShareTemplateStyle.allCases) { style in
-                    TemplateStyleButton(
+                    TemplatePreviewCard(
                         style: style,
                         isSelected: viewModel.configuration.templateStyle == style
                     ) {
@@ -109,6 +56,23 @@ struct SharePreviewEditorView: View {
                     }
                 }
             }
+
+            // 선택된 템플릿 설명
+            Text(selectedTemplateDescription)
+                .font(WanderTypography.caption1)
+                .foregroundColor(WanderColors.textSecondary)
+                .padding(.top, WanderSpacing.space1)
+        }
+    }
+
+    private var selectedTemplateDescription: String {
+        switch viewModel.configuration.templateStyle {
+        case .modernGlass:
+            return "사진 위에 글래스 효과의 정보 패널이 표시됩니다"
+        case .polaroidGrid:
+            return "폴라로이드 스타일로 최대 3장의 사진이 배치됩니다"
+        case .cleanMinimal:
+            return "깔끔한 흰색 배경에 사진과 정보가 표시됩니다"
         }
     }
 
@@ -125,26 +89,47 @@ struct SharePreviewEditorView: View {
 
                 Text("\(viewModel.selectedPhotoCount)장 선택")
                     .font(WanderTypography.caption1)
-                    .foregroundColor(WanderColors.textSecondary)
+                    .foregroundColor(viewModel.selectedPhotoCount > 0 ? WanderColors.primary : WanderColors.textSecondary)
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: WanderSpacing.space2) {
-                    ForEach(viewModel.loadedPhotos.indices, id: \.self) { index in
-                        PhotoSelectionThumbnail(
-                            photo: viewModel.loadedPhotos[index],
-                            onTap: {
-                                viewModel.loadedPhotos[index].isSelected.toggle()
-                                Task { await generatePreview() }
-                            }
-                        )
+            if viewModel.loadedPhotos.isEmpty {
+                // 로딩 중
+                HStack {
+                    Spacer()
+                    ProgressView()
+                        .tint(WanderColors.primary)
+                    Text("사진 로드 중...")
+                        .font(WanderTypography.body)
+                        .foregroundColor(WanderColors.textSecondary)
+                    Spacer()
+                }
+                .frame(height: 80)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: WanderSpacing.space2) {
+                        ForEach(viewModel.loadedPhotos.indices, id: \.self) { index in
+                            PhotoSelectionThumbnail(
+                                photo: viewModel.loadedPhotos[index],
+                                onTap: {
+                                    viewModel.loadedPhotos[index].isSelected.toggle()
+                                }
+                            )
+                        }
                     }
                 }
-            }
 
-            Text("첫 번째 선택 사진이 메인으로 사용됩니다")
-                .font(WanderTypography.caption2)
-                .foregroundColor(WanderColors.textTertiary)
+                // 안내 텍스트
+                VStack(alignment: .leading, spacing: 4) {
+                    if viewModel.configuration.templateStyle == .polaroidGrid {
+                        Text("폴라로이드 스타일은 최대 3장까지 표시됩니다")
+                            .font(WanderTypography.caption2)
+                            .foregroundColor(WanderColors.textTertiary)
+                    }
+                    Text("첫 번째 선택 사진이 메인으로 사용됩니다")
+                        .font(WanderTypography.caption2)
+                        .foregroundColor(WanderColors.textTertiary)
+                }
+            }
         }
     }
 
@@ -178,6 +163,10 @@ struct SharePreviewEditorView: View {
                     RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium)
                         .strokeBorder(WanderColors.border, lineWidth: 1)
                 )
+
+            Text("Instagram 공유 시 클립보드에 복사됩니다")
+                .font(WanderTypography.caption2)
+                .foregroundColor(WanderColors.textTertiary)
         }
     }
 
@@ -245,7 +234,7 @@ struct SharePreviewEditorView: View {
                 .foregroundColor(WanderColors.border)
 
             HStack(spacing: WanderSpacing.space3) {
-                // 뒤로 버튼
+                // 이전 버튼
                 Button(action: onBack) {
                     Text("이전")
                         .font(WanderTypography.headline)
@@ -260,13 +249,11 @@ struct SharePreviewEditorView: View {
                         )
                 }
 
-                // 공유 버튼
-                Button {
-                    Task { await onShare() }
-                } label: {
+                // 다음 버튼 (미리보기로 이동)
+                Button(action: onNext) {
                     HStack(spacing: WanderSpacing.space2) {
-                        Image(systemName: viewModel.configuration.destination.icon)
-                        Text("공유하기")
+                        Text("미리보기")
+                        Image(systemName: "arrow.right")
                     }
                     .font(WanderTypography.headline)
                     .foregroundColor(.white)
@@ -286,35 +273,11 @@ struct SharePreviewEditorView: View {
         }
         .background(WanderColors.surface)
     }
-
-    // MARK: - Preview Generation
-
-    private func generatePreview() async {
-        guard viewModel.selectedPhotoCount > 0 else {
-            previewImage = nil
-            return
-        }
-
-        isGeneratingPreview = true
-
-        do {
-            let image = try await ShareImageGenerator.shared.generateImage(
-                photos: viewModel.selectedPhotos,
-                data: viewModel.record,
-                configuration: viewModel.configuration
-            )
-            previewImage = image
-        } catch {
-            logger.error("📤 [SharePreviewEditorView] 미리보기 생성 실패: \(error.localizedDescription)")
-        }
-
-        isGeneratingPreview = false
-    }
 }
 
-// MARK: - Template Style Button
+// MARK: - Template Preview Card (기본 템플릿 미리보기)
 
-private struct TemplateStyleButton: View {
+private struct TemplatePreviewCard: View {
     let style: ShareTemplateStyle
     let isSelected: Bool
     let action: () -> Void
@@ -322,15 +285,21 @@ private struct TemplateStyleButton: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: WanderSpacing.space2) {
-                // 미니 프리뷰 아이콘
+                // 템플릿 미리보기 (기본 형태)
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(isSelected ? WanderColors.primary : WanderColors.primaryPale)
-                        .frame(width: 60, height: 75)
+                        .fill(isSelected ? WanderColors.primaryPale : WanderColors.surface)
+                        .frame(width: 90, height: 112)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .strokeBorder(
+                                    isSelected ? WanderColors.primary : WanderColors.border,
+                                    lineWidth: isSelected ? 2 : 1
+                                )
+                        )
 
-                    Image(systemName: styleIcon)
-                        .font(.system(size: 24))
-                        .foregroundColor(isSelected ? .white : WanderColors.primary)
+                    // 템플릿 형태 시각화
+                    templateVisualization
                 }
 
                 Text(style.displayName)
@@ -341,14 +310,83 @@ private struct TemplateStyleButton: View {
         .buttonStyle(.plain)
     }
 
-    private var styleIcon: String {
+    @ViewBuilder
+    private var templateVisualization: some View {
         switch style {
         case .modernGlass:
-            return "sparkles.rectangle.stack"
+            // 사진 배경 + 하단 글래스 패널
+            VStack(spacing: 0) {
+                // 사진 영역
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(WanderColors.border.opacity(0.5))
+                    .frame(width: 70, height: 60)
+                    .overlay(
+                        Image(systemName: "photo")
+                            .font(.system(size: 16))
+                            .foregroundColor(WanderColors.textTertiary)
+                    )
+
+                Spacer().frame(height: 8)
+
+                // 글래스 패널
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.white.opacity(0.8))
+                    .frame(width: 70, height: 28)
+                    .overlay(
+                        VStack(spacing: 2) {
+                            RoundedRectangle(cornerRadius: 1)
+                                .fill(WanderColors.textTertiary)
+                                .frame(width: 40, height: 4)
+                            RoundedRectangle(cornerRadius: 1)
+                                .fill(WanderColors.textTertiary.opacity(0.5))
+                                .frame(width: 30, height: 3)
+                        }
+                    )
+            }
+            .padding(6)
+
         case .polaroidGrid:
-            return "rectangle.split.3x1"
+            // 3개의 작은 폴라로이드
+            HStack(spacing: 4) {
+                ForEach(0..<3, id: \.self) { index in
+                    VStack(spacing: 2) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(WanderColors.border.opacity(0.5))
+                            .frame(width: 18, height: 16)
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(WanderColors.textTertiary.opacity(0.3))
+                            .frame(width: 18, height: 4)
+                    }
+                    .padding(2)
+                    .background(Color.white)
+                    .cornerRadius(2)
+                    .rotationEffect(.degrees(Double([-3, 2, -1][index])))
+                }
+            }
+            .padding(.top, 20)
+
         case .cleanMinimal:
-            return "rectangle"
+            // 중앙 사진 + 하단 텍스트
+            VStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(WanderColors.border.opacity(0.5))
+                    .frame(width: 60, height: 50)
+                    .overlay(
+                        Image(systemName: "photo")
+                            .font(.system(size: 14))
+                            .foregroundColor(WanderColors.textTertiary)
+                    )
+
+                VStack(spacing: 3) {
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(WanderColors.textTertiary)
+                        .frame(width: 40, height: 4)
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(WanderColors.textTertiary.opacity(0.5))
+                        .frame(width: 30, height: 3)
+                }
+            }
+            .padding(6)
         }
     }
 }
@@ -462,5 +500,5 @@ private struct AddHashtagButton: View {
 // MARK: - Preview
 
 #Preview {
-    Text("SharePreviewEditorView Preview")
+    Text("ShareEditOptionsView Preview")
 }

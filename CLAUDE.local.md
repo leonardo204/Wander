@@ -218,6 +218,69 @@ Wander/
 
 ---
 
+## SNS 공유 기능
+
+### 공유 플로우
+```
+ResultView/RecordsView
+  └→ ShareFlowView (sheet)
+       ├── Step 1: 공유 대상 선택 (ShareOptionsView)
+       │   ├── 일반 이미지 공유
+       │   ├── Instagram 피드 (4:5)
+       │   └── Instagram 스토리 (9:16)
+       │
+       ├── Step 2: 편집 (ShareEditOptionsView)
+       │   ├── 템플릿 스타일 선택
+       │   ├── 사진 선택/순서 변경
+       │   ├── 캡션 입력
+       │   └── 해시태그 입력/추천
+       │
+       └── Step 3: 최종 미리보기 (ShareFinalPreviewView)
+            ├── 생성된 이미지 미리보기
+            ├── 핀치 투 줌 확대
+            └── 공유 실행
+```
+
+### 템플릿 스타일
+| 스타일 | 설명 | 레이아웃 |
+|--------|------|----------|
+| Modern Glass | 글래스모피즘 오버레이 | 사진 배경 + 반투명 정보 패널 |
+| Polaroid | 폴라로이드 그리드 | 최대 3장, 회전 배치 |
+| Clean Minimal | 미니멀 디자인 | 사진 그리드 + 하단 정보 |
+
+### 이미지 사이즈
+| 용도 | 사이즈 | 비율 |
+|------|--------|------|
+| 일반 공유 | 810 × 1012 | 4:5 |
+| Instagram Feed | 1080 × 1350 | 4:5 |
+| Instagram Story | 1080 × 1920 | 9:16 |
+
+### 공유 이미지 구성요소
+- 제목 (42pt)
+- 날짜 범위 (33pt)
+- 통계: 장소 수, 이동거리 (36pt)
+- 캡션 (30pt, 최대 2줄)
+- 해시태그 (27pt)
+- 워터마크: 앱 아이콘 + "Wander" (36pt 아이콘, 24pt 텍스트)
+
+### Instagram 공유 방식
+- **Feed**: 이미지를 사진 라이브러리에 저장 후 Instagram 앱 열기 (캡션/해시태그 클립보드 복사)
+- **Stories**: Pasteboard API로 배경 이미지 전달
+
+### 관련 파일
+| 파일 | 역할 |
+|------|------|
+| `ShareModels.swift` | 공유 모델/프로토콜/에러 정의 |
+| `ShareService.swift` | 공유 서비스 총괄 |
+| `ShareImageGenerator.swift` | 템플릿별 이미지 렌더링 |
+| `InstagramShareService.swift` | Instagram 전용 공유 |
+| `ShareFlowView.swift` | 공유 플로우 컨테이너 + ViewModel |
+| `ShareOptionsView.swift` | Step 1: 공유 대상 선택 |
+| `ShareEditOptionsView.swift` | Step 2: 편집 화면 |
+| `ShareFinalPreviewView.swift` | Step 3: 미리보기 + 줌 뷰어 |
+
+---
+
 ## AI 서비스 (BYOK)
 
 ### 지원 프로바이더
@@ -467,6 +530,10 @@ options.deliveryMode = .fastFormat
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-04 | SNS 공유 기능 전면 개편 (3단계 플로우, 글래스모피즘 템플릿) |
+| 2026-02-04 | 공유 이미지에 캡션/해시태그/AI 스토리 추가 |
+| 2026-02-04 | 공유 미리보기 핀치 투 줌 기능 추가 |
+| 2026-02-04 | 워터마크 앱 아이콘으로 변경 및 텍스트 크기 최적화 |
 | 2026-02-04 | 커스텀 탭바 스크롤 문제 수정 (GeometryReader + ZStack 방식) |
 | 2026-02-04 | 모든 탭 하단 패딩 추가 (탭바에 콘텐츠 가려지는 문제 해결) |
 | 2026-02-04 | 기록 상세 페이지 여행동선 지도 클릭 시 팝업 표시 기능 추가 |

@@ -57,10 +57,12 @@ enum ShareDestination: String, CaseIterable, Identifiable {
 
     var imageSize: CGSize {
         switch self {
-        case .general, .instagramFeed:
-            return CGSize(width: 1080, height: 1350)
+        case .general:
+            return CGSize(width: 810, height: 1012)  // 일반 공유용 (75% 축소)
+        case .instagramFeed:
+            return CGSize(width: 1080, height: 1350) // Instagram Feed 원본 유지
         case .instagramStory:
-            return CGSize(width: 1080, height: 1920)
+            return CGSize(width: 1080, height: 1920) // Instagram Story 원본 유지
         }
     }
 }
@@ -68,7 +70,7 @@ enum ShareDestination: String, CaseIterable, Identifiable {
 // MARK: - 템플릿 스타일
 
 /// 공유 이미지 템플릿 스타일
-enum ShareTemplateStyle: String, CaseIterable, Identifiable {
+enum ShareTemplateStyle: String, CaseIterable, Identifiable, Hashable {
     case modernGlass = "modern_glass"      // Style 1: 글래스 오버레이
     case polaroidGrid = "polaroid_grid"    // Style 2: 폴라로이드 그리드
     case cleanMinimal = "clean_minimal"    // Style 3: 미니멀
