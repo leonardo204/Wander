@@ -9,9 +9,10 @@ struct AnalyzingView: View {
     var onSaveComplete: ((TravelRecord) -> Void)?
 
     @State private var engine = AnalysisEngine()
-    @State private var showResult = false
+    @State private var navigateToResult = false
     @State private var analysisResult: AnalysisResult?
     @State private var errorMessage: String?
+    @State private var hasStartedAnalysis = false  // 중복 분석 방지
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
@@ -22,40 +23,33 @@ struct AnalyzingView: View {
 
                 if let error = errorMessage {
                     errorView(message: error)
-                } else {
+                } else if !navigateToResult {
                     progressView
                 }
 
                 Spacer()
 
-                privacyBadge
+                if !navigateToResult {
+                    privacyBadge
+                }
             }
             .padding(WanderSpacing.screenMargin)
             .background(WanderColors.background)
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") {
-                        dismiss()
+                    if !navigateToResult {
+                        Button("취소") {
+                            dismiss()
+                        }
+                        .foregroundColor(WanderColors.textSecondary)
                     }
-                    .foregroundColor(WanderColors.textSecondary)
                 }
             }
             .task {
                 await startAnalysis()
             }
-            .fullScreenCover(isPresented: $showResult, onDismiss: {
-                // ResultView가 닫히면 모든 화면을 한꺼번에 닫기
-                logger.info("📱 ResultView 닫힘 → 모든 화면 즉시 닫기")
-                // PhotoSelectionView 닫기 플래그 먼저 설정
-                viewModel.shouldDismissPhotoSelection = true
-                // AnalyzingView도 애니메이션 없이 닫기
-                var transaction = Transaction()
-                transaction.disablesAnimations = true
-                withTransaction(transaction) {
-                    dismiss()
-                }
-            }) {
+            .navigationDestination(isPresented: $navigateToResult) {
                 if let result = analysisResult {
                     ResultView(
                         result: result,
@@ -63,22 +57,34 @@ struct AnalyzingView: View {
                         onSaveComplete: { savedRecord in
                             logger.info("📱 [AnalyzingView] 저장 완료 콜백 받음: \(savedRecord.title)")
                             onSaveComplete?(savedRecord)
+                            // ResultView를 먼저 닫고 (navigateToResult = false)
+                            navigateToResult = false
+                            // 그 다음 상위 뷰에서 닫도록 플래그 설정
+                            viewModel.shouldDismissPhotoSelection = true
+                            // 약간의 지연 후 AnalyzingView도 닫기 (상위 뷰가 플래그를 인식할 시간)
+                            Task { @MainActor in
+                                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1초
+                                dismiss()
+                            }
+                        },
+                        onDismiss: {
+                            // ResultView에서 뒤로가기 시 모든 화면 닫기
+                            logger.info("📱 ResultView 닫힘 → 모든 화면 즉시 닫기")
+                            navigateToResult = false
+                            viewModel.shouldDismissPhotoSelection = true
+                            Task { @MainActor in
+                                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1초
+                                dismiss()
+                            }
                         }
                     )
                     .onAppear {
-                        logger.info("📱 ResultView fullScreenCover 표시됨 - places: \(result.places.count), photos: \(result.photoCount)")
-                    }
-                } else {
-                    VStack {
-                        Text("결과를 불러올 수 없습니다")
-                    }
-                    .onAppear {
-                        logger.error("❌ analysisResult가 nil인데 showResult가 true")
+                        logger.info("📱 ResultView 표시됨 - places: \(result.places.count), photos: \(result.photoCount)")
                     }
                 }
             }
-            .onChange(of: showResult) { oldValue, newValue in
-                logger.info("🔄 showResult 변경: \(oldValue) → \(newValue)")
+            .onChange(of: navigateToResult) { oldValue, newValue in
+                logger.info("🔄 navigateToResult 변경: \(oldValue) → \(newValue)")
             }
             .onChange(of: analysisResult?.places.count) { oldValue, newValue in
                 logger.info("🔄 analysisResult 변경: places \(oldValue ?? -1) → \(newValue ?? -1)")
@@ -105,13 +111,29 @@ struct AnalyzingView: View {
                     .rotationEffect(.degrees(-90))
                     .animation(.easeInOut, value: engine.progress)
 
-                Image(systemName: "sparkles")
+                // 분석 단계에 따른 아이콘 변경
+                analysisStepIcon
                     .font(.system(size: 40))
                     .foregroundColor(WanderColors.primary)
             }
 
             // Progress Text
             VStack(spacing: WanderSpacing.space2) {
+                // 분석 레벨 배지
+                if engine.currentAnalysisLevel >= .smart {
+                    HStack(spacing: WanderSpacing.space1) {
+                        Image(systemName: engine.currentAnalysisLevel == .advanced ? "brain" : "sparkles")
+                            .font(.system(size: 12))
+                        Text(engine.currentAnalysisLevel.displayName)
+                            .font(WanderTypography.caption1)
+                    }
+                    .foregroundColor(WanderColors.primary)
+                    .padding(.horizontal, WanderSpacing.space3)
+                    .padding(.vertical, WanderSpacing.space1)
+                    .background(WanderColors.primaryPale)
+                    .cornerRadius(WanderSpacing.radiusSmall)
+                }
+
                 Text("분석 중...")
                     .font(WanderTypography.title2)
                     .foregroundColor(WanderColors.textPrimary)
@@ -120,6 +142,7 @@ struct AnalyzingView: View {
                     .font(WanderTypography.body)
                     .foregroundColor(WanderColors.textSecondary)
                     .animation(.easeInOut, value: engine.currentStep)
+                    .multilineTextAlignment(.center)
 
                 Text("\(Int(engine.progress * 100))%")
                     .font(WanderTypography.headline)
@@ -131,6 +154,87 @@ struct AnalyzingView: View {
             Text("\(viewModel.selectedAssets.count)장의 사진 분석 중")
                 .font(WanderTypography.caption1)
                 .foregroundColor(WanderColors.textTertiary)
+
+            // 분석 단계 인디케이터 (스마트 분석 시)
+            if engine.currentAnalysisLevel >= .smart {
+                smartAnalysisStepsIndicator
+                    .padding(.top, WanderSpacing.space4)
+            }
+        }
+    }
+
+    // MARK: - Analysis Step Icon
+    @ViewBuilder
+    private var analysisStepIcon: some View {
+        let step = engine.currentStep
+        if step.contains("메타데이터") || step.contains("사진") {
+            Image(systemName: "photo.stack")
+        } else if step.contains("위치") || step.contains("GPS") {
+            Image(systemName: "location")
+        } else if step.contains("동선") || step.contains("클러스터") {
+            Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
+        } else if step.contains("주소") || step.contains("geocoding") {
+            Image(systemName: "map")
+        } else if step.contains("장면") || step.contains("Vision") {
+            Image(systemName: "eye")
+        } else if step.contains("주변") || step.contains("POI") {
+            Image(systemName: "mappin.and.ellipse")
+        } else if step.contains("제목") {
+            Image(systemName: "text.badge.star")
+        } else if step.contains("AI") {
+            Image(systemName: "brain")
+        } else if step.contains("완료") {
+            Image(systemName: "checkmark")
+        } else {
+            Image(systemName: "sparkles")
+        }
+    }
+
+    // MARK: - Smart Analysis Steps Indicator
+    private var smartAnalysisStepsIndicator: some View {
+        HStack(spacing: WanderSpacing.space3) {
+            ForEach(SmartAnalysisCoordinator.AnalysisStep.allCases, id: \.rawValue) { step in
+                // iOS 18+ 전용 단계는 조건부 표시
+                if step != .advancedAI || engine.currentAnalysisLevel >= .advanced {
+                    VStack(spacing: 4) {
+                        Circle()
+                            .fill(stepColor(for: step))
+                            .frame(width: 8, height: 8)
+
+                        Text(step.emoji)
+                            .font(.system(size: 10))
+                    }
+                }
+            }
+        }
+    }
+
+    private func stepColor(for step: SmartAnalysisCoordinator.AnalysisStep) -> Color {
+        // 현재 진행 상황에 따른 색상
+        let currentProgress = engine.progress
+
+        // 각 단계의 예상 진행률 구간
+        let stepRanges: [SmartAnalysisCoordinator.AnalysisStep: ClosedRange<Double>] = [
+            .metadata: 0...0.10,
+            .clustering: 0.10...0.20,
+            .geocoding: 0.20...0.35,
+            .vision: 0.45...0.65,
+            .poi: 0.65...0.80,
+            .titleGen: 0.80...0.90,
+            .advancedAI: 0.90...0.95,
+            .finalizing: 0.95...1.0
+        ]
+
+        guard let range = stepRanges[step] else {
+            return WanderColors.surface
+        }
+
+        if currentProgress >= range.upperBound {
+            return WanderColors.success  // 완료
+        } else if currentProgress >= range.lowerBound {
+            return WanderColors.primary  // 진행 중
+        } else {
+            return WanderColors.surface  // 대기
         }
     }
 
@@ -183,6 +287,13 @@ struct AnalyzingView: View {
 
     // MARK: - Start Analysis
     private func startAnalysis() async {
+        // 이미 분석이 시작되었으면 중복 실행 방지
+        guard !hasStartedAnalysis else {
+            logger.info("⚠️ 분석이 이미 진행 중이거나 완료됨 - 중복 실행 방지")
+            return
+        }
+        hasStartedAnalysis = true
+
         logger.info("🚀 분석 시작 - 사진 \(viewModel.selectedAssets.count)장")
 
         // 사용자 장소 로드
@@ -206,18 +317,14 @@ struct AnalyzingView: View {
             logger.info("   - 사진 수: \(result.photoCount)")
             logger.info("   - 총 거리: \(result.totalDistance)km")
 
-            await MainActor.run {
-                logger.info("📲 MainActor에서 결과 설정 중...")
-                analysisResult = result
-                logger.info("📲 analysisResult 설정 완료, showResult = true 설정")
-                showResult = true
-                logger.info("📲 showResult 설정 완료: \(showResult)")
-            }
+            logger.info("📲 결과 설정 중...")
+            analysisResult = result
+            logger.info("📲 analysisResult 설정 완료, navigateToResult = true 설정")
+            navigateToResult = true
+            logger.info("📲 navigateToResult 설정 완료: \(navigateToResult)")
         } catch {
             logger.error("❌ 분석 실패: \(error.localizedDescription)")
-            await MainActor.run {
-                errorMessage = error.localizedDescription
-            }
+            errorMessage = error.localizedDescription
         }
     }
 }

@@ -505,11 +505,16 @@ struct RecordDetailFullView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: WanderSpacing.space6) {
-                // Header
-                headerSection
+                // Map Section (like ResultView)
+                mapSection
 
-                // Stats
+                // Stats Section
                 statsSection
+
+                // Wander Intelligence Section (if available)
+                if record.hasWanderIntelligence {
+                    wanderIntelligenceSection
+                }
 
                 // Timeline
                 if !record.days.isEmpty {
@@ -528,7 +533,8 @@ struct RecordDetailFullView: View {
                 shareButton
             }
             .padding(.horizontal, WanderSpacing.screenMargin)
-            .padding(.vertical, WanderSpacing.space4)
+            .padding(.top, WanderSpacing.space4)
+            .padding(.bottom, WanderSpacing.tabBarHeight + WanderSpacing.space6)  // 탭바 높이 + 여유 공간
         }
         .background(WanderColors.background)
         .navigationTitle(record.title)
@@ -680,34 +686,99 @@ struct RecordDetailFullView: View {
         }
     }
 
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: WanderSpacing.space2) {
-            Text(record.title)
-                .font(WanderTypography.title1)
-                .foregroundColor(WanderColors.textPrimary)
+    // MARK: - Map Section
+    private var mapSection: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+            HStack {
+                Text("여행 동선")
+                    .font(WanderTypography.headline)
+                    .foregroundColor(WanderColors.textPrimary)
 
-            Text(formatDateRange())
-                .font(WanderTypography.body)
-                .foregroundColor(WanderColors.textSecondary)
+                Spacer()
+
+                Button(action: { showMapDetail = true }) {
+                    HStack(spacing: WanderSpacing.space1) {
+                        Text("전체 보기")
+                            .font(WanderTypography.caption1)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12))
+                    }
+                    .foregroundColor(WanderColors.primary)
+                }
+            }
+
+            // Mini Map
+            RecordMiniMapView(record: record)
+                .frame(height: 200)
+                .cornerRadius(WanderSpacing.radiusLarge)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // MARK: - Stats Section
     private var statsSection: some View {
-        HStack(spacing: WanderSpacing.space4) {
-            // 장소 카드 - 클릭하면 지도 표시
-            Button(action: { showMapDetail = true }) {
-                StatCard(icon: "mappin.circle.fill", value: "\(record.placeCount)", label: "장소")
+        VStack(spacing: WanderSpacing.space3) {
+            // 분석 레벨 배지 (스마트 분석인 경우)
+            if let level = record.analysisLevel {
+                HStack(spacing: WanderSpacing.space2) {
+                    Image(systemName: level == "advanced" ? "brain" : "sparkles")
+                        .font(.system(size: 14))
+                    Text(level == "advanced" ? "AI 분석" : (level == "smart" ? "스마트 분석" : "기본 분석"))
+                        .font(WanderTypography.caption1)
+                }
+                .foregroundColor(WanderColors.primary)
+                .padding(.horizontal, WanderSpacing.space3)
+                .padding(.vertical, WanderSpacing.space2)
+                .background(WanderColors.primaryPale)
+                .cornerRadius(WanderSpacing.radiusMedium)
             }
-            .buttonStyle(.plain)
 
-            StatCard(icon: "car.fill", value: String(format: "%.1f", record.totalDistance), label: "km")
+            // 기본 통계 카드
+            HStack(spacing: WanderSpacing.space4) {
+                // 장소 카드 - 클릭하면 지도 표시
+                Button(action: { showMapDetail = true }) {
+                    StatCard(icon: "mappin.circle.fill", value: "\(record.placeCount)", label: "방문 장소")
+                }
+                .buttonStyle(.plain)
 
-            // 사진 카드 - 클릭하면 전체 사진 표시
-            Button(action: { showAllPhotos = true }) {
-                StatCard(icon: "photo.fill", value: "\(record.photoCount)", label: "사진")
+                StatCard(icon: "car.fill", value: String(format: "%.1f", record.totalDistance), label: "이동 거리 (km)")
+
+                // 사진 카드 - 클릭하면 전체 사진 표시
+                Button(action: { showAllPhotos = true }) {
+                    StatCard(icon: "photo.fill", value: "\(record.photoCount)", label: "사진")
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+
+            // 날짜 범위
+            Text(formatDateRange())
+                .font(WanderTypography.caption1)
+                .foregroundColor(WanderColors.textSecondary)
+        }
+    }
+
+    // MARK: - Wander Intelligence Section
+    @ViewBuilder
+    private var wanderIntelligenceSection: some View {
+        VStack(spacing: WanderSpacing.space5) {
+            // Trip Score Card
+            if let tripScore = record.tripScore {
+                RecordTripScoreCard(tripScore: tripScore, badges: record.badges)
+            }
+
+            // Travel DNA Card
+            if let dna = record.travelDNA {
+                RecordTravelDNACard(dna: dna)
+            }
+
+            // Insights Preview
+            if !record.insights.isEmpty {
+                RecordInsightsPreview(insights: record.insights)
+            }
+
+            // Story Preview
+            if let story = record.travelStory {
+                RecordStoryPreviewCard(story: story)
+            }
         }
     }
 
@@ -2535,6 +2606,328 @@ struct RecordPhotosSheet: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Record Mini Map View
+struct RecordMiniMapView: View {
+    let record: TravelRecord
+    @State private var camera: MapCameraPosition = .automatic
+
+    private var allPlaces: [Place] {
+        record.days
+            .sorted { $0.dayNumber < $1.dayNumber }
+            .flatMap { $0.places.sorted { $0.order < $1.order } }
+    }
+
+    var body: some View {
+        Map(position: $camera, interactionModes: []) {
+            ForEach(Array(allPlaces.enumerated()), id: \.element.id) { index, place in
+                Annotation("", coordinate: place.coordinate) {
+                    ZStack {
+                        Circle()
+                            .fill(WanderColors.primary)
+                            .frame(width: 24, height: 24)
+
+                        Text("\(index + 1)")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+
+            if allPlaces.count > 1 {
+                MapPolyline(coordinates: allPlaces.map { $0.coordinate })
+                    .stroke(WanderColors.primary.opacity(0.6), lineWidth: 2)
+            }
+        }
+        .mapStyle(.standard)
+    }
+}
+
+// MARK: - Record Trip Score Card
+struct RecordTripScoreCard: View {
+    let tripScore: MomentScoreService.TripOverallScore
+    let badges: [MomentScoreService.SpecialBadge]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space4) {
+            // Header
+            HStack {
+                Image(systemName: "star.fill")
+                    .foregroundColor(WanderColors.primary)
+                Text("여행 점수")
+                    .font(WanderTypography.headline)
+                    .foregroundColor(WanderColors.textPrimary)
+                Spacer()
+            }
+
+            // Score Display
+            HStack(alignment: .center, spacing: WanderSpacing.space4) {
+                // Main Score
+                VStack(spacing: 4) {
+                    Text("\(Int(tripScore.averageScore))")
+                        .font(.system(size: 48, weight: .bold))
+                        .foregroundColor(gradeColor)
+
+                    Text(tripScore.tripGrade.koreanName)
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(gradeColor)
+                        .padding(.horizontal, WanderSpacing.space2)
+                        .padding(.vertical, 2)
+                        .background(gradeColor.opacity(0.15))
+                        .cornerRadius(WanderSpacing.radiusSmall)
+                }
+                .frame(width: 100)
+
+                Divider()
+                    .frame(height: 60)
+
+                // Stats
+                VStack(alignment: .leading, spacing: WanderSpacing.space2) {
+                    HStack {
+                        Text("최고 순간 점수")
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.textSecondary)
+                        Spacer()
+                        Text("\(tripScore.peakMomentScore)점")
+                            .font(WanderTypography.body)
+                            .foregroundColor(WanderColors.textPrimary)
+                    }
+                    HStack {
+                        Text("획득한 배지")
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.textSecondary)
+                        Spacer()
+                        Text("\(badges.count)개")
+                            .font(WanderTypography.body)
+                            .foregroundColor(WanderColors.textPrimary)
+                    }
+                }
+            }
+
+            // Badges
+            if !badges.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: WanderSpacing.space2) {
+                        ForEach(badges, id: \.rawValue) { badge in
+                            HStack(spacing: 4) {
+                                Text(badge.emoji)
+                                Text(badge.koreanName)
+                            }
+                            .font(WanderTypography.caption2)
+                            .foregroundColor(WanderColors.textSecondary)
+                            .padding(.horizontal, WanderSpacing.space2)
+                            .padding(.vertical, 4)
+                            .background(WanderColors.surface)
+                            .cornerRadius(WanderSpacing.radiusSmall)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .cornerRadius(WanderSpacing.radiusLarge)
+    }
+
+    private var gradeColor: Color {
+        switch tripScore.tripGrade {
+        case .legendary: return Color.purple
+        case .epic: return Color.orange
+        case .memorable: return WanderColors.success
+        case .pleasant: return WanderColors.primary
+        case .ordinary, .casual: return WanderColors.textSecondary
+        }
+    }
+}
+
+// MARK: - Record Travel DNA Card
+struct RecordTravelDNACard: View {
+    let dna: TravelDNAService.TravelDNA
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space4) {
+            // Header
+            HStack {
+                Image(systemName: "person.fill.viewfinder")
+                    .foregroundColor(WanderColors.primary)
+                Text("여행자 DNA")
+                    .font(WanderTypography.headline)
+                    .foregroundColor(WanderColors.textPrimary)
+                Spacer()
+            }
+
+            // Primary Type
+            HStack(spacing: WanderSpacing.space3) {
+                Text(dna.primaryType.emoji)
+                    .font(.system(size: 40))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(dna.primaryType.koreanName)
+                        .font(WanderTypography.title3)
+                        .foregroundColor(WanderColors.textPrimary)
+
+                    Text(dna.description)
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textSecondary)
+                        .lineLimit(2)
+                }
+            }
+
+            // Score Bars
+            VStack(spacing: WanderSpacing.space2) {
+                DNAScoreBar(label: "탐험", value: Double(dna.explorationScore), color: .orange)
+                DNAScoreBar(label: "소셜", value: Double(dna.socialScore), color: .red)
+                DNAScoreBar(label: "문화", value: Double(dna.cultureScore), color: .purple)
+            }
+        }
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .cornerRadius(WanderSpacing.radiusLarge)
+    }
+}
+
+// MARK: - DNA Score Bar
+struct DNAScoreBar: View {
+    let label: String
+    let value: Double
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: WanderSpacing.space2) {
+            Text(label)
+                .font(WanderTypography.caption2)
+                .foregroundColor(WanderColors.textSecondary)
+                .frame(width: 40, alignment: .leading)
+
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(WanderColors.surface)
+                        .frame(height: 8)
+
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(color)
+                        .frame(width: geometry.size.width * CGFloat(value / 100), height: 8)
+                }
+            }
+            .frame(height: 8)
+
+            Text("\(Int(value))")
+                .font(WanderTypography.caption2)
+                .foregroundColor(WanderColors.textTertiary)
+                .frame(width: 30, alignment: .trailing)
+        }
+    }
+}
+
+// MARK: - Record Insights Preview
+struct RecordInsightsPreview: View {
+    let insights: [InsightEngine.TravelInsight]
+
+    private var topInsights: [InsightEngine.TravelInsight] {
+        Array(insights.prefix(3))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+            // Header
+            HStack {
+                Image(systemName: "lightbulb.fill")
+                    .foregroundColor(WanderColors.primary)
+                Text("여행 인사이트")
+                    .font(WanderTypography.headline)
+                    .foregroundColor(WanderColors.textPrimary)
+                Spacer()
+
+                if insights.count > 3 {
+                    Text("+\(insights.count - 3)")
+                        .font(WanderTypography.caption2)
+                        .foregroundColor(WanderColors.textTertiary)
+                }
+            }
+
+            // Insights
+            ForEach(topInsights, id: \.id) { insight in
+                HStack(alignment: .top, spacing: WanderSpacing.space3) {
+                    Text(insight.emoji)
+                        .font(.system(size: 20))
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(insight.title)
+                            .font(WanderTypography.body)
+                            .foregroundColor(WanderColors.textPrimary)
+
+                        Text(insight.description)
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.textSecondary)
+                            .lineLimit(2)
+                    }
+                }
+                .padding(WanderSpacing.space3)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(WanderColors.surface)
+                .cornerRadius(WanderSpacing.radiusMedium)
+            }
+        }
+    }
+}
+
+// MARK: - Record Story Preview Card
+struct RecordStoryPreviewCard: View {
+    let story: StoryWeavingService.TravelStory
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space4) {
+            // Header
+            HStack {
+                Image(systemName: "book.fill")
+                    .foregroundColor(WanderColors.primary)
+                Text("여행 이야기")
+                    .font(WanderTypography.headline)
+                    .foregroundColor(WanderColors.textPrimary)
+                Spacer()
+            }
+
+            // Story Content
+            VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+                // Title & Tagline
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(story.title)
+                        .font(WanderTypography.title3)
+                        .foregroundColor(WanderColors.textPrimary)
+
+                    Text(story.tagline)
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.primary)
+                        .italic()
+                }
+
+                Divider()
+
+                // Opening
+                Text(story.opening)
+                    .font(WanderTypography.body)
+                    .foregroundColor(WanderColors.textSecondary)
+                    .lineLimit(4)
+
+                // Chapter Count
+                HStack {
+                    Image(systemName: "text.book.closed")
+                        .font(.system(size: 12))
+                    Text("\(story.chapters.count)개의 챕터")
+                }
+                .font(WanderTypography.caption1)
+                .foregroundColor(WanderColors.textTertiary)
+            }
+            .padding(WanderSpacing.space4)
+            .background(WanderColors.primaryPale.opacity(0.5))
+            .cornerRadius(WanderSpacing.radiusMedium)
+        }
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .cornerRadius(WanderSpacing.radiusLarge)
     }
 }
 

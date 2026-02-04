@@ -15,6 +15,26 @@ final class TravelRecord {
     var updatedAt: Date
     var isHidden: Bool = false
 
+    // MARK: - Wander Intelligence Data (JSON 직렬화)
+
+    /// 여행 점수 데이터 (JSON)
+    var tripScoreJSON: String?
+
+    /// 여행자 DNA 데이터 (JSON)
+    var travelDNAJSON: String?
+
+    /// 인사이트 데이터 (JSON)
+    var insightsJSON: String?
+
+    /// 여행 스토리 데이터 (JSON)
+    var travelStoryJSON: String?
+
+    /// 획득한 배지 목록 (JSON)
+    var badgesJSON: String?
+
+    /// 분석 레벨 (basic, smart, advanced)
+    var analysisLevel: String?
+
     @Relationship(deleteRule: .cascade, inverse: \TravelDay.record)
     var days: [TravelDay]
 
@@ -79,5 +99,95 @@ final class TravelRecord {
             }
         }
         return identifiers
+    }
+
+    // MARK: - Wander Intelligence Computed Properties
+
+    /// 여행 점수 (역직렬화)
+    var tripScore: MomentScoreService.TripOverallScore? {
+        get {
+            guard let json = tripScoreJSON,
+                  let data = json.data(using: .utf8) else { return nil }
+            return try? JSONDecoder().decode(MomentScoreService.TripOverallScore.self, from: data)
+        }
+        set {
+            if let value = newValue,
+               let data = try? JSONEncoder().encode(value) {
+                tripScoreJSON = String(data: data, encoding: .utf8)
+            } else {
+                tripScoreJSON = nil
+            }
+        }
+    }
+
+    /// 여행자 DNA (역직렬화)
+    var travelDNA: TravelDNAService.TravelDNA? {
+        get {
+            guard let json = travelDNAJSON,
+                  let data = json.data(using: .utf8) else { return nil }
+            return try? JSONDecoder().decode(TravelDNAService.TravelDNA.self, from: data)
+        }
+        set {
+            if let value = newValue,
+               let data = try? JSONEncoder().encode(value) {
+                travelDNAJSON = String(data: data, encoding: .utf8)
+            } else {
+                travelDNAJSON = nil
+            }
+        }
+    }
+
+    /// 인사이트 목록 (역직렬화)
+    var insights: [InsightEngine.TravelInsight] {
+        get {
+            guard let json = insightsJSON,
+                  let data = json.data(using: .utf8) else { return [] }
+            return (try? JSONDecoder().decode([InsightEngine.TravelInsight].self, from: data)) ?? []
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue) {
+                insightsJSON = String(data: data, encoding: .utf8)
+            } else {
+                insightsJSON = nil
+            }
+        }
+    }
+
+    /// 여행 스토리 (역직렬화)
+    var travelStory: StoryWeavingService.TravelStory? {
+        get {
+            guard let json = travelStoryJSON,
+                  let data = json.data(using: .utf8) else { return nil }
+            return try? JSONDecoder().decode(StoryWeavingService.TravelStory.self, from: data)
+        }
+        set {
+            if let value = newValue,
+               let data = try? JSONEncoder().encode(value) {
+                travelStoryJSON = String(data: data, encoding: .utf8)
+            } else {
+                travelStoryJSON = nil
+            }
+        }
+    }
+
+    /// 획득한 배지 목록 (역직렬화)
+    var badges: [MomentScoreService.SpecialBadge] {
+        get {
+            guard let json = badgesJSON,
+                  let data = json.data(using: .utf8) else { return [] }
+            return (try? JSONDecoder().decode([MomentScoreService.SpecialBadge].self, from: data)) ?? []
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue) {
+                badgesJSON = String(data: data, encoding: .utf8)
+            } else {
+                badgesJSON = nil
+            }
+        }
+    }
+
+    /// Wander Intelligence 데이터 유무
+    var hasWanderIntelligence: Bool {
+        tripScoreJSON != nil || travelDNAJSON != nil || travelStoryJSON != nil
     }
 }

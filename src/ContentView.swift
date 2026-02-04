@@ -1,38 +1,38 @@
 import SwiftUI
-import Parchment
 import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "ContentView")
 
 struct ContentView: View {
-    @State private var selectedIndex = 0
+    @State private var selectedTab = 0
     @State private var isNavigationActive = false  // 상세 페이지 진입 시 탭바 스와이프 비활성화용
 
     var body: some View {
-        VStack(spacing: 0) {
-            // 스와이프 가능한 페이지 영역
-            PageView(selectedIndex: $selectedIndex) {
-                Page("홈") {
-                    HomeView(isNavigationActive: $isNavigationActive)
-                }
-                Page("기록") {
-                    RecordsView()
-                }
-                Page("설정") {
-                    SettingsView()
-                }
+        ZStack(alignment: .bottom) {
+            // 페이지 콘텐츠
+            TabView(selection: $selectedTab) {
+                HomeView(isNavigationActive: $isNavigationActive)
+                    .tag(0)
+
+                RecordsView()
+                    .tag(1)
+
+                SettingsView()
+                    .tag(2)
             }
-            .menuItemSize(.fixed(width: 0, height: 0))  // Parchment 기본 메뉴 숨김 (커스텀 탭바 사용)
-            .contentInteraction(isNavigationActive ? .none : .scrolling)  // 상세 페이지에서는 스와이프 비활성화
+            .tabViewStyle(.page(indexDisplayMode: .never))  // 스와이프 전환, 인디케이터 숨김
+            .animation(.easeInOut(duration: 0.2), value: selectedTab)
+            .allowsHitTesting(true)  // 항상 터치 허용
+            .scrollDisabled(isNavigationActive)  // 상세 페이지에서는 탭 스와이프만 비활성화
 
             // 커스텀 하단 탭바
-            CustomTabBar(selectedIndex: $selectedIndex)
+            CustomTabBar(selectedIndex: $selectedTab)
         }
         .ignoresSafeArea(.keyboard)
         .onAppear {
             logger.info("🚀 [ContentView] 앱 메인 화면 나타남")
         }
-        .onChange(of: selectedIndex) { oldValue, newValue in
+        .onChange(of: selectedTab) { oldValue, newValue in
             let tabNames = ["홈", "기록", "설정"]
             logger.info("🚀 [ContentView] 탭 변경: \(tabNames[oldValue]) → \(tabNames[newValue])")
         }

@@ -1,0 +1,441 @@
+import Foundation
+import Vision
+import Photos
+import UIKit
+import os.log
+
+private let logger = Logger(subsystem: "com.zerolive.wander", category: "VisionAnalysis")
+
+/// Vision Framework 기반 이미지 장면 분류 서비스
+/// iOS 17+: VNClassifyImageRequest (1,303개 카테고리)
+/// iOS 18+: 추가 고급 분석 기능 (예정)
+@MainActor
+class VisionAnalysisService {
+
+    // MARK: - Scene Classification Result
+
+    struct SceneClassification {
+        let identifier: String      // Vision 분류 식별자
+        let confidence: Float       // 신뢰도 (0.0 ~ 1.0)
+        let category: SceneCategory // 앱 내부 카테고리 매핑
+        let koreanLabel: String     // 한국어 라벨
+    }
+
+    // MARK: - Scene Category (앱 내부 카테고리)
+
+    enum SceneCategory: String, CaseIterable {
+        case cafe           // 카페, 커피숍
+        case restaurant     // 식당, 음식점
+        case beach          // 해변, 바다
+        case mountain       // 산, 자연
+        case park           // 공원, 정원
+        case museum         // 박물관, 미술관
+        case shopping       // 쇼핑몰, 시장
+        case airport        // 공항
+        case hotel          // 호텔, 숙소
+        case temple         // 사찰, 절
+        case city           // 도시, 거리
+        case nature         // 자연 풍경
+        case food           // 음식 사진
+        case people         // 인물 사진
+        case landmark       // 랜드마크
+        case unknown        // 분류 불가
+
+        var emoji: String {
+            switch self {
+            case .cafe: return "☕"
+            case .restaurant: return "🍽️"
+            case .beach: return "🏖️"
+            case .mountain: return "⛰️"
+            case .park: return "🌳"
+            case .museum: return "🏛️"
+            case .shopping: return "🛍️"
+            case .airport: return "✈️"
+            case .hotel: return "🏨"
+            case .temple: return "⛩️"
+            case .city: return "🏙️"
+            case .nature: return "🌿"
+            case .food: return "🍜"
+            case .people: return "👥"
+            case .landmark: return "🗼"
+            case .unknown: return "📍"
+            }
+        }
+
+        var koreanName: String {
+            switch self {
+            case .cafe: return "카페"
+            case .restaurant: return "음식점"
+            case .beach: return "해변"
+            case .mountain: return "산"
+            case .park: return "공원"
+            case .museum: return "박물관"
+            case .shopping: return "쇼핑"
+            case .airport: return "공항"
+            case .hotel: return "숙소"
+            case .temple: return "사찰"
+            case .city: return "도시"
+            case .nature: return "자연"
+            case .food: return "음식"
+            case .people: return "인물"
+            case .landmark: return "명소"
+            case .unknown: return "장소"
+            }
+        }
+
+        /// ActivityType으로 변환
+        var toActivityType: ActivityType {
+            switch self {
+            case .cafe: return .cafe
+            case .restaurant, .food: return .restaurant
+            case .beach: return .beach
+            case .mountain, .nature, .park: return .mountain
+            case .museum, .temple, .landmark: return .culture
+            case .shopping: return .shopping
+            case .airport: return .airport
+            default: return .tourist
+            }
+        }
+    }
+
+    // MARK: - Vision 분류자 → 앱 카테고리 매핑
+
+    /// Vision Framework의 1,303개 분류자를 앱 카테고리로 매핑
+    private static let categoryMapping: [String: SceneCategory] = [
+        // 카페/커피
+        "coffee_shop": .cafe,
+        "coffeehouse": .cafe,
+        "café": .cafe,
+        "bakery": .cafe,
+        "tea_house": .cafe,
+
+        // 식당/음식
+        "restaurant": .restaurant,
+        "dining_room": .restaurant,
+        "kitchen": .restaurant,
+        "pizzeria": .restaurant,
+        "sushi_bar": .restaurant,
+        "food_court": .restaurant,
+        "food": .food,
+        "pizza": .food,
+        "sushi": .food,
+        "noodle": .food,
+        "dessert": .food,
+        "ice_cream": .food,
+
+        // 해변/바다
+        "beach": .beach,
+        "coast": .beach,
+        "seashore": .beach,
+        "ocean": .beach,
+        "sea": .beach,
+        "swimming_pool": .beach,
+
+        // 산/자연
+        "mountain": .mountain,
+        "mountain_path": .mountain,
+        "mountain_snowy": .mountain,
+        "valley": .mountain,
+        "cliff": .mountain,
+        "hiking": .mountain,
+        "forest": .nature,
+        "forest_path": .nature,
+        "tree_farm": .nature,
+        "bamboo_forest": .nature,
+        "rainforest": .nature,
+        "waterfall": .nature,
+        "river": .nature,
+        "lake": .nature,
+        "pond": .nature,
+        "field": .nature,
+        "meadow": .nature,
+        "flower_garden": .nature,
+
+        // 공원/정원
+        "park": .park,
+        "botanical_garden": .park,
+        "japanese_garden": .park,
+        "zen_garden": .park,
+        "playground": .park,
+        "picnic_area": .park,
+
+        // 박물관/문화
+        "museum": .museum,
+        "art_gallery": .museum,
+        "art_museum": .museum,
+        "exhibition_hall": .museum,
+        "palace": .museum,
+        "castle": .museum,
+        "amphitheater": .museum,
+        "theater": .museum,
+        "concert_hall": .museum,
+        "opera_house": .museum,
+
+        // 쇼핑
+        "shopping_mall": .shopping,
+        "market": .shopping,
+        "supermarket": .shopping,
+        "convenience_store": .shopping,
+        "department_store": .shopping,
+        "clothing_store": .shopping,
+        "bazaar": .shopping,
+
+        // 공항/교통
+        "airport": .airport,
+        "airport_terminal": .airport,
+        "airplane_cabin": .airport,
+        "train_station": .airport,
+        "subway_station": .airport,
+        "bus_station": .airport,
+
+        // 호텔/숙소
+        "hotel": .hotel,
+        "hotel_room": .hotel,
+        "motel": .hotel,
+        "bedroom": .hotel,
+        "lobby": .hotel,
+
+        // 사찰/종교
+        "temple": .temple,
+        "pagoda": .temple,
+        "shrine": .temple,
+        "church": .temple,
+        "cathedral": .temple,
+        "mosque": .temple,
+
+        // 도시/거리
+        "street": .city,
+        "downtown": .city,
+        "skyscraper": .city,
+        "office_building": .city,
+        "alley": .city,
+        "crosswalk": .city,
+        "bridge": .city,
+        "plaza": .city,
+        "square": .city,
+
+        // 랜드마크
+        "tower": .landmark,
+        "lighthouse": .landmark,
+        "monument": .landmark,
+        "fountain": .landmark,
+        "statue": .landmark,
+
+        // 인물
+        "person": .people,
+        "people": .people,
+        "crowd": .people,
+        "selfie": .people,
+    ]
+
+    /// 한국어 라벨 매핑
+    private static let koreanLabels: [String: String] = [
+        "coffee_shop": "커피숍",
+        "restaurant": "레스토랑",
+        "beach": "해변",
+        "mountain": "산",
+        "forest": "숲",
+        "park": "공원",
+        "museum": "박물관",
+        "temple": "사찰",
+        "street": "거리",
+        "hotel": "호텔",
+        "airport": "공항",
+        "tower": "타워",
+        "food": "음식",
+        // ... 필요시 추가
+    ]
+
+    // MARK: - Image Manager
+
+    private let imageManager = PHCachingImageManager()
+
+    // MARK: - Analyze Single Photo
+
+    /// 단일 사진의 장면 분류
+    /// - Parameter asset: 분석할 PHAsset
+    /// - Returns: 상위 3개 분류 결과
+    func classifyScene(for asset: PHAsset) async -> [SceneClassification] {
+        guard let image = await loadImage(from: asset) else {
+            logger.warning("✨ [Vision] 이미지 로드 실패: \(asset.localIdentifier.prefix(8))...")
+            return []
+        }
+
+        return await classifyScene(image: image)
+    }
+
+    /// UIImage에서 장면 분류
+    func classifyScene(image: UIImage) async -> [SceneClassification] {
+        guard let cgImage = image.cgImage else {
+            logger.warning("✨ [Vision] CGImage 변환 실패")
+            return []
+        }
+
+        return await withCheckedContinuation { continuation in
+            let request = VNClassifyImageRequest { request, error in
+                if let error = error {
+                    logger.error("✨ [Vision] 분류 에러: \(error.localizedDescription)")
+                    continuation.resume(returning: [])
+                    return
+                }
+
+                guard let results = request.results as? [VNClassificationObservation] else {
+                    continuation.resume(returning: [])
+                    return
+                }
+
+                // 상위 5개 결과 중 confidence 0.1 이상만 필터
+                let topResults = results
+                    .filter { $0.confidence >= 0.1 }
+                    .prefix(5)
+                    .map { observation -> SceneClassification in
+                        let identifier = observation.identifier
+                        let category = Self.categoryMapping[identifier] ?? .unknown
+                        let koreanLabel = Self.koreanLabels[identifier] ?? category.koreanName
+
+                        return SceneClassification(
+                            identifier: identifier,
+                            confidence: observation.confidence,
+                            category: category,
+                            koreanLabel: koreanLabel
+                        )
+                    }
+
+                logger.info("✨ [Vision] 분류 완료: \(topResults.map { "\($0.identifier)(\($0.confidence))" }.joined(separator: ", "))")
+                continuation.resume(returning: Array(topResults))
+            }
+
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+
+            do {
+                try handler.perform([request])
+            } catch {
+                logger.error("✨ [Vision] 요청 수행 실패: \(error.localizedDescription)")
+                continuation.resume(returning: [])
+            }
+        }
+    }
+
+    // MARK: - Analyze Multiple Photos (Cluster)
+
+    /// 클러스터 내 대표 사진들의 장면 분류 종합
+    /// - Parameters:
+    ///   - assets: 클러스터의 사진들
+    ///   - sampleCount: 분석할 샘플 수 (기본 3장)
+    /// - Returns: 종합된 장면 카테고리
+    func analyzeCluster(assets: [PHAsset], sampleCount: Int = 3) async -> SceneCategory {
+        guard !assets.isEmpty else { return .unknown }
+
+        // 샘플링: 처음, 중간, 마지막에서 균등하게 선택
+        let samples = sampleAssets(from: assets, count: sampleCount)
+
+        var categoryVotes: [SceneCategory: Float] = [:]
+
+        for asset in samples {
+            let classifications = await classifyScene(for: asset)
+
+            for classification in classifications {
+                let weight = classification.confidence
+                categoryVotes[classification.category, default: 0] += weight
+            }
+        }
+
+        // 가장 많은 투표를 받은 카테고리 반환
+        let topCategory = categoryVotes
+            .sorted { $0.value > $1.value }
+            .first?.key ?? .unknown
+
+        logger.info("✨ [Vision] 클러스터 분석 결과: \(topCategory.koreanName) (투표: \(categoryVotes))")
+
+        return topCategory
+    }
+
+    // MARK: - iOS 18+ Advanced Analysis
+
+    /// iOS 18 이상에서 사용 가능한 고급 분석
+    @available(iOS 18.0, *)
+    func advancedAnalysis(for asset: PHAsset) async -> [String: Any] {
+        var result: [String: Any] = [:]
+
+        // 기본 장면 분류
+        let classifications = await classifyScene(for: asset)
+        result["classifications"] = classifications
+
+        // TODO: iOS 18+ 전용 기능 추가
+        // - FastVLM 통합 (가능한 경우)
+        // - 더 상세한 장면 설명
+        // - 감정/분위기 분석
+
+        logger.info("✨ [Vision] iOS 18+ 고급 분석 완료")
+
+        return result
+    }
+
+    // MARK: - Helper Methods
+
+    /// PHAsset에서 UIImage 로드
+    private func loadImage(from asset: PHAsset, targetSize: CGSize = CGSize(width: 512, height: 512)) async -> UIImage? {
+        await withCheckedContinuation { continuation in
+            let options = PHImageRequestOptions()
+            options.deliveryMode = .highQualityFormat
+            options.isSynchronous = false
+            options.isNetworkAccessAllowed = true
+
+            imageManager.requestImage(
+                for: asset,
+                targetSize: targetSize,
+                contentMode: .aspectFit,
+                options: options
+            ) { image, info in
+                let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
+                if !isDegraded {
+                    continuation.resume(returning: image)
+                }
+            }
+        }
+    }
+
+    /// 균등 샘플링
+    private func sampleAssets(from assets: [PHAsset], count: Int) -> [PHAsset] {
+        guard assets.count > count else { return assets }
+
+        var samples: [PHAsset] = []
+        let step = Double(assets.count - 1) / Double(count - 1)
+
+        for i in 0..<count {
+            let index = Int(Double(i) * step)
+            samples.append(assets[index])
+        }
+
+        return samples
+    }
+}
+
+// MARK: - iOS Version Check Extension
+
+extension VisionAnalysisService {
+    /// iOS 버전 확인
+    static var isiOS18OrLater: Bool {
+        if #available(iOS 18.0, *) {
+            return true
+        }
+        return false
+    }
+
+    /// 사용 가능한 분석 레벨
+    enum AnalysisLevel: String {
+        case basic      // iOS 17: 기본 분석
+        case advanced   // iOS 18+: 고급 분석
+
+        var description: String {
+            switch self {
+            case .basic: return "기본 분석"
+            case .advanced: return "고급 AI 분석"
+            }
+        }
+    }
+
+    static var availableAnalysisLevel: AnalysisLevel {
+        isiOS18OrLater ? .advanced : .basic
+    }
+}

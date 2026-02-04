@@ -6,6 +6,7 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "AnalysisEngine")
 
+@MainActor
 @Observable
 class AnalysisEngine {
     // MARK: - Properties
@@ -14,12 +15,22 @@ class AnalysisEngine {
     var isAnalyzing: Bool = false
     var error: AnalysisError?
 
+    /// 스마트 분석 진행 상황 (UI 표시용)
+    var smartAnalysisProgress: SmartAnalysisCoordinator.AnalysisProgress?
+
+    /// 현재 분석 레벨
+    var currentAnalysisLevel: SmartAnalysisCoordinator.AnalysisLevel = .basic
+
     private let geocodingService = GeocodingService()
     private let clusteringService = ClusteringService()
     private let activityService = ActivityInferenceService()
+    private let smartCoordinator = SmartAnalysisCoordinator()
 
     /// 사용자 장소 목록 (분석 전 설정)
     var userPlaces: [UserPlace] = []
+
+    /// 스마트 분석 활성화 여부 (기본: true)
+    var enableSmartAnalysis: Bool = true
 
     // MARK: - Analyze
     func analyze(assets: [PHAsset]) async throws -> AnalysisResult {
@@ -27,24 +38,27 @@ class AnalysisEngine {
         isAnalyzing = true
         progress = 0
         error = nil
+        currentAnalysisLevel = enableSmartAnalysis ? SmartAnalysisCoordinator.availableLevel : .basic
 
         defer {
             isAnalyzing = false
             logger.info("🔬 [Engine] 분석 종료 (defer)")
         }
 
+        // ===== Phase 1: 기본 분석 =====
+
         // Step 1: Extract metadata
         currentStep = "📸 사진 메타데이터 읽는 중..."
-        progress = 0.1
+        progress = 0.05
         logger.info("🔬 [Step 1] 메타데이터 추출 시작")
 
         let photosWithMetadata = extractMetadata(from: assets)
         logger.info("🔬 [Step 1] 메타데이터 추출 완료: \(photosWithMetadata.count)장")
-        try await Task.sleep(nanoseconds: 500_000_000) // Visual feedback
+        try? await Task.sleep(nanoseconds: 300_000_000)
 
         // Step 2: Filter photos with GPS
         currentStep = "📍 위치 정보 추출 중..."
-        progress = 0.25
+        progress = 0.10
         logger.info("🔬 [Step 2] GPS 필터링 시작")
 
         let gpsPhotos = photosWithMetadata.filter { $0.hasGPS }
@@ -56,21 +70,24 @@ class AnalysisEngine {
             throw AnalysisError.noGPSData
         }
 
-        try await Task.sleep(nanoseconds: 500_000_000)
+        try? await Task.sleep(nanoseconds: 300_000_000)
 
         // Step 3: Clustering
         currentStep = "📊 동선 분석 중..."
-        progress = 0.4
+        progress = 0.15
         logger.info("🔬 [Step 3] 클러스터링 시작")
 
         let clusters = clusteringService.cluster(photos: sortedPhotos)
         logger.info("🔬 [Step 3] 클러스터링 완료: \(clusters.count)개 장소")
-        try await Task.sleep(nanoseconds: 500_000_000)
+        try? await Task.sleep(nanoseconds: 300_000_000)
 
         // Step 4: Reverse geocoding
         currentStep = "🗺️ 주소 정보 변환 중..."
-        progress = 0.6
+        progress = 0.20
         logger.info("🔬 [Step 4] Reverse geocoding 시작")
+
+        // Geocoding 결과 저장 (스마트 분석에서 활용)
+        var geocodingResults: [UUID: GeocodingService.GeocodingResult] = [:]
 
         for (index, cluster) in clusters.enumerated() {
             logger.info("🔬 [Step 4] 장소 \(index + 1)/\(clusters.count) geocoding...")
@@ -82,20 +99,27 @@ class AnalysisEngine {
                 cluster.name = address.name
                 cluster.address = address.fullAddress
                 cluster.placeType = address.placeType
+                geocodingResults[cluster.id] = address
                 logger.info("🔬 [Step 4] → \(address.name)")
             } catch {
                 logger.warning("🔬 [Step 4] geocoding 실패: \(error.localizedDescription)")
-                cluster.name = "알 수 없는 장소"
-                cluster.address = ""
+                // 좌표 기반 기본 이름 생성
+                cluster.name = generateFallbackPlaceName(
+                    latitude: cluster.latitude,
+                    longitude: cluster.longitude,
+                    index: index
+                )
+                cluster.address = String(format: "%.4f, %.4f", cluster.latitude, cluster.longitude)
+                logger.info("🔬 [Step 4] → 대체 이름 사용: \(cluster.name)")
             }
 
-            progress = 0.6 + (0.2 * Double(index + 1) / Double(clusters.count))
+            progress = 0.20 + (0.10 * Double(index + 1) / Double(clusters.count))
         }
 
         // Step 4.5: User place matching
         if !userPlaces.isEmpty {
             currentStep = "🏠 등록된 장소 매칭 중..."
-            progress = 0.82
+            progress = 0.32
             let userPlaceCount = self.userPlaces.count
             logger.info("🔬 [Step 4.5] 사용자 장소 매칭 시작 - 등록 장소: \(userPlaceCount)개")
 
@@ -109,13 +133,12 @@ class AnalysisEngine {
             }
         }
 
-        // Step 5: Activity inference
+        // Step 5: Activity inference (기본)
         currentStep = "✨ 활동 유형 분석 중..."
-        progress = 0.85
+        progress = 0.35
         logger.info("🔬 [Step 5] 활동 추론 시작")
 
         for cluster in clusters {
-            // 사용자 장소가 매칭된 경우 특별 활동 타입 추론
             if cluster.userPlaceMatched {
                 cluster.activityType = inferActivityForUserPlace(cluster.name, time: cluster.startTime)
             } else {
@@ -127,22 +150,54 @@ class AnalysisEngine {
             logger.info("🔬 [Step 5] \(cluster.name): \(cluster.activityType.displayName)")
         }
 
-        try await Task.sleep(nanoseconds: 500_000_000)
+        try? await Task.sleep(nanoseconds: 300_000_000)
 
-        // Step 6: Build result
-        currentStep = "📝 결과 정리 중..."
-        progress = 0.95
-        logger.info("🔬 [Step 6] 결과 빌드 시작")
+        // Step 6: Build basic result
+        currentStep = "📝 기본 결과 정리 중..."
+        progress = 0.40
+        logger.info("🔬 [Step 6] 기본 결과 빌드")
 
-        let result = buildResult(
+        var result = buildResult(
             assets: assets,
             gpsPhotos: sortedPhotos,
             clusters: clusters
         )
 
+        // ===== Phase 2: 스마트 분석 (iOS 17+) =====
+
+        if enableSmartAnalysis && currentAnalysisLevel >= .smart {
+            logger.info("🔬 [Smart] 스마트 분석 시작 - 레벨: \(self.currentAnalysisLevel.displayName)")
+
+            currentStep = "🤖 스마트 분석 시작..."
+            progress = 0.45
+
+            do {
+                let smartResult = try await smartCoordinator.runSmartAnalysis(
+                    clusters: clusters,
+                    basicResult: result,
+                    level: currentAnalysisLevel
+                )
+
+                // 스마트 분석 결과 병합
+                smartCoordinator.mergeResults(smartResult: smartResult, into: &result)
+
+                // 추가 정보 저장 (나중에 UI에서 활용)
+                result.smartAnalysisResult = smartResult
+
+                logger.info("🔬 [Smart] 스마트 분석 완료!")
+                logger.info("🔬 [Smart] - 스마트 제목: \(smartResult.smartTitle)")
+                logger.info("🔬 [Smart] - Vision 분석: \(smartResult.visionClassificationCount)장")
+                logger.info("🔬 [Smart] - POI 검색: \(smartResult.poiSearchCount)개")
+
+            } catch {
+                logger.warning("🔬 [Smart] 스마트 분석 실패 (기본 결과 사용): \(error.localizedDescription)")
+                // 스마트 분석 실패해도 기본 결과는 유지
+            }
+        }
+
+        // 최종 완료
         progress = 1.0
         currentStep = "완료!"
-        logger.info("🔬 [Step 6] 결과 빌드 완료!")
         logger.info("🔬 ✅ 분석 완료 - 제목: \(result.title), 장소: \(result.places.count)개")
 
         return result
@@ -150,15 +205,38 @@ class AnalysisEngine {
 
     // MARK: - Extract Metadata
     private func extractMetadata(from assets: [PHAsset]) -> [PhotoMetadata] {
-        return assets.map { asset in
-            PhotoMetadata(
+        var noDateCount = 0
+        var noGPSCount = 0
+
+        let metadata = assets.enumerated().map { index, asset -> PhotoMetadata in
+            let capturedAt = asset.creationDate
+            let location = asset.location
+
+            // 디버깅: 메타데이터 누락 추적
+            if capturedAt == nil {
+                noDateCount += 1
+                logger.warning("🔬 [Metadata] 사진[\(index)] 날짜 정보 없음 - \(asset.localIdentifier)")
+            }
+            if location == nil {
+                noGPSCount += 1
+            }
+
+            return PhotoMetadata(
                 asset: asset,
                 assetId: asset.localIdentifier,
-                capturedAt: asset.creationDate,
-                latitude: asset.location?.coordinate.latitude,
-                longitude: asset.location?.coordinate.longitude
+                capturedAt: capturedAt,
+                latitude: location?.coordinate.latitude,
+                longitude: location?.coordinate.longitude
             )
         }
+
+        // 메타데이터 누락 요약
+        if noDateCount > 0 {
+            logger.warning("🔬 [Metadata] ⚠️ 날짜 없는 사진: \(noDateCount)장 (현재 시간으로 대체됨)")
+        }
+        logger.info("🔬 [Metadata] GPS 없는 사진: \(noGPSCount)장 / 전체 \(assets.count)장")
+
+        return metadata
     }
 
     // MARK: - Build Result
@@ -207,6 +285,21 @@ class AnalysisEngine {
         }
 
         return totalDistance / 1000 // Convert to km
+    }
+
+    // MARK: - Fallback Place Name
+    /// Geocoding 실패 시 대체 장소 이름 생성
+    private func generateFallbackPlaceName(latitude: Double, longitude: Double, index: Int) -> String {
+        // 시간대 기반 이름 생성
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH시"
+        let timeStr = formatter.string(from: Date())
+
+        // 순서 기반 이름
+        let orderNames = ["첫 번째", "두 번째", "세 번째", "네 번째", "다섯 번째"]
+        let orderName = index < orderNames.count ? orderNames[index] : "\(index + 1)번째"
+
+        return "\(orderName) 장소"
     }
 
     // MARK: - User Place Matching

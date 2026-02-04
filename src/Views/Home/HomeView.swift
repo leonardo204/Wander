@@ -23,49 +23,47 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
-            ZStack {
-                ScrollView {
-                    VStack(spacing: WanderSpacing.space6) {
-                        // Greeting
-                        greetingSection
+            VStack(spacing: 0) {
+                // 커스텀 헤더
+                customHeader
 
-                        // Quick Action Cards (2 columns)
-                        quickActionSection
+                ZStack {
+                    ScrollView {
+                        VStack(spacing: WanderSpacing.space6) {
+                            // Greeting
+                            greetingSection
 
-                        // Recent Records Section
-                        recentRecordsSection
+                            // Quick Action Cards (2 columns)
+                            quickActionSection
+
+                            // Recent Records Section
+                            recentRecordsSection
+                        }
+                        .padding(.horizontal, WanderSpacing.screenMargin)
+                        .padding(.top, WanderSpacing.space4)
+                        .padding(.bottom, records.isEmpty ? WanderSpacing.space4 : 80) // FAB 공간 확보
                     }
-                    .padding(.horizontal, WanderSpacing.screenMargin)
-                    .padding(.top, WanderSpacing.space4)
-                    .padding(.bottom, records.isEmpty ? WanderSpacing.space4 : 80) // FAB 공간 확보
-                }
-                .background(WanderColors.background)
+                    .background(WanderColors.background)
 
-                // FAB (Floating Action Button) - 기록이 있을 때만 표시
-                if !records.isEmpty {
-                    VStack {
-                        Spacer()
-                        HStack {
+                    // FAB (Floating Action Button) - 기록이 있을 때만 표시
+                    if !records.isEmpty {
+                        VStack {
                             Spacer()
-                            fabButton
-                                .padding(.trailing, WanderSpacing.screenMargin)
-                                .padding(.bottom, WanderSpacing.space4)
+                            HStack {
+                                Spacer()
+                                fabButton
+                                    .padding(.trailing, WanderSpacing.screenMargin)
+                                    .padding(.bottom, WanderSpacing.space4)
+                            }
                         }
                     }
                 }
             }
-            .navigationTitle("Wander")
-            .navigationBarTitleDisplayMode(.inline)
+            .background(WanderColors.background)
+            .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: UUID.self) { recordId in
                 if let record = records.first(where: { $0.id == recordId }) {
                     RecordDetailFullView(record: record)
-                }
-            }
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Wander")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(WanderColors.primary)
                 }
             }
             .sheet(isPresented: $showPhotoSelection) {
@@ -101,6 +99,19 @@ struct HomeView: View {
                 isNavigationActive = !newPath.isEmpty
             }
         }
+    }
+
+    // MARK: - Custom Header
+    private var customHeader: some View {
+        HStack {
+            Spacer()
+            Text("Wander")
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(WanderColors.primary)
+            Spacer()
+        }
+        .frame(height: 44)
+        .background(WanderColors.background)
     }
 
     // MARK: - Greeting Section
