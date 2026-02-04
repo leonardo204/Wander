@@ -41,7 +41,9 @@ struct HomeView: View {
                         }
                         .padding(.horizontal, WanderSpacing.screenMargin)
                         .padding(.top, WanderSpacing.space4)
-                        .padding(.bottom, records.isEmpty ? WanderSpacing.space4 : 70) // FAB 공간 확보
+                        // ⚠️ 하단 패딩: 탭바(49pt) + FAB(56pt) + 여백(20pt) = 125pt
+                        // 탭바에 가려지지 않도록 충분한 공간 확보 필수
+                        .padding(.bottom, records.isEmpty ? WanderSpacing.space4 : 125)
                     }
                     .background(WanderColors.background)
 
@@ -53,7 +55,9 @@ struct HomeView: View {
                                 Spacer()
                                 fabButton
                                     .padding(.trailing, WanderSpacing.screenMargin)
-                                    .padding(.bottom, WanderSpacing.space6)
+                                    // ⚠️ FAB 하단 패딩: 탭바 높이(49pt) + 여백(16pt) = 65pt
+                                    // 탭바에 가려지지 않도록 반드시 49pt 이상 유지 필요
+                                    .padding(.bottom, 65)
                             }
                         }
                     }
