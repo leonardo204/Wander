@@ -5,6 +5,23 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "SettingsView")
 
+/// 설정 네비게이션 목적지 enum
+/// - NOTE: NavigationStack(path:) 방식으로 네비게이션 관리를 위해 사용
+enum SettingsDestination: Hashable {
+    case aiSettings
+    case dataManagement
+    case permissionSettings
+    case securitySettings
+    case languageSettings
+    case categoryManagement
+    case userPlaces
+    case shareSettings
+    case about
+}
+
+/// 설정 탭 메인 뷰 - 앱 설정 관리
+/// - NOTE: navigationPath로 상세 화면 네비게이션 관리
+/// - IMPORTANT: 탭 전환 시 resetTrigger로 초기화면 표시
 struct SettingsView: View {
     @AppStorage("isOnboardingCompleted") private var isOnboardingCompleted = true
     @State private var showAISettings = false
@@ -12,13 +29,22 @@ struct SettingsView: View {
     @State private var showPermissions = false
     @State private var showAbout = false
     @State private var showShareLinkTest = false
+    @State private var navigationPath = NavigationPath()
+
+    /// 네비게이션 리셋 트리거 (부모에서 바인딩)
+    /// - NOTE: 탭 전환 또는 같은 탭 클릭 시 토글되어 navigationPath 초기화 유도
+    @Binding var resetTrigger: Bool
+
+    init(resetTrigger: Binding<Bool> = .constant(false)) {
+        _resetTrigger = resetTrigger
+    }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             List {
                 // AI Settings Section
                 Section {
-                    NavigationLink(destination: AIProviderSettingsView()) {
+                    NavigationLink(value: SettingsDestination.aiSettings) {
                         SettingsRow(
                             icon: "sparkles",
                             iconColor: WanderColors.primary,
@@ -32,7 +58,7 @@ struct SettingsView: View {
 
                 // Data Section
                 Section {
-                    NavigationLink(destination: DataManagementView()) {
+                    NavigationLink(value: SettingsDestination.dataManagement) {
                         SettingsRow(
                             icon: "externaldrive",
                             iconColor: WanderColors.info,
@@ -41,7 +67,7 @@ struct SettingsView: View {
                         )
                     }
 
-                    NavigationLink(destination: PermissionSettingsView()) {
+                    NavigationLink(value: SettingsDestination.permissionSettings) {
                         SettingsRow(
                             icon: "lock.shield",
                             iconColor: WanderColors.success,
@@ -55,7 +81,7 @@ struct SettingsView: View {
 
                 // Security Section
                 Section {
-                    NavigationLink(destination: SecuritySettingsView()) {
+                    NavigationLink(value: SettingsDestination.securitySettings) {
                         SettingsRow(
                             icon: "lock.shield.fill",
                             iconColor: WanderColors.primary,
@@ -69,7 +95,7 @@ struct SettingsView: View {
 
                 // Customization Section
                 Section {
-                    NavigationLink(destination: LanguageSettingsView()) {
+                    NavigationLink(value: SettingsDestination.languageSettings) {
                         SettingsRow(
                             icon: "globe",
                             iconColor: WanderColors.info,
@@ -78,7 +104,7 @@ struct SettingsView: View {
                         )
                     }
 
-                    NavigationLink(destination: CategoryManagementView()) {
+                    NavigationLink(value: SettingsDestination.categoryManagement) {
                         SettingsRow(
                             icon: "folder.fill",
                             iconColor: WanderColors.warning,
@@ -87,7 +113,7 @@ struct SettingsView: View {
                         )
                     }
 
-                    NavigationLink(destination: UserPlacesView()) {
+                    NavigationLink(value: SettingsDestination.userPlaces) {
                         SettingsRow(
                             icon: "mappin.circle.fill",
                             iconColor: WanderColors.error,
@@ -101,7 +127,7 @@ struct SettingsView: View {
 
                 // Share Settings Section
                 Section {
-                    NavigationLink(destination: ShareSettingsView()) {
+                    NavigationLink(value: SettingsDestination.shareSettings) {
                         SettingsRow(
                             icon: "square.and.arrow.up",
                             iconColor: WanderColors.warning,
@@ -115,7 +141,7 @@ struct SettingsView: View {
 
                 // About Section
                 Section {
-                    NavigationLink(destination: AboutView()) {
+                    NavigationLink(value: SettingsDestination.about) {
                         SettingsRow(
                             icon: "info.circle",
                             iconColor: WanderColors.textSecondary,
@@ -153,8 +179,37 @@ struct SettingsView: View {
             .listStyle(.insetGrouped)
             .contentMargins(.bottom, 70, for: .scrollContent)  // 탭바 높이만큼 여백 확보
             .navigationTitle("설정")
+            .navigationDestination(for: SettingsDestination.self) { destination in
+                switch destination {
+                case .aiSettings:
+                    AIProviderSettingsView()
+                case .dataManagement:
+                    DataManagementView()
+                case .permissionSettings:
+                    PermissionSettingsView()
+                case .securitySettings:
+                    SecuritySettingsView()
+                case .languageSettings:
+                    LanguageSettingsView()
+                case .categoryManagement:
+                    CategoryManagementView()
+                case .userPlaces:
+                    UserPlacesView()
+                case .shareSettings:
+                    ShareSettingsView()
+                case .about:
+                    AboutView()
+                }
+            }
             .onAppear {
                 logger.info("⚙️ [SettingsView] 설정 화면 나타남")
+            }
+            .onChange(of: resetTrigger) { _, _ in
+                // NOTE: 탭 전환 또는 같은 탭 클릭 시 트리거됨 → 네비게이션 스택 초기화하여 루트로 이동
+                if !navigationPath.isEmpty {
+                    logger.info("⚙️ [SettingsView] 네비게이션 리셋 - 초기화면으로 복귀")
+                    navigationPath = NavigationPath()
+                }
             }
             .sheet(isPresented: $showShareLinkTest) {
                 ShareLinkTestView()

@@ -5,6 +5,9 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "RecordsView")
 
+/// 기록 탭 메인 뷰 - 저장된 여행 기록 목록 표시
+/// - NOTE: navigationPath로 상세 화면 네비게이션 관리
+/// - IMPORTANT: 탭 전환 시 resetTrigger로 초기화면 표시
 struct RecordsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \TravelRecord.createdAt, order: .reverse) private var records: [TravelRecord]
@@ -13,6 +16,15 @@ struct RecordsView: View {
     @State private var showDeleteConfirmation = false
     @State private var recordToDelete: TravelRecord?
     @State private var showHiddenRecords = false
+    @State private var navigationPath = NavigationPath()
+
+    /// 네비게이션 리셋 트리거 (부모에서 바인딩)
+    /// - NOTE: 탭 전환 또는 같은 탭 클릭 시 토글되어 navigationPath 초기화 유도
+    @Binding var resetTrigger: Bool
+
+    init(resetTrigger: Binding<Bool> = .constant(false)) {
+        _resetTrigger = resetTrigger
+    }
 
     /// 숨기지 않은 기록만 반환
     var visibleRecords: [TravelRecord] {
@@ -50,7 +62,7 @@ struct RecordsView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             VStack(spacing: 0) {
                 // Filter Chips
                 filterSection
@@ -66,8 +78,20 @@ struct RecordsView: View {
             .background(WanderColors.background)
             .navigationTitle("records.title".localized)
             .searchable(text: $searchText, prompt: "records.search".localized)
+            .navigationDestination(for: UUID.self) { recordId in
+                if let record = records.first(where: { $0.id == recordId }) {
+                    RecordDetailFullView(record: record)
+                }
+            }
             .onAppear {
                 logger.info("📚 [RecordsView] 나타남 - 전체 기록: \(records.count)개")
+            }
+            .onChange(of: resetTrigger) { _, _ in
+                // NOTE: 탭 전환 또는 같은 탭 클릭 시 트리거됨 → 네비게이션 스택 초기화하여 루트로 이동
+                if !navigationPath.isEmpty {
+                    logger.info("📚 [RecordsView] 네비게이션 리셋 - 초기화면으로 복귀")
+                    navigationPath = NavigationPath()
+                }
             }
             .confirmationDialog(
                 "records.delete.confirm".localized,
@@ -155,7 +179,7 @@ struct RecordsView: View {
         ScrollView {
             LazyVStack(spacing: WanderSpacing.space4) {
                 ForEach(filteredRecords) { record in
-                    NavigationLink(destination: RecordDetailFullView(record: record)) {
+                    NavigationLink(value: record.id) {
                         RecordListCard(record: record)
                     }
                     .buttonStyle(.plain)

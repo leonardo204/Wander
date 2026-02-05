@@ -8,7 +8,7 @@ private let logger = Logger(subsystem: "com.zerolive.wander", category: "Content
 
 /// 앱의 메인 컨테이너 뷰 - 탭 네비게이션 관리
 /// - NOTE: TabView의 .page 스타일로 스와이프 전환 지원
-/// - IMPORTANT: 상세 페이지 진입 시 탭 스와이프 비활성화 (isNavigationActive)
+/// - IMPORTANT: 탭 전환 시 이전 탭의 네비게이션 리셋하여 초기화면 표시
 struct ContentView: View {
     @State private var selectedTab = 0
 
@@ -17,8 +17,16 @@ struct ContentView: View {
     @State private var isNavigationActive = false
 
     /// 홈 탭 네비게이션 리셋 트리거
-    /// - NOTE: 같은 탭 클릭 시 값을 변경하여 HomeView에서 navigationPath 초기화 유도
+    /// - NOTE: 탭 전환 또는 같은 탭 클릭 시 값을 변경하여 HomeView에서 navigationPath 초기화 유도
     @State private var homeResetTrigger = false
+
+    /// 기록 탭 네비게이션 리셋 트리거
+    /// - NOTE: 탭 전환 또는 같은 탭 클릭 시 값을 변경하여 RecordsView에서 navigationPath 초기화 유도
+    @State private var recordsResetTrigger = false
+
+    /// 설정 탭 네비게이션 리셋 트리거
+    /// - NOTE: 탭 전환 또는 같은 탭 클릭 시 값을 변경하여 SettingsView에서 navigationPath 초기화 유도
+    @State private var settingsResetTrigger = false
 
     /// 탭바 높이 (safe area 포함)
     private let tabBarHeight: CGFloat = 49
@@ -34,10 +42,10 @@ struct ContentView: View {
                     )
                     .tag(0)
 
-                    RecordsView()
+                    RecordsView(resetTrigger: $recordsResetTrigger)
                         .tag(1)
 
-                    SettingsView()
+                    SettingsView(resetTrigger: $settingsResetTrigger)
                         .tag(2)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))  // 스와이프 전환, 인디케이터 숨김
@@ -66,6 +74,19 @@ struct ContentView: View {
         .onChange(of: selectedTab) { oldValue, newValue in
             let tabNames = ["홈", "기록", "설정"]
             logger.info("🚀 [ContentView] 탭 변경: \(tabNames[oldValue]) → \(tabNames[newValue])")
+
+            // IMPORTANT: 탭 전환 시 이전 탭의 네비게이션 리셋하여 초기화면 표시
+            // 다음에 해당 탭으로 돌아왔을 때 항상 초기화면이 보이도록 함
+            switch oldValue {
+            case 0:
+                homeResetTrigger.toggle()
+            case 1:
+                recordsResetTrigger.toggle()
+            case 2:
+                settingsResetTrigger.toggle()
+            default:
+                break
+            }
         }
         .onChange(of: isNavigationActive) { _, newValue in
             logger.info("🚀 [ContentView] 네비게이션 상태 변경: \(newValue ? "상세 페이지" : "홈")")
@@ -80,15 +101,14 @@ struct ContentView: View {
     private func handleSameTabTap(_ index: Int) {
         switch index {
         case 0:
-            // 홈 탭: navigationPath 초기화
             homeResetTrigger.toggle()
             logger.info("🚀 [ContentView] 홈 탭 네비게이션 리셋 요청")
         case 1:
-            // 기록 탭: 현재 NavigationStack 직접 관리 안 함 (추후 필요시 구현)
-            logger.info("🚀 [ContentView] 기록 탭 리셋 (미구현)")
+            recordsResetTrigger.toggle()
+            logger.info("🚀 [ContentView] 기록 탭 네비게이션 리셋 요청")
         case 2:
-            // 설정 탭: 보통 깊은 네비게이션 없음
-            logger.info("🚀 [ContentView] 설정 탭 리셋 (미구현)")
+            settingsResetTrigger.toggle()
+            logger.info("🚀 [ContentView] 설정 탭 네비게이션 리셋 요청")
         default:
             break
         }
