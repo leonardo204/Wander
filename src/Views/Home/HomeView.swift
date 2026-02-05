@@ -338,9 +338,19 @@ struct RecordCard: View {
                 .frame(height: 120)
 
             VStack(alignment: .leading, spacing: WanderSpacing.space1) {
-                Text(record.title)
-                    .font(WanderTypography.headline)
-                    .foregroundColor(WanderColors.textPrimary)
+                // 제목과 공유 배지
+                HStack(spacing: WanderSpacing.space2) {
+                    Text(record.title)
+                        .font(WanderTypography.headline)
+                        .foregroundColor(WanderColors.textPrimary)
+                        .lineLimit(1)
+
+                    if record.isShared {
+                        SharedBadgeView(size: .small)
+                    }
+
+                    Spacer()
+                }
 
                 Text(formatDateRange(start: record.startDate, end: record.endDate))
                     .font(WanderTypography.caption1)
@@ -501,6 +511,12 @@ struct MultiPhotoThumbnail: View {
     // NOTE: PHImageManager 요청 ID를 저장하여 뷰 소멸 시 취소 가능하게 함
 
     private func loadThumbnails() {
+        // 공유받은 기록인 경우 로컬 파일에서 로드
+        if record.isShared {
+            loadThumbnailsFromLocalFiles()
+            return
+        }
+
         let assetIds = Array(record.allPhotoAssetIdentifiers.prefix(maxPhotos))
 
         guard !assetIds.isEmpty else {
@@ -556,15 +572,31 @@ struct MultiPhotoThumbnail: View {
             }
             requestIDs.append(requestID)
         }
+    }
 
-        // 타임아웃 처리 - 2초 후에도 로딩 중이면 현재까지 로드된 이미지로 표시
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [self] in
-            if self.isLoading && !loadedImages.isEmpty {
-                let orderedImages = assetIds.compactMap { loadedImages[$0] }
-                self.thumbnails = orderedImages
-                self.isLoading = false
+    /// 공유받은 사진을 로컬 파일에서 로드
+    private func loadThumbnailsFromLocalFiles() {
+        let photos = Array(record.allPhotos.prefix(maxPhotos))
+
+        guard !photos.isEmpty else {
+            isLoading = false
+            return
+        }
+
+        var loadedImages: [UIImage] = []
+
+        for photo in photos {
+            if let localPath = photo.localFilePath {
+                let url = URL(fileURLWithPath: localPath)
+                if let data = try? Data(contentsOf: url),
+                   let image = UIImage(data: data) {
+                    loadedImages.append(image)
+                }
             }
         }
+
+        thumbnails = loadedImages
+        isLoading = false
     }
 }
 

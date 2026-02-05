@@ -665,6 +665,10 @@ options.deliveryMode = .fastFormat
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-05 | P2P 공유받은 사진 표시 버그 수정 - localFilePath 지원 추가 (HomeView, RecordsView) |
+| 2026-02-05 | P2P 공유 기록 placeCount/photoCount 저장 누락 버그 수정 |
+| 2026-02-05 | 홈 화면 RecordCard에 "공유됨" 배지 추가, 배지 디자인 개선 (더 진한 청록색) |
+| 2026-02-05 | P2P 공유 서비스에 상세 디버그 로깅 추가 (송신/수신 양쪽) |
 | 2026-02-05 | P2P 공유 UI 디자인 가이드 준수 적용 (WanderColors, WanderTypography, WanderSpacing 토큰) |
 | 2026-02-05 | CLAUDE.local.md에 디자인 토큰 사용 규칙 문서화 |
 | 2026-02-05 | P2P 기록 공유 기능 구현 (CloudKit, AES-256 암호화, Deep Link) |

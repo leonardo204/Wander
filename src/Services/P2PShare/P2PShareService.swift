@@ -225,6 +225,18 @@ final class P2PShareService: ObservableObject {
             key: encryptionKey
         )
 
+        // 복호화 결과 로깅
+        logger.info("📦 [saveSharedRecord] 복호화 완료")
+        logger.info("📦 - 제목: \(sharePackage.record.title)")
+        logger.info("📦 - days 수: \(sharePackage.record.days.count)")
+        logger.info("📦 - photoReferences 수: \(sharePackage.photoReferences.count)")
+        for (dayIndex, day) in sharePackage.record.days.enumerated() {
+            logger.info("📦 - Day \(dayIndex + 1): places 수 = \(day.places.count)")
+            for (placeIndex, place) in day.places.enumerated() {
+                logger.info("📦   - Place \(placeIndex + 1): '\(place.name)', photoIndices = \(place.photoIndices)")
+            }
+        }
+
         progress = 0.6
 
         // 5. 사진 로컬 저장
@@ -260,14 +272,26 @@ final class P2PShareService: ObservableObject {
         shareID: UUID,
         options: ShareOptions
     ) async throws -> SharePackage {
+        logger.info("📦 [createSharePackage] 패키지 생성 시작")
+        logger.info("📦 - 원본 record.days.count: \(record.days.count)")
+
         var photoReferences: [PhotoReference] = []
         var photoIndex = 0
 
-        // Days 변환
-        let sharedDays: [SharedTravelDay] = record.days.map { day in
-            let sharedPlaces: [SharedPlace] = day.places.map { place in
+        // Days 변환 (정렬 보장)
+        let sortedDays = record.days.sorted { $0.dayNumber < $1.dayNumber }
+        logger.info("📦 - 정렬된 days 수: \(sortedDays.count)")
+
+        let sharedDays: [SharedTravelDay] = sortedDays.map { day in
+            let sortedPlaces = day.places.sorted { $0.order < $1.order }
+            logger.info("📦 - Day \(day.dayNumber): places 수 = \(sortedPlaces.count)")
+
+            let sharedPlaces: [SharedPlace] = sortedPlaces.map { place in
+                let sortedPhotos = place.photos.sorted { $0.order < $1.order }
+                logger.info("📦   - Place '\(place.name)': photos 수 = \(sortedPhotos.count)")
+
                 // 각 장소의 사진 인덱스 수집
-                let placePhotoIndices: [Int] = place.photos.enumerated().compactMap { (_, photo) in
+                let placePhotoIndices: [Int] = sortedPhotos.compactMap { photo in
                     let index = photoIndex
                     photoReferences.append(PhotoReference(
                         index: index,
@@ -279,6 +303,8 @@ final class P2PShareService: ObservableObject {
                     photoIndex += 1
                     return index
                 }
+
+                logger.info("📦   - Place '\(place.name)': photoIndices = \(placePhotoIndices)")
 
                 return SharedPlace(
                     name: place.name,
@@ -308,6 +334,10 @@ final class P2PShareService: ObservableObject {
             days: sharedDays
         )
 
+        logger.info("📦 [createSharePackage] 패키지 생성 완료")
+        logger.info("📦 - 총 days: \(sharedDays.count)")
+        logger.info("📦 - 총 photoReferences: \(photoReferences.count)")
+
         return SharePackage(
             shareID: shareID,
             expiresAt: options.linkExpiration.expirationDate,
@@ -327,7 +357,7 @@ final class P2PShareService: ObservableObject {
 
         for day in record.days {
             for place in day.places {
-                for (index, photo) in place.photos.enumerated() {
+                for photo in place.photos {
                     guard let assetIdentifier = photo.assetIdentifier else { continue }
 
                     // PHAsset에서 이미지 로드
@@ -392,8 +422,13 @@ final class P2PShareService: ObservableObject {
 
     /// 사진을 로컬 Documents 디렉토리에 저장
     private func savePhotosLocally(from urls: [URL], shareID: String) async throws -> [URL] {
+        logger.info("📸 [savePhotosLocally] 사진 로컬 저장 시작")
+        logger.info("📸 - 입력 URL 수: \(urls.count)")
+
         let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let shareDir = documentsDir.appendingPathComponent("SharedRecords/\(shareID)")
+
+        logger.info("📸 - 저장 경로: \(shareDir.path)")
 
         try FileManager.default.createDirectory(at: shareDir, withIntermediateDirectories: true)
 
@@ -407,11 +442,13 @@ final class P2PShareService: ObservableObject {
                 let data = try Data(contentsOf: url)
                 try data.write(to: destURL)
                 savedURLs.append(destURL)
+                logger.info("📸 - 저장 완료 [\(index)]: \(destURL.lastPathComponent) (\(data.count) bytes)")
             } catch {
-                logger.error("❌ 사진 저장 실패: \(error.localizedDescription)")
+                logger.error("❌ 사진 저장 실패 [\(index)]: \(error.localizedDescription)")
             }
         }
 
+        logger.info("📸 [savePhotosLocally] 완료 - 저장된 사진: \(savedURLs.count)개")
         return savedURLs
     }
 
@@ -422,6 +459,11 @@ final class P2PShareService: ObservableObject {
         shareID: String,
         modelContext: ModelContext
     ) async throws -> TravelRecord {
+        logger.info("📦 [convertToTravelRecord] 변환 시작")
+        logger.info("📦 - 패키지 days 수: \(package.record.days.count)")
+        logger.info("📦 - 패키지 photoReferences 수: \(package.photoReferences.count)")
+        logger.info("📦 - 다운로드된 사진 URL 수: \(photoURLs.count)")
+
         let record = TravelRecord(
             title: package.record.title,
             startDate: package.record.startDate,
@@ -435,11 +477,19 @@ final class P2PShareService: ObservableObject {
         record.sharedAt = Date()
         record.originalShareID = UUID(uuidString: shareID)
 
+        // 통계 카운터
+        var totalPlaceCount = 0
+        var totalPhotoCount = 0
+
         // Days 변환
-        for sharedDay in package.record.days {
+        for (dayIndex, sharedDay) in package.record.days.enumerated() {
+            logger.info("📦 - Day \(dayIndex + 1): places 수 = \(sharedDay.places.count)")
+
             let day = TravelDay(date: sharedDay.date, dayNumber: sharedDay.dayNumber)
 
-            for sharedPlace in sharedDay.places {
+            for (placeIndex, sharedPlace) in sharedDay.places.enumerated() {
+                logger.info("📦   - Place \(placeIndex + 1): \(sharedPlace.name), photoIndices = \(sharedPlace.photoIndices)")
+
                 let coordinate = CLLocationCoordinate2D(
                     latitude: sharedPlace.latitude,
                     longitude: sharedPlace.longitude
@@ -452,8 +502,10 @@ final class P2PShareService: ObservableObject {
                 )
                 place.endTime = sharedPlace.endTime
                 place.activityLabel = sharedPlace.activityLabel
+                place.order = placeIndex
 
                 // 사진 연결
+                var placePhotoCount = 0
                 for photoIndex in sharedPlace.photoIndices {
                     if photoIndex < photoURLs.count {
                         let photoRef = package.photoReferences.first { $0.index == photoIndex }
@@ -465,18 +517,35 @@ final class P2PShareService: ObservableObject {
                         )
                         // 로컬 파일 경로 저장
                         photoItem.localFilePath = photoURLs[photoIndex].path
+                        photoItem.order = placePhotoCount
                         place.photos.append(photoItem)
+                        placePhotoCount += 1
+                        totalPhotoCount += 1
+                    } else {
+                        logger.warning("📦   ⚠️ photoIndex \(photoIndex) out of bounds (photoURLs.count = \(photoURLs.count))")
                     }
                 }
 
                 day.places.append(place)
+                totalPlaceCount += 1
             }
 
             record.days.append(day)
         }
 
+        // placeCount, photoCount 업데이트
+        record.placeCount = totalPlaceCount
+        record.photoCount = totalPhotoCount
+
+        logger.info("📦 [convertToTravelRecord] 변환 완료")
+        logger.info("📦 - 생성된 days: \(record.days.count)")
+        logger.info("📦 - 생성된 places: \(totalPlaceCount)")
+        logger.info("📦 - 생성된 photos: \(totalPhotoCount)")
+
         modelContext.insert(record)
         try modelContext.save()
+
+        logger.info("📦 [convertToTravelRecord] SwiftData 저장 완료")
 
         return record
     }

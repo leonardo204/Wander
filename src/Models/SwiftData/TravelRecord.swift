@@ -104,6 +104,25 @@ final class TravelRecord {
         return nil
     }
 
+    /// 첫 번째 사진 (공유받은 사진 포함)
+    var firstPhoto: PhotoItem? {
+        let sortedDays = days.sorted { $0.dayNumber < $1.dayNumber }
+        for day in sortedDays {
+            let sortedPlaces = day.places.sorted { $0.order < $1.order }
+            for place in sortedPlaces {
+                if let firstPhoto = place.photos.sorted(by: { $0.order < $1.order }).first {
+                    return firstPhoto
+                }
+            }
+        }
+        return nil
+    }
+
+    /// 첫 번째 사진의 localFilePath 반환 (공유받은 사진의 썸네일용)
+    var firstPhotoLocalPath: String? {
+        firstPhoto?.localFilePath
+    }
+
     /// 모든 사진의 assetIdentifier 목록 반환 (공유받은 사진 제외)
     var allPhotoAssetIdentifiers: [String] {
         var identifiers: [String] = []
@@ -116,6 +135,20 @@ final class TravelRecord {
             }
         }
         return identifiers
+    }
+
+    /// 모든 사진 목록 반환 (공유받은 사진 포함)
+    var allPhotos: [PhotoItem] {
+        var photos: [PhotoItem] = []
+        let sortedDays = days.sorted { $0.dayNumber < $1.dayNumber }
+        for day in sortedDays {
+            let sortedPlaces = day.places.sorted { $0.order < $1.order }
+            for place in sortedPlaces {
+                let sortedPhotos = place.photos.sorted { $0.order < $1.order }
+                photos.append(contentsOf: sortedPhotos)
+            }
+        }
+        return photos
     }
 
     // MARK: - Wander Intelligence Computed Properties

@@ -434,6 +434,12 @@ struct RecordListCard: View {
     }
 
     private func loadThumbnails() {
+        // 공유받은 기록인 경우 로컬 파일에서 로드
+        if record.isShared {
+            loadThumbnailsFromLocalFiles()
+            return
+        }
+
         let assetIds = Array(record.allPhotoAssetIdentifiers.prefix(4))
         guard !assetIds.isEmpty else { return }
 
@@ -469,6 +475,26 @@ struct RecordListCard: View {
             }
             requestIDs.append(requestID)
         }
+    }
+
+    /// 공유받은 사진을 로컬 파일에서 로드
+    private func loadThumbnailsFromLocalFiles() {
+        let photos = Array(record.allPhotos.prefix(4))
+        guard !photos.isEmpty else { return }
+
+        var loadedImages: [UIImage] = []
+
+        for photo in photos {
+            if let localPath = photo.localFilePath {
+                let url = URL(fileURLWithPath: localPath)
+                if let data = try? Data(contentsOf: url),
+                   let image = UIImage(data: data) {
+                    loadedImages.append(image)
+                }
+            }
+        }
+
+        thumbnails = loadedImages
     }
 }
 
@@ -1105,12 +1131,22 @@ struct PlaceRow: View {
     }
 
     private func loadThumbnails() {
-        let assetIds = place.photos.prefix(4).compactMap { $0.assetIdentifier }
+        let photos = Array(place.photos.prefix(4))
+        guard !photos.isEmpty else { return }
+
+        // 공유받은 사진(localFilePath 있음)인지 확인
+        let hasLocalFiles = photos.contains { $0.localFilePath != nil }
+        if hasLocalFiles {
+            loadThumbnailsFromLocalFiles(photos)
+            return
+        }
+
+        let assetIds = photos.compactMap { $0.assetIdentifier }
         guard !assetIds.isEmpty else { return }
 
         cancelAllRequests()
 
-        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: Array(assetIds), options: nil)
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: assetIds, options: nil)
 
         let options = PHImageRequestOptions()
         // Use .fastFormat to ensure single callback
@@ -1139,6 +1175,23 @@ struct PlaceRow: View {
             }
             requestIDs.append(requestID)
         }
+    }
+
+    /// 공유받은 사진을 로컬 파일에서 로드
+    private func loadThumbnailsFromLocalFiles(_ photos: [PhotoItem]) {
+        var loadedImages: [UIImage] = []
+
+        for photo in photos {
+            if let localPath = photo.localFilePath {
+                let url = URL(fileURLWithPath: localPath)
+                if let data = try? Data(contentsOf: url),
+                   let image = UIImage(data: data) {
+                    loadedImages.append(image)
+                }
+            }
+        }
+
+        thumbnails = loadedImages
     }
 }
 
@@ -1318,7 +1371,17 @@ struct PlaceDetailSheet: View {
     }
 
     private func loadPhotos() {
-        let assetIds = place.photos.compactMap { $0.assetIdentifier }
+        let placePhotos = place.photos.sorted { $0.order < $1.order }
+        guard !placePhotos.isEmpty else { return }
+
+        // 공유받은 사진(localFilePath 있음)인지 확인
+        let hasLocalFiles = placePhotos.contains { $0.localFilePath != nil }
+        if hasLocalFiles {
+            loadPhotosFromLocalFiles(placePhotos)
+            return
+        }
+
+        let assetIds = placePhotos.compactMap { $0.assetIdentifier }
         guard !assetIds.isEmpty else { return }
 
         cancelAllRequests()
@@ -1351,6 +1414,23 @@ struct PlaceDetailSheet: View {
             }
             requestIDs.append(requestID)
         }
+    }
+
+    /// 공유받은 사진을 로컬 파일에서 로드
+    private func loadPhotosFromLocalFiles(_ placePhotos: [PhotoItem]) {
+        var loadedImages: [UIImage] = []
+
+        for photo in placePhotos {
+            if let localPath = photo.localFilePath {
+                let url = URL(fileURLWithPath: localPath)
+                if let data = try? Data(contentsOf: url),
+                   let image = UIImage(data: data) {
+                    loadedImages.append(image)
+                }
+            }
+        }
+
+        photos = loadedImages
     }
 }
 
@@ -2901,10 +2981,15 @@ struct RecordPhotosSheet: View {
         record.allPhotoAssetIdentifiers
     }
 
+    /// 공유받은 기록인지 확인 (사진 로드 방식 결정)
+    private var hasPhotosToLoad: Bool {
+        record.isShared ? !record.allPhotos.isEmpty : !allPhotoAssetIds.isEmpty
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                if photos.isEmpty && !allPhotoAssetIds.isEmpty {
+                if photos.isEmpty && hasPhotosToLoad {
                     VStack(spacing: WanderSpacing.space4) {
                         ProgressView()
                         Text("사진 불러오는 중...")
@@ -2973,6 +3058,12 @@ struct RecordPhotosSheet: View {
     }
 
     private func loadPhotos() {
+        // 공유받은 기록인 경우 로컬 파일에서 로드
+        if record.isShared {
+            loadPhotosFromLocalFiles()
+            return
+        }
+
         guard !allPhotoAssetIds.isEmpty else { return }
 
         cancelAllRequests()
@@ -3006,6 +3097,23 @@ struct RecordPhotosSheet: View {
             }
             requestIDs.append(requestID)
         }
+    }
+
+    /// 공유받은 사진을 로컬 파일에서 로드
+    private func loadPhotosFromLocalFiles() {
+        var loadedImages: [UIImage] = []
+
+        for photo in record.allPhotos {
+            if let localPath = photo.localFilePath {
+                let url = URL(fileURLWithPath: localPath)
+                if let data = try? Data(contentsOf: url),
+                   let image = UIImage(data: data) {
+                    loadedImages.append(image)
+                }
+            }
+        }
+
+        photos = loadedImages
     }
 }
 

@@ -39,25 +39,29 @@ struct SharedBadgeView: View {
         }
     }
 
+    /// 더 진한 청록색 - 공유 배지용
+    private static let sharedBadgeColor = Color(red: 0.2, green: 0.6, blue: 0.7)  // #339CB3 계열
+
     var body: some View {
         HStack(spacing: WanderSpacing.space1) {
             Image(systemName: "link")
-                .font(.system(size: size.iconSize, weight: .semibold))
+                .font(.system(size: size.iconSize, weight: .bold))
 
             Text("공유됨")
                 .font(size.fontSize)
-                .fontWeight(.medium)
+                .fontWeight(.semibold)
         }
         .foregroundStyle(.white)
         .padding(size.padding)
         .background(
             LinearGradient(
-                colors: [WanderColors.primary, WanderColors.primary.opacity(0.8)],
+                colors: [Self.sharedBadgeColor, Self.sharedBadgeColor.opacity(0.85)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         )
         .clipShape(Capsule())
+        .shadow(color: Self.sharedBadgeColor.opacity(0.3), radius: 2, x: 0, y: 1)
     }
 }
 
