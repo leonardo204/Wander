@@ -5,283 +5,376 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "PhotoGridView")
 
-/// 사진 그리드 뷰 - LazyVGrid 기반, Swipe 선택 지원
-struct PhotoGridView: View {
-    // MARK: - Properties
+// MARK: - SwiftUI Wrapper
 
+/// UICollectionView 기반 사진 그리드 뷰
+/// - UIPanGestureRecognizer로 정확한 swipe 선택 지원
+/// - indexPathForItem(at:)으로 스크롤 위치 자동 반영
+struct PhotoGridView: View {
     let assets: [PHAsset]
-    @Binding var selectedAssets: Set<String>  // PHAsset.localIdentifier 저장
+    @Binding var selectedAssets: Set<String>
     let thumbnailSize: CGSize
 
-    @StateObject private var thumbnailLoader = ThumbnailLoader()
-
-    // Swipe 선택용 상태
-    @State private var isDragging = false
-    @State private var dragStartIndex: Int?
-    @State private var dragCurrentIndex: Int?
-    @State private var dragSelectionMode: Bool = true  // true: 선택 모드, false: 해제 모드
-
-    // 스크롤 오프셋 추적 (드래그 선택 시 필요)
-    @State private var scrollOffset: CGFloat = 0
-
-    // 그리드 레이아웃 (4열)
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 4)
-    private let spacing: CGFloat = 2
-
-    // MARK: - Body
-
     var body: some View {
-        GeometryReader { outerGeometry in
-            let itemSize = (outerGeometry.size.width - spacing * 3) / 4
-
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: spacing) {
-                    ForEach(Array(assets.enumerated()), id: \.element.localIdentifier) { index, asset in
-                        PhotoThumbnailView(
-                            asset: asset,
-                            isSelected: selectedAssets.contains(asset.localIdentifier),
-                            size: CGSize(width: itemSize, height: itemSize),
-                            thumbnailLoader: thumbnailLoader
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            toggleSelection(asset)
-                        }
-                    }
-                }
-                .padding(.horizontal, 2)
-                // 스크롤 오프셋 추적용 배경
-                .background(
-                    GeometryReader { innerGeometry in
-                        Color.clear
-                            .preference(
-                                key: ScrollOffsetPreferenceKey.self,
-                                value: outerGeometry.frame(in: .global).minY - innerGeometry.frame(in: .global).minY
-                            )
-                    }
-                )
-            }
-            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-                scrollOffset = offset
-            }
-            .gesture(
-                DragGesture(minimumDistance: 10)
-                    .onChanged { value in
-                        handleDragChanged(value: value, itemSize: itemSize, gridWidth: outerGeometry.size.width)
-                    }
-                    .onEnded { _ in
-                        handleDragEnded()
-                    }
-            )
-        }
-    }
-
-    // MARK: - Selection Logic
-
-    private func toggleSelection(_ asset: PHAsset) {
-        let id = asset.localIdentifier
-        if selectedAssets.contains(id) {
-            selectedAssets.remove(id)
-            logger.info("📷 [PhotoGridView] 선택 해제: \(id.prefix(8))...")
-        } else {
-            selectedAssets.insert(id)
-            logger.info("📷 [PhotoGridView] 선택: \(id.prefix(8))...")
-        }
-    }
-
-    // MARK: - Drag Selection
-
-    private func handleDragChanged(value: DragGesture.Value, itemSize: CGFloat, gridWidth: CGFloat) {
-        let location = value.location
-        let startLocation = value.startLocation
-
-        // 현재 드래그 위치의 인덱스 계산
-        let currentIndex = indexAt(location: location, itemSize: itemSize, gridWidth: gridWidth)
-
-        // 드래그 시작 시
-        if !isDragging {
-            isDragging = true
-            dragStartIndex = indexAt(location: startLocation, itemSize: itemSize, gridWidth: gridWidth)
-
-            // 시작 위치의 선택 상태에 따라 모드 결정
-            if let startIdx = dragStartIndex, startIdx < assets.count {
-                let startAsset = assets[startIdx]
-                dragSelectionMode = !selectedAssets.contains(startAsset.localIdentifier)
-            }
-        }
-
-        // 유효한 인덱스인 경우 선택/해제
-        if let currentIdx = currentIndex, currentIdx < assets.count {
-            if dragCurrentIndex != currentIdx {
-                dragCurrentIndex = currentIdx
-                let asset = assets[currentIdx]
-                let id = asset.localIdentifier
-
-                if dragSelectionMode {
-                    if !selectedAssets.contains(id) {
-                        selectedAssets.insert(id)
-                    }
-                } else {
-                    if selectedAssets.contains(id) {
-                        selectedAssets.remove(id)
-                    }
-                }
-            }
-        }
-    }
-
-    private func handleDragEnded() {
-        isDragging = false
-        dragStartIndex = nil
-        dragCurrentIndex = nil
-        logger.info("📷 [PhotoGridView] 드래그 선택 완료: \(selectedAssets.count)장")
-    }
-
-    /// 화면 좌표에서 그리드 인덱스 계산
-    /// - 스크롤 오프셋을 고려하여 실제 컨텐츠 위치 계산
-    private func indexAt(location: CGPoint, itemSize: CGFloat, gridWidth: CGFloat) -> Int? {
-        guard location.x >= 0 else { return nil }
-
-        let adjustedItemSize = itemSize + spacing
-
-        // 스크롤 오프셋을 더해 실제 컨텐츠 위치 계산
-        let contentY = location.y + scrollOffset
-
-        guard contentY >= 0 else { return nil }
-
-        let col = Int(location.x / adjustedItemSize)
-        let row = Int(contentY / adjustedItemSize)
-
-        guard col >= 0, col < 4, row >= 0 else { return nil }
-
-        let index = row * 4 + col
-        return index < assets.count ? index : nil
+        PhotoGridCollectionView(
+            assets: assets,
+            selectedAssets: $selectedAssets,
+            thumbnailSize: thumbnailSize
+        )
     }
 }
 
-// MARK: - Photo Thumbnail View
+// MARK: - UIViewRepresentable
 
-struct PhotoThumbnailView: View {
-    let asset: PHAsset
-    let isSelected: Bool
-    let size: CGSize
-    @ObservedObject var thumbnailLoader: ThumbnailLoader
+struct PhotoGridCollectionView: UIViewRepresentable {
+    let assets: [PHAsset]
+    @Binding var selectedAssets: Set<String>
+    let thumbnailSize: CGSize
 
-    @State private var thumbnail: UIImage?
-
-    var body: some View {
-        ZStack(alignment: .topTrailing) {
-            // 썸네일 이미지
-            if let image = thumbnail {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: size.width, height: size.height)
-                    .clipped()
-            } else {
-                Rectangle()
-                    .fill(WanderColors.surface)
-                    .frame(width: size.width, height: size.height)
-                    .overlay(
-                        ProgressView()
-                            .tint(WanderColors.textTertiary)
-                    )
-            }
-
-            // 선택 표시
-            if isSelected {
-                // 선택된 상태 - 체크마크
-                Circle()
-                    .fill(WanderColors.primary)
-                    .frame(width: 24, height: 24)
-                    .overlay(
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
-                    )
-                    .padding(6)
-
-                // 선택 테두리
-                RoundedRectangle(cornerRadius: 0)
-                    .stroke(WanderColors.primary, lineWidth: 3)
-                    .frame(width: size.width, height: size.height)
-            } else {
-                // 미선택 상태 - 빈 원
-                Circle()
-                    .stroke(Color.white.opacity(0.8), lineWidth: 2)
-                    .frame(width: 24, height: 24)
-                    .background(
-                        Circle()
-                            .fill(Color.black.opacity(0.3))
-                    )
-                    .padding(6)
-            }
-        }
-        .frame(width: size.width, height: size.height)
-        .task(id: asset.localIdentifier) {
-            thumbnail = await thumbnailLoader.loadThumbnail(for: asset, targetSize: CGSize(width: size.width * 2, height: size.height * 2))
-        }
-    }
-}
-
-// MARK: - Thumbnail Loader
-
-/// 썸네일 로딩 및 캐싱 관리
-@MainActor
-class ThumbnailLoader: ObservableObject {
-    private let imageManager = PHCachingImageManager()
-    private var cache = NSCache<NSString, UIImage>()
-
-    init() {
-        cache.countLimit = 500  // 최대 500개 캐시
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
     }
 
-    func loadThumbnail(for asset: PHAsset, targetSize: CGSize) async -> UIImage? {
-        let cacheKey = NSString(string: asset.localIdentifier)
+    func makeUIView(context: Context) -> UICollectionView {
+        let layout = UICollectionViewFlowLayout()
+        layout.minimumInteritemSpacing = 2
+        layout.minimumLineSpacing = 2
 
-        // 캐시 확인
-        if let cached = cache.object(forKey: cacheKey) {
-            return cached
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = UIColor(WanderColors.background)
+        collectionView.delegate = context.coordinator
+        collectionView.dataSource = context.coordinator
+        collectionView.register(PhotoGridCell.self, forCellWithReuseIdentifier: PhotoGridCell.identifier)
+
+        // Swipe 선택용 Pan Gesture
+        let panGesture = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePanGesture(_:)))
+        panGesture.delegate = context.coordinator
+        // 기본 스크롤 제스처가 실패해야 pan 제스처 활성화
+        collectionView.panGestureRecognizer.require(toFail: panGesture)
+        collectionView.addGestureRecognizer(panGesture)
+
+        context.coordinator.collectionView = collectionView
+
+        return collectionView
+    }
+
+    func updateUIView(_ collectionView: UICollectionView, context: Context) {
+        context.coordinator.parent = self
+        context.coordinator.assets = assets
+        context.coordinator.selectedAssets = selectedAssets
+
+        // 레이아웃 업데이트
+        if let layout = collectionView.collectionViewLayout as? UICollectionViewFlowLayout {
+            let width = collectionView.bounds.width
+            let itemWidth = (width - 6) / 4  // 4열, 3개의 간격
+            layout.itemSize = CGSize(width: itemWidth, height: itemWidth)
         }
 
-        // 새로 로드
-        return await withCheckedContinuation { continuation in
+        collectionView.reloadData()
+    }
+
+    // MARK: - Coordinator
+
+    class Coordinator: NSObject, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate {
+        var parent: PhotoGridCollectionView
+        var assets: [PHAsset] = []
+        var selectedAssets: Set<String> = []
+        weak var collectionView: UICollectionView?
+
+        // 드래그 선택 상태
+        private var isDragging = false
+        private var dragStartIndexPath: IndexPath?
+        private var dragSelectionMode: Bool = true  // true: 선택, false: 해제
+        private var lastProcessedIndexPath: IndexPath?
+
+        private let imageManager = PHCachingImageManager()
+        private var thumbnailCache = NSCache<NSString, UIImage>()
+
+        init(_ parent: PhotoGridCollectionView) {
+            self.parent = parent
+            self.assets = parent.assets
+            self.selectedAssets = parent.selectedAssets
+            thumbnailCache.countLimit = 500
+        }
+
+        // MARK: - UICollectionViewDataSource
+
+        func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+            return assets.count
+        }
+
+        func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PhotoGridCell.identifier, for: indexPath) as! PhotoGridCell
+            let asset = assets[indexPath.item]
+            let isSelected = selectedAssets.contains(asset.localIdentifier)
+
+            cell.configure(isSelected: isSelected)
+            loadThumbnail(for: asset, into: cell)
+
+            return cell
+        }
+
+        // MARK: - UICollectionViewDelegate
+
+        func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+            let asset = assets[indexPath.item]
+            let id = asset.localIdentifier
+
+            if selectedAssets.contains(id) {
+                selectedAssets.remove(id)
+                parent.selectedAssets.remove(id)
+                logger.info("📷 [PhotoGridView] 선택 해제: \(id.prefix(8))...")
+            } else {
+                selectedAssets.insert(id)
+                parent.selectedAssets.insert(id)
+                logger.info("📷 [PhotoGridView] 선택: \(id.prefix(8))...")
+            }
+
+            collectionView.reloadItems(at: [indexPath])
+        }
+
+        // MARK: - UICollectionViewDelegateFlowLayout
+
+        func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+            let width = collectionView.bounds.width
+            let itemWidth = (width - 6) / 4
+            return CGSize(width: itemWidth, height: itemWidth)
+        }
+
+        func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+            return UIEdgeInsets(top: 0, left: 0, bottom: 80, right: 0)  // 하단 버튼 공간
+        }
+
+        // MARK: - Pan Gesture Handler
+
+        @objc func handlePanGesture(_ gesture: UIPanGestureRecognizer) {
+            guard let collectionView = collectionView else { return }
+
+            let location = gesture.location(in: collectionView)
+
+            switch gesture.state {
+            case .began:
+                // 드래그 시작
+                isDragging = true
+                dragStartIndexPath = collectionView.indexPathForItem(at: location)
+                lastProcessedIndexPath = nil
+
+                // 시작 위치의 선택 상태로 모드 결정
+                if let startIndexPath = dragStartIndexPath {
+                    let asset = assets[startIndexPath.item]
+                    dragSelectionMode = !selectedAssets.contains(asset.localIdentifier)
+                    processSelection(at: startIndexPath)
+                }
+                logger.info("📷 [PhotoGridView] 드래그 시작 - 모드: \(self.dragSelectionMode ? "선택" : "해제")")
+
+            case .changed:
+                // 드래그 중 - 현재 위치의 셀 선택/해제
+                if let currentIndexPath = collectionView.indexPathForItem(at: location) {
+                    if currentIndexPath != lastProcessedIndexPath {
+                        processSelection(at: currentIndexPath)
+                        lastProcessedIndexPath = currentIndexPath
+                    }
+                }
+
+            case .ended, .cancelled, .failed:
+                // 드래그 종료
+                isDragging = false
+                dragStartIndexPath = nil
+                lastProcessedIndexPath = nil
+                logger.info("📷 [PhotoGridView] 드래그 완료: \(self.selectedAssets.count)장 선택됨")
+
+            default:
+                break
+            }
+        }
+
+        private func processSelection(at indexPath: IndexPath) {
+            guard indexPath.item < assets.count else { return }
+
+            let asset = assets[indexPath.item]
+            let id = asset.localIdentifier
+
+            if dragSelectionMode {
+                // 선택 모드
+                if !selectedAssets.contains(id) {
+                    selectedAssets.insert(id)
+                    parent.selectedAssets.insert(id)
+                }
+            } else {
+                // 해제 모드
+                if selectedAssets.contains(id) {
+                    selectedAssets.remove(id)
+                    parent.selectedAssets.remove(id)
+                }
+            }
+
+            collectionView?.reloadItems(at: [indexPath])
+        }
+
+        // MARK: - UIGestureRecognizerDelegate
+
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            return false
+        }
+
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard let panGesture = gestureRecognizer as? UIPanGestureRecognizer,
+                  let collectionView = collectionView else {
+                return true
+            }
+
+            let velocity = panGesture.velocity(in: collectionView)
+            // 수평 속도가 수직 속도보다 클 때만 swipe 선택 활성화
+            return abs(velocity.x) > abs(velocity.y)
+        }
+
+        // MARK: - Thumbnail Loading
+
+        private func loadThumbnail(for asset: PHAsset, into cell: PhotoGridCell) {
+            let cacheKey = NSString(string: asset.localIdentifier)
+
+            // 캐시 확인
+            if let cached = thumbnailCache.object(forKey: cacheKey) {
+                cell.setImage(cached)
+                return
+            }
+
+            // 새로 로드
             let options = PHImageRequestOptions()
             options.deliveryMode = .opportunistic
             options.resizeMode = .fast
             options.isNetworkAccessAllowed = true
+
+            let targetSize = CGSize(width: 200, height: 200)
 
             imageManager.requestImage(
                 for: asset,
                 targetSize: targetSize,
                 contentMode: .aspectFill,
                 options: options
-            ) { [weak self] image, info in
-                if let image = image {
-                    self?.cache.setObject(image, forKey: cacheKey)
-                }
-                // 최종 이미지만 반환 (degraded가 아닌 경우)
-                let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
-                if !isDegraded {
-                    continuation.resume(returning: image)
+            ) { [weak self, weak cell] image, info in
+                guard let image = image else { return }
+
+                self?.thumbnailCache.setObject(image, forKey: cacheKey)
+
+                DispatchQueue.main.async {
+                    cell?.setImage(image)
                 }
             }
         }
     }
-
-    func clearCache() {
-        cache.removeAllObjects()
-    }
 }
 
-// MARK: - Preference Key
+// MARK: - Photo Grid Cell
 
-/// 스크롤 오프셋 추적용 PreferenceKey
-struct ScrollOffsetPreferenceKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
+class PhotoGridCell: UICollectionViewCell {
+    static let identifier = "PhotoGridCell"
 
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
+    private let imageView: UIImageView = {
+        let iv = UIImageView()
+        iv.contentMode = .scaleAspectFill
+        iv.clipsToBounds = true
+        iv.backgroundColor = UIColor(WanderColors.surface)
+        return iv
+    }()
+
+    private let checkmarkView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(WanderColors.primary)
+        view.layer.cornerRadius = 12
+        return view
+    }()
+
+    private let checkmarkIcon: UIImageView = {
+        let iv = UIImageView()
+        iv.image = UIImage(systemName: "checkmark")
+        iv.tintColor = .white
+        iv.contentMode = .scaleAspectFit
+        return iv
+    }()
+
+    private let emptyCircleView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+        view.layer.cornerRadius = 12
+        view.layer.borderWidth = 2
+        view.layer.borderColor = UIColor.white.withAlphaComponent(0.8).cgColor
+        return view
+    }()
+
+    private let selectionBorder: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.layer.borderWidth = 3
+        view.layer.borderColor = UIColor(WanderColors.primary).cgColor
+        view.isHidden = true
+        return view
+    }()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupViews()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupViews() {
+        contentView.addSubview(imageView)
+        contentView.addSubview(selectionBorder)
+        contentView.addSubview(emptyCircleView)
+        contentView.addSubview(checkmarkView)
+        checkmarkView.addSubview(checkmarkIcon)
+
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        selectionBorder.translatesAutoresizingMaskIntoConstraints = false
+        checkmarkView.translatesAutoresizingMaskIntoConstraints = false
+        checkmarkIcon.translatesAutoresizingMaskIntoConstraints = false
+        emptyCircleView.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+
+            selectionBorder.topAnchor.constraint(equalTo: contentView.topAnchor),
+            selectionBorder.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            selectionBorder.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            selectionBorder.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+
+            checkmarkView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
+            checkmarkView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -6),
+            checkmarkView.widthAnchor.constraint(equalToConstant: 24),
+            checkmarkView.heightAnchor.constraint(equalToConstant: 24),
+
+            checkmarkIcon.centerXAnchor.constraint(equalTo: checkmarkView.centerXAnchor),
+            checkmarkIcon.centerYAnchor.constraint(equalTo: checkmarkView.centerYAnchor),
+            checkmarkIcon.widthAnchor.constraint(equalToConstant: 12),
+            checkmarkIcon.heightAnchor.constraint(equalToConstant: 12),
+
+            emptyCircleView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
+            emptyCircleView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -6),
+            emptyCircleView.widthAnchor.constraint(equalToConstant: 24),
+            emptyCircleView.heightAnchor.constraint(equalToConstant: 24),
+        ])
+    }
+
+    func configure(isSelected: Bool) {
+        checkmarkView.isHidden = !isSelected
+        emptyCircleView.isHidden = isSelected
+        selectionBorder.isHidden = !isSelected
+    }
+
+    func setImage(_ image: UIImage?) {
+        imageView.image = image
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        imageView.image = nil
+        configure(isSelected: false)
     }
 }
 
