@@ -66,3 +66,4 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: Info.plist
+        CODE_SIGN_ENTITLEMENTS: Wander.entitlements

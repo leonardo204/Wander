@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.com.zerolive.wander</string>
+	</array>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudKit</string>
+	</array>
+	<!-- TODO: Universal Link 활성화 시 주석 해제
+	     도메인에 AASA 파일 호스팅 필요: https://wander.zerolive.com/.well-known/apple-app-site-association
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:wander.zerolive.com</string>
+	</array>
+	-->
+</dict>
+</plist>

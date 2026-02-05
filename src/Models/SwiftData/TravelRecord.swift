@@ -15,6 +15,20 @@ final class TravelRecord {
     var updatedAt: Date
     var isHidden: Bool = false
 
+    // MARK: - P2P Share Fields (공유 관련)
+
+    /// 공유받은 기록 여부
+    var isShared: Bool = false
+
+    /// 공유자 이름 (선택적)
+    var sharedFrom: String?
+
+    /// 공유받은 시간
+    var sharedAt: Date?
+
+    /// 원본 공유 ID (중복 저장 방지용)
+    var originalShareID: UUID?
+
     // MARK: - Wander Intelligence Data (JSON 직렬화)
 
     /// 여행 점수 데이터 (JSON)
@@ -90,7 +104,7 @@ final class TravelRecord {
         return nil
     }
 
-    /// 모든 사진의 assetIdentifier 목록 반환
+    /// 모든 사진의 assetIdentifier 목록 반환 (공유받은 사진 제외)
     var allPhotoAssetIdentifiers: [String] {
         var identifiers: [String] = []
         let sortedDays = days.sorted { $0.dayNumber < $1.dayNumber }
@@ -98,7 +112,7 @@ final class TravelRecord {
             let sortedPlaces = day.places.sorted { $0.order < $1.order }
             for place in sortedPlaces {
                 let sortedPhotos = place.photos.sorted { $0.order < $1.order }
-                identifiers.append(contentsOf: sortedPhotos.map { $0.assetIdentifier })
+                identifiers.append(contentsOf: sortedPhotos.compactMap { $0.assetIdentifier })
             }
         }
         return identifiers

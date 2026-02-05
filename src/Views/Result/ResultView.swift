@@ -17,6 +17,11 @@ struct ResultView: View {
     @State private var isSaved = false
     @State private var savedRecord: TravelRecord?
 
+    // P2P 공유
+    @State private var showP2PShareOptions = false
+    @State private var pendingP2PShareResult: P2PShareResult?  // onDismiss에서 사용할 임시 저장소
+    @State private var p2pShareResultWrapper: P2PShareResultWrapper?
+
     init(result: AnalysisResult, selectedAssets: [PHAsset], onSaveComplete: ((TravelRecord) -> Void)? = nil, onDismiss: (() -> Void)? = nil) {
         self.result = result
         self.selectedAssets = selectedAssets
@@ -70,6 +75,28 @@ struct ResultView: View {
             .sheet(isPresented: $showShareSheet) {
                 ShareSheetView(result: result)
                     .presentationDetents([.medium])
+            }
+            // P2P 공유 옵션 시트
+            .sheet(isPresented: $showP2PShareOptions, onDismiss: {
+                // 시트가 완전히 닫힌 후 pending 결과가 있으면 완료 화면 표시
+                if let result = pendingP2PShareResult {
+                    pendingP2PShareResult = nil
+                    p2pShareResultWrapper = P2PShareResultWrapper(result: result)
+                }
+            }) {
+                if let record = savedRecord {
+                    P2PShareOptionsView(record: record) { result in
+                        // 결과를 임시 저장하고 시트 닫기
+                        pendingP2PShareResult = result
+                        showP2PShareOptions = false
+                    }
+                }
+            }
+            // P2P 공유 완료 시트 (onDismiss 콜백 후 표시)
+            .sheet(item: $p2pShareResultWrapper) { wrapper in
+                P2PShareCompleteView(shareResult: wrapper.result) {
+                    p2pShareResultWrapper = nil
+                }
             }
             .onAppear {
                 logger.info("📊 [ResultView] onAppear - 화면 표시됨")
@@ -555,10 +582,11 @@ struct ResultView: View {
             }
             .disabled(isSaved)
 
+            // 이미지 공유
             Button(action: { showShareSheet = true }) {
                 HStack(spacing: WanderSpacing.space2) {
                     Image(systemName: "square.and.arrow.up")
-                    Text("공유하기")
+                    Text("이미지 공유")
                 }
                 .font(WanderTypography.headline)
                 .foregroundColor(WanderColors.textPrimary)
@@ -570,6 +598,22 @@ struct ResultView: View {
                     RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge)
                         .stroke(WanderColors.border, lineWidth: 1)
                 )
+            }
+
+            // P2P Wander 공유 (저장 후 활성화)
+            if isSaved, savedRecord != nil {
+                Button(action: { showP2PShareOptions = true }) {
+                    HStack(spacing: WanderSpacing.space2) {
+                        Image(systemName: "link.badge.plus")
+                        Text("Wander 공유")
+                    }
+                    .font(WanderTypography.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: WanderSpacing.buttonHeight)
+                    .background(WanderColors.primary.opacity(0.9))
+                    .cornerRadius(WanderSpacing.radiusLarge)
+                }
             }
         }
         .padding(.top, WanderSpacing.space4)

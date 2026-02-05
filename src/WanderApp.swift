@@ -11,6 +11,10 @@ struct WanderApp: App {
     @State private var sharedRecordData: SharedRecordData?
     @State private var showSharedRecord = false
 
+    // P2P 공유 관련
+    @StateObject private var deepLinkHandler = DeepLinkHandler.shared
+    @State private var savedSharedRecord: TravelRecord?
+
     var sharedModelContainer: ModelContainer = {
         logger.info("🚀 [WanderApp] ModelContainer 생성 시작")
         let schema = Schema([
@@ -21,7 +25,12 @@ struct WanderApp: App {
             RecordCategory.self,
             UserPlace.self
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        // CloudKit 동기화 비활성화 (P2P 공유는 Public DB를 직접 사용)
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .none  // SwiftData-CloudKit 동기화 비활성화
+        )
 
         do {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
@@ -65,6 +74,19 @@ struct WanderApp: App {
                     SharedRecordView(sharedData: data)
                 }
             }
+            // P2P 공유 수신 시트
+            .sheet(isPresented: $deepLinkHandler.showShareReceiveSheet) {
+                if let shareURL = deepLinkHandler.pendingShareURL {
+                    P2PShareReceiveView(
+                        shareURL: shareURL,
+                        onSaveComplete: { record in
+                            savedSharedRecord = record
+                            deepLinkHandler.clearPendingShare()
+                            // 저장 완료 후 기록 탭으로 이동 등 추가 처리 가능
+                        }
+                    )
+                }
+            }
             .preferredColorScheme(.light)  // 라이트모드 고정
         }
         .modelContainer(sharedModelContainer)
@@ -74,7 +96,16 @@ struct WanderApp: App {
     private func handleIncomingURL(_ url: URL) {
         logger.info("🔗 [WanderApp] URL 수신: \(url.absoluteString)")
 
-        // wander://share?data=BASE64_ENCODED_DATA
+        // P2P 공유 링크 확인 (CloudKit 기반)
+        // Universal Link: https://wander.zerolive.com/share/{shareID}?key={key}
+        // Custom Scheme: wander://share/{shareID}?key={key}
+        if isP2PShareLink(url) {
+            logger.info("🔗 [WanderApp] P2P 공유 링크 감지")
+            deepLinkHandler.handleURL(url)
+            return
+        }
+
+        // 기존 방식: wander://share?data=BASE64_ENCODED_DATA (레거시)
         guard url.scheme == "wander" else {
             logger.warning("🔗 [WanderApp] 지원하지 않는 URL 스킴: \(url.scheme ?? "nil")")
             return
@@ -102,5 +133,27 @@ struct WanderApp: App {
         } else {
             logger.error("🔗 [WanderApp] 공유 데이터 디코딩 실패")
         }
+    }
+
+    /// P2P 공유 링크인지 확인
+    private func isP2PShareLink(_ url: URL) -> Bool {
+        // Universal Link with key parameter
+        if url.scheme == "https" && url.host == "wander.zerolive.com" {
+            if url.pathComponents.contains("share"),
+               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+               components.queryItems?.contains(where: { $0.name == "key" }) == true {
+                return true
+            }
+        }
+
+        // Custom Scheme with key parameter (not legacy data parameter)
+        if url.scheme == "wander" && url.host == "share" {
+            if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+               components.queryItems?.contains(where: { $0.name == "key" }) == true {
+                return true
+            }
+        }
+
+        return false
     }
 }

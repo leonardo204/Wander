@@ -5,11 +5,11 @@ import os.log
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "ShareFlowView")
 
 // MARK: - 공유 플로우 단계
+// 공유 대상이 일반 공유 하나만 남아서 2단계로 단순화
 
 enum ShareFlowStep: Int, CaseIterable {
-    case selectDestination = 0  // Step 1: 공유 대상 선택
-    case editOptions = 1        // Step 2: 편집 (템플릿/사진/캡션/해시태그)
-    case finalPreview = 2       // Step 3: 최종 미리보기 + 공유
+    case editOptions = 0        // Step 1: 편집 (템플릿/사진/캡션/해시태그)
+    case finalPreview = 1       // Step 2: 최종 미리보기 + 공유
 }
 
 // MARK: - 공유 플로우 뷰
@@ -35,26 +35,16 @@ struct ShareFlowView: View {
                         .padding(.horizontal, WanderSpacing.screenMargin)
                         .padding(.top, WanderSpacing.space2)
 
-                    // 콘텐츠
+                    // 콘텐츠 (2단계: 편집 → 미리보기)
                     switch viewModel.currentStep {
-                    case .selectDestination:
-                        ShareOptionsView(
-                            selectedDestination: $viewModel.configuration.destination,
-                            onNext: { viewModel.goToNextStep() }
-                        )
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .leading),
-                            removal: .move(edge: .leading)
-                        ))
-
                     case .editOptions:
                         ShareEditOptionsView(
                             viewModel: viewModel,
                             onNext: { viewModel.goToNextStep() },
-                            onBack: { viewModel.goToPreviousStep() }
+                            onBack: { dismiss() }  // 첫 단계이므로 시트 닫기
                         )
                         .transition(.asymmetric(
-                            insertion: .move(edge: .trailing),
+                            insertion: .move(edge: .leading),
                             removal: .move(edge: .leading)
                         ))
 
@@ -161,7 +151,7 @@ final class ShareFlowViewModel: ObservableObject {
     let record: TravelRecord
     private let shareService = ShareService.shared
 
-    @Published var currentStep: ShareFlowStep = .selectDestination
+    @Published var currentStep: ShareFlowStep = .editOptions
     @Published var configuration = ShareConfiguration()
     @Published var loadedPhotos: [SharePhotoItem] = []
     @Published var isLoading = false
