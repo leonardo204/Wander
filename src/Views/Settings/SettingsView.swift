@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var showDataManagement = false
     @State private var showPermissions = false
     @State private var showAbout = false
+    @State private var showShareLinkTest = false
 
     var body: some View {
         NavigationStack {
@@ -128,6 +129,15 @@ struct SettingsView: View {
 
                 // Developer Mode Section
                 Section {
+                    Button(action: { showShareLinkTest = true }) {
+                        SettingsRow(
+                            icon: "link.badge.plus",
+                            iconColor: WanderColors.primary,
+                            title: "공유 링크 테스트",
+                            subtitle: "Wander 공유 링크로 기록 수신 테스트"
+                        )
+                    }
+
                     Button(action: resetOnboarding) {
                         SettingsRow(
                             icon: "arrow.counterclockwise",
@@ -145,6 +155,9 @@ struct SettingsView: View {
             .navigationTitle("설정")
             .onAppear {
                 logger.info("⚙️ [SettingsView] 설정 화면 나타남")
+            }
+            .sheet(isPresented: $showShareLinkTest) {
+                ShareLinkTestView()
             }
         }
     }
@@ -915,6 +928,189 @@ struct AboutView: View {
             }
         }
         .navigationTitle("settings.appInfo".localized)
+    }
+}
+
+// MARK: - Share Link Test View (Developer Mode)
+struct ShareLinkTestView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var deepLinkHandler = DeepLinkHandler.shared
+
+    @State private var shareLink = ""
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+    @State private var showSuccess = false
+    @State private var savedRecord: TravelRecord?
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: WanderSpacing.space6) {
+                // 안내 텍스트
+                VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+                    Label("공유 링크 테스트", systemImage: "link.badge.plus")
+                        .font(WanderTypography.title3)
+                        .foregroundColor(WanderColors.textPrimary)
+
+                    Text("Wander 공유 링크를 붙여넣어 기록 수신을 테스트합니다.")
+                        .font(WanderTypography.body)
+                        .foregroundColor(WanderColors.textSecondary)
+
+                    Text("예: wander://share/{shareID}?key={key}")
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textTertiary)
+                        .padding(.top, WanderSpacing.space1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(WanderColors.surface)
+                .cornerRadius(WanderSpacing.radiusLarge)
+
+                // 링크 입력
+                VStack(alignment: .leading, spacing: WanderSpacing.space2) {
+                    Text("공유 링크")
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textSecondary)
+
+                    HStack(spacing: WanderSpacing.space2) {
+                        TextField("wander://share/...", text: $shareLink)
+                            .textFieldStyle(.roundedBorder)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+
+                        Button {
+                            if let clipboard = UIPasteboard.general.string {
+                                shareLink = clipboard
+                            }
+                        } label: {
+                            Image(systemName: "doc.on.clipboard")
+                                .foregroundColor(WanderColors.primary)
+                        }
+                    }
+                }
+
+                // 에러 메시지
+                if let error = errorMessage {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(WanderColors.error)
+                        Text(error)
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.error)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(WanderColors.error.opacity(0.1))
+                    .cornerRadius(WanderSpacing.radiusMedium)
+                }
+
+                // 성공 메시지
+                if showSuccess, let record = savedRecord {
+                    VStack(spacing: WanderSpacing.space3) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(WanderColors.success)
+
+                        Text("기록이 저장되었습니다!")
+                            .font(WanderTypography.headline)
+                            .foregroundColor(WanderColors.textPrimary)
+
+                        Text(record.title)
+                            .font(WanderTypography.body)
+                            .foregroundColor(WanderColors.textSecondary)
+
+                        Text("홈 또는 기록 탭에서 확인하세요")
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.textTertiary)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(WanderColors.success.opacity(0.1))
+                    .cornerRadius(WanderSpacing.radiusLarge)
+                }
+
+                Spacer()
+
+                // 테스트 버튼
+                Button {
+                    testShareLink()
+                } label: {
+                    HStack {
+                        if isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Image(systemName: "play.fill")
+                        }
+                        Text(isLoading ? "처리 중..." : "테스트 실행")
+                    }
+                    .font(WanderTypography.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: WanderSpacing.buttonHeight)
+                    .background(shareLink.isEmpty || isLoading ? WanderColors.textTertiary : WanderColors.primary)
+                    .cornerRadius(WanderSpacing.radiusLarge)
+                }
+                .disabled(shareLink.isEmpty || isLoading)
+            }
+            .padding(WanderSpacing.screenMargin)
+            .navigationTitle("공유 링크 테스트")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("닫기") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private func testShareLink() {
+        logger.info("🔗 [ShareLinkTestView] 테스트 시작: \(shareLink)")
+
+        errorMessage = nil
+        showSuccess = false
+        savedRecord = nil
+
+        // URL 파싱
+        guard let url = URL(string: shareLink) else {
+            errorMessage = "유효하지 않은 URL 형식입니다"
+            return
+        }
+
+        // 공유 링크 확인
+        guard let deepLink = ShareDeepLink.parse(from: url) else {
+            errorMessage = "Wander 공유 링크 형식이 아닙니다.\n예: wander://share/{shareID}?key={key}"
+            return
+        }
+
+        logger.info("🔗 [ShareLinkTestView] 딥링크 파싱 성공 - shareID: \(deepLink.shareID)")
+
+        isLoading = true
+
+        Task {
+            do {
+                let record = try await P2PShareService.shared.saveSharedRecord(
+                    from: url,
+                    modelContext: modelContext
+                )
+
+                await MainActor.run {
+                    logger.info("✅ [ShareLinkTestView] 기록 저장 성공: \(record.title)")
+                    savedRecord = record
+                    showSuccess = true
+                    isLoading = false
+                    shareLink = ""
+                }
+            } catch {
+                await MainActor.run {
+                    logger.error("❌ [ShareLinkTestView] 에러: \(error.localizedDescription)")
+                    errorMessage = error.localizedDescription
+                    isLoading = false
+                }
+            }
+        }
     }
 }
 
