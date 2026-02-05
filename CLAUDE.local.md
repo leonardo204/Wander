@@ -100,11 +100,10 @@ Wander/
 │   │   │   └── InsightEngine.swift
 │   │   ├── ExportService/
 │   │   │   └── ExportService.swift
-│   │   ├── ShareService/            ← SNS 공유 서비스 (신규)
+│   │   ├── ShareService/            ← SNS 공유 서비스
 │   │   │   ├── ShareModels.swift
 │   │   │   ├── ShareService.swift
-│   │   │   ├── ShareImageGenerator.swift
-│   │   │   └── InstagramShareService.swift
+│   │   │   └── ShareImageGenerator.swift
 │   │   ├── LocationService/
 │   │   │   └── GeocodingService.swift
 │   │   └── AuthenticationManager.swift
@@ -189,7 +188,7 @@ Wander/
 | 역지오코딩 | 좌표 → 주소 변환 | `GeocodingService.swift` |
 | 활동 추론 | 규칙 기반 활동 타입 추론 | `ActivityInferenceService.swift` |
 | AI 스토리 | BYOK AI로 여행 스토리 생성 | `AIStoryView.swift` |
-| SNS 공유 | Instagram Feed/Stories, 글래스모피즘 템플릿 | `ShareService/`, `Views/Share/` |
+| SNS 공유 | 일반 공유, 글래스모피즘 템플릿 | `ShareService/`, `Views/Share/` |
 | 내보내기 | 이미지/Markdown 내보내기 | `ExportService.swift` |
 
 ### Wander Intelligence (스마트 분석)
@@ -225,9 +224,7 @@ Wander/
 ResultView/RecordsView
   └→ ShareFlowView (sheet)
        ├── Step 1: 공유 대상 선택 (ShareOptionsView)
-       │   ├── 일반 이미지 공유
-       │   ├── Instagram 피드 (4:5)
-       │   └── Instagram 스토리 (9:16)
+       │   └── 일반 이미지 공유 (메시지, 카카오톡, 저장 등)
        │
        ├── Step 2: 편집 (ShareEditOptionsView)
        │   ├── 템플릿 스타일 선택
@@ -251,9 +248,7 @@ ResultView/RecordsView
 ### 이미지 사이즈
 | 용도 | 사이즈 | 비율 |
 |------|--------|------|
-| 일반 공유 | 810 × 1012 | 4:5 |
-| Instagram Feed | 1080 × 1350 | 4:5 |
-| Instagram Story | 1080 × 1920 | 9:16 |
+| 일반 공유 | 1080 × 1350 | 4:5 |
 
 ### 공유 이미지 구성요소
 - 제목 (42pt)
@@ -263,17 +258,12 @@ ResultView/RecordsView
 - 해시태그 (27pt)
 - 워터마크: 앱 아이콘 + "Wander" (36pt 아이콘, 24pt 텍스트)
 
-### Instagram 공유 방식
-- **Feed**: 이미지를 사진 라이브러리에 저장 후 Instagram 앱 열기 (캡션/해시태그 클립보드 복사)
-- **Stories**: Pasteboard API로 배경 이미지 전달
-
 ### 관련 파일
 | 파일 | 역할 |
 |------|------|
 | `ShareModels.swift` | 공유 모델/프로토콜/에러 정의 |
 | `ShareService.swift` | 공유 서비스 총괄 |
 | `ShareImageGenerator.swift` | 템플릿별 이미지 렌더링 |
-| `InstagramShareService.swift` | Instagram 전용 공유 |
 | `ShareFlowView.swift` | 공유 플로우 컨테이너 + ViewModel |
 | `ShareOptionsView.swift` | Step 1: 공유 대상 선택 |
 | `ShareEditOptionsView.swift` | Step 2: 편집 화면 |
@@ -530,6 +520,15 @@ options.deliveryMode = .fastFormat
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-05 | Instagram 공유 기능 제거 (Feed/Stories), 일반 공유만 유지 |
+| 2026-02-05 | 사진 피커 드래그 선택 버그 수정 (UICollectionView 방식으로 재작성) |
+| 2026-02-05 | 미분류 사진(GPS 없음) 지도 표시 제외 - hasValidCoordinate 필터 추가 |
+| 2026-02-05 | 공유 템플릿 UI/UX 개선 - 날짜 중복 제거 (통계에 날짜 통합) |
+| 2026-02-05 | 감성 키워드(Impression) 기능 추가 (로맨틱 · 힐링 · 도심탈출) |
+| 2026-02-05 | ImpressionGenerator 추가 - 활동/지역/계절 기반 키워드 자동 생성 |
+| 2026-02-05 | ShareConfiguration에 impression 필드 추가 |
+| 2026-02-05 | 텍스트 오버플로우 처리 개선 (truncateText 함수 강화) |
+| 2026-02-05 | UI/UX 스펙 문서 작성 (specs/share-template-ui/design-spec.md) |
 | 2026-02-04 | SNS 공유 기능 전면 개편 (3단계 플로우, 글래스모피즘 템플릿) |
 | 2026-02-04 | 공유 이미지에 캡션/해시태그/AI 스토리 추가 |
 | 2026-02-04 | 공유 미리보기 핀치 투 줌 기능 추가 |
@@ -544,4 +543,4 @@ options.deliveryMode = .fastFormat
 
 ---
 
-*최종 업데이트: 2026-02-04*
+*최종 업데이트: 2026-02-05*

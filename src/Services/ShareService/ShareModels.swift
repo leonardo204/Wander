@@ -27,8 +27,6 @@ protocol ShareableData {
 /// 공유 대상 타입
 enum ShareDestination: String, CaseIterable, Identifiable {
     case general = "general"           // 일반 공유 (UIActivityViewController)
-    case instagramFeed = "instagram_feed"   // Instagram Feed (4:5)
-    case instagramStory = "instagram_story" // Instagram Story (9:16)
 
     var id: String { rawValue }
 
@@ -36,10 +34,6 @@ enum ShareDestination: String, CaseIterable, Identifiable {
         switch self {
         case .general:
             return "일반 공유"
-        case .instagramFeed:
-            return "Instagram 피드"
-        case .instagramStory:
-            return "Instagram 스토리"
         }
     }
 
@@ -47,30 +41,20 @@ enum ShareDestination: String, CaseIterable, Identifiable {
         switch self {
         case .general:
             return "square.and.arrow.up"
-        case .instagramFeed:
-            return "camera"
-        case .instagramStory:
-            return "camera.circle"
         }
     }
 
     var aspectRatio: CGFloat {
         switch self {
-        case .general, .instagramFeed:
-            return 4.0 / 5.0  // 1080 x 1350
-        case .instagramStory:
-            return 9.0 / 16.0  // 1080 x 1920
+        case .general:
+            return 4.0 / 5.0  // 4:5 비율
         }
     }
 
     var imageSize: CGSize {
         switch self {
         case .general:
-            return CGSize(width: 810, height: 1012)  // 일반 공유용 (75% 축소)
-        case .instagramFeed:
-            return CGSize(width: 1080, height: 1350) // Instagram Feed 원본 유지
-        case .instagramStory:
-            return CGSize(width: 1080, height: 1920) // Instagram Story 원본 유지
+            return CGSize(width: 1080, height: 1350)  // 4:5 비율
         }
     }
 }
@@ -430,7 +414,6 @@ struct HashtagRecommendation {
 enum ShareError: LocalizedError {
     case noPhotosSelected
     case imageGenerationFailed
-    case instagramNotInstalled
     case clipboardFailed
     case unknown(Error)
 
@@ -440,8 +423,6 @@ enum ShareError: LocalizedError {
             return "공유할 사진을 선택해주세요."
         case .imageGenerationFailed:
             return "이미지 생성에 실패했습니다."
-        case .instagramNotInstalled:
-            return "Instagram이 설치되어 있지 않습니다."
         case .clipboardFailed:
             return "클립보드 복사에 실패했습니다."
         case .unknown(let error):

@@ -251,20 +251,6 @@ struct ShareFinalPreviewView: View {
                         .lineLimit(2)
                 }
             }
-
-            // Instagram 안내
-            if viewModel.configuration.destination != .general {
-                HStack(spacing: WanderSpacing.space2) {
-                    Image(systemName: "info.circle")
-                        .foregroundColor(WanderColors.primary)
-                    Text("캡션과 해시태그가 클립보드에 복사됩니다")
-                        .font(WanderTypography.caption1)
-                        .foregroundColor(WanderColors.textSecondary)
-                }
-                .padding(WanderSpacing.space3)
-                .background(WanderColors.primaryPale)
-                .cornerRadius(WanderSpacing.radiusMedium)
-            }
         }
         .padding(WanderSpacing.space4)
         .background(WanderColors.surface)

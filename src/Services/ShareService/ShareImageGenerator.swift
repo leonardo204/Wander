@@ -35,10 +35,6 @@ final class ShareImageGenerator {
         static let watermarkTextSize: CGFloat = 22   // Wander 텍스트 크기
         static let watermarkWidth: CGFloat = 150     // 전체 로고 영역
 
-        // 스토리용
-        static let storyTitleFontSize: CGFloat = 38
-        static let storyStatsFontSize: CGFloat = 30
-
         // 폴라로이드
         static let polaroidTitleFontSize: CGFloat = 42
         static let polaroidStatsFontSize: CGFloat = 28
@@ -104,16 +100,6 @@ final class ShareImageGenerator {
             throw ShareError.imageGenerationFailed
         }
         return first
-    }
-
-    /// Instagram Story용 이미지 생성 (9:16)
-    func generateStoryImage(
-        photos: [UIImage],
-        data: ShareableData,
-        showWatermark: Bool = true
-    ) -> UIImage {
-        let size = ShareDestination.instagramStory.imageSize
-        return renderStoryTemplate(photos: photos, data: data, size: size, showWatermark: showWatermark)
     }
 
     // MARK: - Modern Glass Template (Multiple)
@@ -699,79 +685,6 @@ final class ShareImageGenerator {
                     in: CGRect(
                         x: size.width - DesignConstants.watermarkWidth - horizontalMargin,
                         y: size.height - bottomMargin - DesignConstants.watermarkIconSize,
-                        width: DesignConstants.watermarkWidth,
-                        height: DesignConstants.watermarkIconSize
-                    ),
-                    context: cgContext
-                )
-            }
-        }
-    }
-
-    // MARK: - Story Template (9:16)
-
-    private func renderStoryTemplate(
-        photos: [UIImage],
-        data: ShareableData,
-        size: CGSize,
-        showWatermark: Bool
-    ) -> UIImage {
-        let renderer = UIGraphicsImageRenderer(size: size)
-
-        return renderer.image { context in
-            let cgContext = context.cgContext
-
-            // 1. 전체 배경 사진
-            if let mainPhoto = photos.first {
-                drawImageFill(mainPhoto, in: CGRect(origin: .zero, size: size), context: cgContext)
-            }
-
-            // 2. 글래스 스티커 (하단)
-            let stickerHeight: CGFloat = 140
-            let stickerMargin: CGFloat = 40
-            let stickerRect = CGRect(
-                x: stickerMargin,
-                y: size.height - stickerHeight - 140,
-                width: size.width - (stickerMargin * 2),
-                height: stickerHeight
-            )
-
-            drawGlassPanel(in: stickerRect, context: cgContext, cornerRadius: 18)
-
-            // 3. 스티커 내 텍스트 (v2.0 - 날짜 통합)
-            let textMargin: CGFloat = 20
-            let maxTextWidth = stickerRect.width - (textMargin * 2)
-            var currentY = stickerRect.minY + textMargin
-
-            // 제목
-            let titleAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: DesignConstants.storyTitleFontSize, weight: .bold),
-                .foregroundColor: UIColor(hex: "#1A2B33") ?? .black
-            ]
-            let truncatedTitle = truncateText(data.shareTitle, maxLines: 1, width: maxTextWidth, font: UIFont.systemFont(ofSize: DesignConstants.storyTitleFontSize, weight: .bold))
-            truncatedTitle.draw(
-                at: CGPoint(x: stickerRect.minX + textMargin, y: currentY),
-                withAttributes: titleAttributes
-            )
-            currentY += DesignConstants.storyTitleFontSize + 10
-
-            // 통계+날짜 통합
-            let statsAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: DesignConstants.storyStatsFontSize, weight: .medium),
-                .foregroundColor: UIColor(hex: "#1A2B33")?.withAlphaComponent(0.85) ?? .darkGray
-            ]
-            let statsWithDate = data.shareStatsWithDate
-            statsWithDate.draw(
-                at: CGPoint(x: stickerRect.minX + textMargin, y: currentY),
-                withAttributes: statsAttributes
-            )
-
-            // 워터마크 (앱 아이콘 + Wander)
-            if showWatermark {
-                drawWatermark(
-                    in: CGRect(
-                        x: size.width - DesignConstants.watermarkWidth - 24,
-                        y: size.height - 80,
                         width: DesignConstants.watermarkWidth,
                         height: DesignConstants.watermarkIconSize
                     ),

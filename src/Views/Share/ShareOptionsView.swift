@@ -5,10 +5,9 @@ private let logger = Logger(subsystem: "com.zerolive.wander", category: "ShareOp
 
 // MARK: - 공유 대상 선택 뷰
 
-/// 공유 대상(일반/Instagram Feed/Instagram Story)을 선택하는 뷰
+/// 공유 대상을 선택하는 뷰
 struct ShareOptionsView: View {
     @Binding var selectedDestination: ShareDestination
-    let isInstagramInstalled: Bool
     let onNext: () -> Void
 
     var body: some View {
@@ -37,40 +36,6 @@ struct ShareOptionsView: View {
                         ) {
                             selectedDestination = .general
                         }
-
-                        // Instagram Feed
-                        ShareDestinationCard(
-                            destination: .instagramFeed,
-                            isSelected: selectedDestination == .instagramFeed,
-                            subtitle: "4:5 비율 피드 게시물",
-                            isDisabled: !isInstagramInstalled,
-                            disabledMessage: "Instagram 미설치"
-                        ) {
-                            if isInstagramInstalled {
-                                selectedDestination = .instagramFeed
-                            }
-                        }
-
-                        // Instagram Story
-                        ShareDestinationCard(
-                            destination: .instagramStory,
-                            isSelected: selectedDestination == .instagramStory,
-                            subtitle: "9:16 비율 스토리",
-                            isDisabled: !isInstagramInstalled,
-                            disabledMessage: "Instagram 미설치"
-                        ) {
-                            if isInstagramInstalled {
-                                selectedDestination = .instagramStory
-                            }
-                        }
-                    }
-
-                    // Instagram 안내
-                    if selectedDestination == .instagramFeed {
-                        InstagramInfoBanner(
-                            title: "캡션은 클립보드에 복사됩니다",
-                            message: "Instagram에서 캡션 입력란에 붙여넣기 해주세요."
-                        )
                     }
                 }
                 .padding(.horizontal, WanderSpacing.screenMargin)
@@ -176,54 +141,12 @@ private struct ShareDestinationCard: View {
     }
 }
 
-// MARK: - Instagram 안내 배너
-
-private struct InstagramInfoBanner: View {
-    let title: String
-    let message: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: WanderSpacing.space3) {
-            Image(systemName: "info.circle.fill")
-                .font(.system(size: 20))
-                .foregroundColor(WanderColors.primary)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(WanderTypography.bodySmall)
-                    .foregroundColor(WanderColors.textPrimary)
-
-                Text(message)
-                    .font(WanderTypography.caption1)
-                    .foregroundColor(WanderColors.textSecondary)
-            }
-
-            Spacer()
-        }
-        .padding(WanderSpacing.space4)
-        .background(WanderColors.primaryPale)
-        .cornerRadius(WanderSpacing.radiusMedium)
-    }
-}
-
 // MARK: - Preview
 
 #Preview {
     NavigationStack {
         ShareOptionsView(
-            selectedDestination: .constant(.general),
-            isInstagramInstalled: true
-        ) {
-            print("Next tapped")
-        }
-    }
-}
-
-#Preview("Instagram 미설치") {
-    NavigationStack {
-        ShareOptionsView(
-            selectedDestination: .constant(.general),
-            isInstagramInstalled: false
+            selectedDestination: .constant(.general)
         ) {
             print("Next tapped")
         }

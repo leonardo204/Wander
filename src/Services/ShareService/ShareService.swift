@@ -18,7 +18,6 @@ final class ShareService: ObservableObject {
     // MARK: - Dependencies
 
     private let imageGenerator = ShareImageGenerator.shared
-    private let instagramService = InstagramShareService.shared
 
     // MARK: - Published Properties
 
@@ -150,78 +149,6 @@ final class ShareService: ObservableObject {
             topVC = presented
         }
         return topVC
-    }
-
-    /// Instagram Feed 공유 (여러 이미지 지원)
-    @MainActor
-    func shareToInstagramFeed(
-        photos: [UIImage],
-        data: ShareableData,
-        configuration: ShareConfiguration
-    ) async throws {
-        logger.info("📤 [ShareService] Instagram Feed 공유 시작")
-        isLoading = true
-
-        defer { isLoading = false }
-
-        // Feed용 이미지 생성 (4:5 비율)
-        var feedConfig = configuration
-        feedConfig.destination = .instagramFeed
-
-        let shareImages = try await imageGenerator.generateImages(
-            photos: photos,
-            data: data,
-            configuration: feedConfig
-        )
-
-        // Instagram Feed 공유 - 첫 번째 이미지만 (Instagram API 제한)
-        // 여러 장일 경우 사용자가 수동으로 추가해야 함
-        guard let firstImage = shareImages.first else {
-            throw ShareError.imageGenerationFailed
-        }
-
-        try await instagramService.shareToFeed(
-            image: firstImage,
-            caption: configuration.clipboardText
-        )
-
-        logger.info("📤 [ShareService] Instagram Feed 공유 완료 - \(shareImages.count)장 중 1장")
-    }
-
-    /// Instagram Stories 공유
-    @MainActor
-    func shareToInstagramStories(
-        photos: [UIImage],
-        data: ShareableData,
-        configuration: ShareConfiguration
-    ) async throws {
-        logger.info("📤 [ShareService] Instagram Stories 공유 시작")
-        isLoading = true
-
-        defer { isLoading = false }
-
-        // Story용 이미지 생성 (9:16 비율)
-        let storyImage = imageGenerator.generateStoryImage(
-            photos: photos,
-            data: data,
-            showWatermark: configuration.showWatermark
-        )
-
-        // Instagram Stories 공유
-        try await instagramService.shareToStories(backgroundImage: storyImage)
-
-        logger.info("📤 [ShareService] Instagram Stories 공유 완료")
-    }
-
-    /// Instagram 설치 여부
-    var isInstagramInstalled: Bool {
-        instagramService.isInstagramInstalled
-    }
-
-    /// App Store 열기 (Instagram 설치)
-    @MainActor
-    func openInstagramAppStore() async {
-        await instagramService.openAppStore()
     }
 
     // MARK: - Photo Loading

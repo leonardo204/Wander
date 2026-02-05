@@ -40,7 +40,6 @@ struct ShareFlowView: View {
                     case .selectDestination:
                         ShareOptionsView(
                             selectedDestination: $viewModel.configuration.destination,
-                            isInstagramInstalled: viewModel.isInstagramInstalled,
                             onNext: { viewModel.goToNextStep() }
                         )
                         .transition(.asymmetric(
@@ -75,42 +74,6 @@ struct ShareFlowView: View {
                 // 로딩 오버레이
                 if viewModel.isLoading {
                     LoadingOverlay(message: "이미지 생성 중...")
-                }
-
-                // Instagram 안내 오버레이
-                if viewModel.showInstagramGuidance {
-                    Color.black.opacity(0.4)
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            viewModel.showInstagramGuidance = false
-                        }
-
-                    InstagramShareGuidanceView(
-                        isPresented: $viewModel.showInstagramGuidance
-                    ) {
-                        Task {
-                            await viewModel.continueInstagramShare()
-                        }
-                    }
-                    .padding(WanderSpacing.screenMargin)
-                }
-
-                // Instagram 미설치 알럿
-                if viewModel.showInstagramNotInstalledAlert {
-                    Color.black.opacity(0.4)
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            viewModel.showInstagramNotInstalledAlert = false
-                        }
-
-                    InstagramNotInstalledAlert(
-                        isPresented: $viewModel.showInstagramNotInstalledAlert
-                    ) {
-                        Task {
-                            await viewModel.openAppStore()
-                        }
-                    }
-                    .padding(WanderSpacing.screenMargin)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -205,16 +168,6 @@ final class ShareFlowViewModel: ObservableObject {
     @Published var showError = false
     @Published var errorMessage: String?
     @Published var shouldDismiss = false
-
-    // Instagram
-    @Published var showInstagramGuidance = false
-    @Published var showInstagramNotInstalledAlert = false
-    private var pendingInstagramImage: UIImage?
-    private var pendingInstagramCaption: String = ""
-
-    var isInstagramInstalled: Bool {
-        shareService.isInstagramInstalled
-    }
 
     // MARK: - Computed Properties
 
@@ -330,15 +283,9 @@ final class ShareFlowViewModel: ObservableObject {
             switch configuration.destination {
             case .general:
                 await shareGeneral()
-
-            case .instagramFeed:
-                try await shareToInstagramFeed()
-
-            case .instagramStory:
-                try await shareToInstagramStory()
             }
         } catch let error as ShareError {
-            handleShareError(error)
+            showError(error)
         } catch {
             showError(ShareError.unknown(error))
         }
@@ -368,76 +315,7 @@ final class ShareFlowViewModel: ObservableObject {
         }
     }
 
-    private func shareToInstagramFeed() async throws {
-        guard shareService.isInstagramInstalled else {
-            showInstagramNotInstalledAlert = true
-            return
-        }
-
-        // 이미지 생성 (여러 장 생성 후 첫 번째만 사용 - Instagram API 제한)
-        var feedConfig = configuration
-        feedConfig.destination = .instagramFeed
-
-        let images = try await ShareImageGenerator.shared.generateImages(
-            photos: selectedPhotos,
-            data: record,
-            configuration: feedConfig
-        )
-
-        guard let firstImage = images.first else {
-            throw ShareError.imageGenerationFailed
-        }
-
-        // 안내 화면 표시 전 준비 (Instagram은 1장만 공유 가능)
-        pendingInstagramImage = firstImage
-        pendingInstagramCaption = configuration.clipboardText
-        showInstagramGuidance = true
-    }
-
-    private func shareToInstagramStory() async throws {
-        guard shareService.isInstagramInstalled else {
-            showInstagramNotInstalledAlert = true
-            return
-        }
-
-        try await shareService.shareToInstagramStories(
-            photos: selectedPhotos,
-            data: record,
-            configuration: configuration
-        )
-        shouldDismiss = true
-    }
-
-    func continueInstagramShare() async {
-        showInstagramGuidance = false
-
-        guard let image = pendingInstagramImage else { return }
-
-        do {
-            try await InstagramShareService.shared.shareToFeed(
-                image: image,
-                caption: pendingInstagramCaption
-            )
-            shouldDismiss = true
-        } catch {
-            showError(ShareError.unknown(error))
-        }
-    }
-
-    func openAppStore() async {
-        await shareService.openInstagramAppStore()
-    }
-
     // MARK: - Error Handling
-
-    private func handleShareError(_ error: ShareError) {
-        switch error {
-        case .instagramNotInstalled:
-            showInstagramNotInstalledAlert = true
-        default:
-            showError(error)
-        }
-    }
 
     private func showError(_ error: ShareError) {
         errorMessage = error.errorDescription

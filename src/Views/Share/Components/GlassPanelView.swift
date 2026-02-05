@@ -43,9 +43,9 @@ struct GlassPanelView<Content: View>: View {
     }
 }
 
-// MARK: - 글래스 스티커 (Story용 작은 패널)
+// MARK: - 글래스 스티커 (작은 패널)
 
-/// Instagram Story용 스티커 형태 글래스 패널
+/// 스티커 형태의 작은 글래스 패널
 struct GlassStickerView<Content: View>: View {
     let content: Content
     var cornerRadius: CGFloat

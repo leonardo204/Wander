@@ -55,7 +55,6 @@
 		A25089AD601F47DCC1DA7BF9 /* ClusteringService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3881765410920805E8E63290 /* ClusteringService.swift */; };
 		A830C878DD79B7DED7A1E419 /* MomentScoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65CB7F9E05FBA5F785330A38 /* MomentScoreService.swift */; };
 		AC0989B60AB5E39B03A638C8 /* ShareModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8323C36CCA16E5E2018936CE /* ShareModels.swift */; };
-		AD8089F39332743D54BC5373 /* InstagramShareService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E587CE64F598B63878AB1B /* InstagramShareService.swift */; };
 		ADA3D6A857DA9EEC387D8F0B /* PhotoSelectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A80A73AF84DC0DF5CDBCA5 /* PhotoSelectionViewModel.swift */; };
 		B5F696A7583039A273513F5C /* AzureOpenAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B0D677907DE08E099A36103 /* AzureOpenAIService.swift */; };
 		B88F11C8EC476D3DB4D26194 /* Place.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F5C5BBA95CC778655ADDEE3 /* Place.swift */; };
@@ -107,7 +106,6 @@
 		4AADF1D249A64201CBBE0C0E /* PINInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PINInputView.swift; sourceTree = "<group>"; };
 		4E6FCA8AF89107AA1A681BE8 /* PhotoSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSelectionView.swift; sourceTree = "<group>"; };
 		4F5C5BBA95CC778655ADDEE3 /* Place.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Place.swift; sourceTree = "<group>"; };
-		51E587CE64F598B63878AB1B /* InstagramShareService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstagramShareService.swift; sourceTree = "<group>"; };
 		544F6F96844A636A8934877B /* ShareFinalPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareFinalPreviewView.swift; sourceTree = "<group>"; };
 		552F612D89E707B00B2EA8D2 /* StoryWeavingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryWeavingService.swift; sourceTree = "<group>"; };
 		5989A12B232DB900FA252CF3 /* OnboardingIntroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingIntroView.swift; sourceTree = "<group>"; };
@@ -497,7 +495,6 @@
 		FAC338EA936438957F037D82 /* ShareService */ = {
 			isa = PBXGroup;
 			children = (
-				51E587CE64F598B63878AB1B /* InstagramShareService.swift */,
 				751124C98B015F66377C62DE /* ShareImageGenerator.swift */,
 				8323C36CCA16E5E2018936CE /* ShareModels.swift */,
 				7CAF5AC597C2A3E28FC12017 /* ShareService.swift */,
@@ -603,7 +600,6 @@
 				8D3C0983E0024D1EEFAC3235 /* HiddenRecordsView.swift in Sources */,
 				68C9C4F8DBDD77FAF0329C54 /* HomeView.swift in Sources */,
 				662C1DF240D714D991D4E734 /* InsightEngine.swift in Sources */,
-				AD8089F39332743D54BC5373 /* InstagramShareService.swift in Sources */,
 				751A2972E76920FF3D6FB66B /* KeychainManager.swift in Sources */,
 				DD5E5C90C447500CA14D82D4 /* LanguageManager.swift in Sources */,
 				ED9CC1319A16AD28CA5EC02F /* LookbackView.swift in Sources */,
