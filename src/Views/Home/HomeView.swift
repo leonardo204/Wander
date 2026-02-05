@@ -306,31 +306,12 @@ struct QuickActionCard: View {
 // MARK: - Record Card
 struct RecordCard: View {
     let record: TravelRecord
-    @State private var thumbnail: UIImage?
 
     var body: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space3) {
-            // Thumbnail from actual photo
-            ZStack {
-                if let thumbnail = thumbnail {
-                    Image(uiImage: thumbnail)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 120)
-                        .clipped()
-                        .cornerRadius(WanderSpacing.radiusMedium)
-                } else {
-                    RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium)
-                        .fill(WanderColors.primaryPale)
-                        .frame(height: 120)
-                        .overlay(
-                            Image(systemName: "photo.on.rectangle")
-                                .font(.system(size: 32))
-                                .foregroundColor(WanderColors.primary)
-                        )
-                }
-            }
-            .frame(height: 120)
+            // 멀티 포토 썸네일 (폴라로이드 스타일)
+            MultiPhotoThumbnail(record: record)
+                .frame(height: 120)
 
             VStack(alignment: .leading, spacing: WanderSpacing.space1) {
                 Text(record.title)
@@ -354,9 +335,6 @@ struct RecordCard: View {
         .cornerRadius(WanderSpacing.radiusXXL)
         .elevation1()
         .contentShape(Rectangle())  // 전체 영역 터치 가능
-        .onAppear {
-            loadThumbnail()
-        }
     }
 
     private func formatDateRange(start: Date, end: Date) -> String {
@@ -368,34 +346,184 @@ struct RecordCard: View {
         }
         return "\(formatter.string(from: start)) ~ \(formatter.string(from: end))"
     }
+}
 
-    private func loadThumbnail() {
-        guard let assetId = record.firstPhotoAssetIdentifier else {
-            logger.info("🏠 [RecordCard] 썸네일 없음 - \(record.title)")
+// MARK: - Multi Photo Thumbnail (폴라로이드 스타일 콜라주)
+struct MultiPhotoThumbnail: View {
+    let record: TravelRecord
+    @State private var thumbnails: [UIImage] = []
+    @State private var isLoading = true
+
+    /// 썸네일에 표시할 최대 사진 수
+    private let maxPhotos = 4
+
+    var body: some View {
+        GeometryReader { geometry in
+            let size = geometry.size
+
+            ZStack {
+                if thumbnails.isEmpty && !isLoading {
+                    // 사진 없음
+                    placeholderView
+                } else if thumbnails.isEmpty && isLoading {
+                    // 로딩 중
+                    RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium)
+                        .fill(WanderColors.primaryPale)
+                        .overlay(
+                            ProgressView()
+                                .tint(WanderColors.primary)
+                        )
+                } else {
+                    // 사진 개수에 따른 레이아웃
+                    thumbnailLayout(size: size)
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium))
+        }
+        .onAppear {
+            loadThumbnails()
+        }
+    }
+
+    // MARK: - Layouts
+
+    @ViewBuilder
+    private func thumbnailLayout(size: CGSize) -> some View {
+        let spacing: CGFloat = 2
+
+        switch thumbnails.count {
+        case 1:
+            // 1장: 전체 커버
+            thumbnailImage(thumbnails[0], width: size.width, height: size.height)
+
+        case 2:
+            // 2장: 좌우 배치
+            HStack(spacing: spacing) {
+                let cellWidth = (size.width - spacing) / 2
+                thumbnailImage(thumbnails[0], width: cellWidth, height: size.height)
+                thumbnailImage(thumbnails[1], width: cellWidth, height: size.height)
+            }
+
+        case 3:
+            // 3장: 좌측 큰 1장 + 우측 2장
+            HStack(spacing: spacing) {
+                let leftWidth = size.width * 0.55
+                let rightWidth = size.width - leftWidth - spacing
+                let rightCellHeight = (size.height - spacing) / 2
+
+                thumbnailImage(thumbnails[0], width: leftWidth, height: size.height)
+
+                VStack(spacing: spacing) {
+                    thumbnailImage(thumbnails[1], width: rightWidth, height: rightCellHeight)
+                    thumbnailImage(thumbnails[2], width: rightWidth, height: rightCellHeight)
+                }
+            }
+
+        default:
+            // 4장+: 2x2 그리드
+            VStack(spacing: spacing) {
+                let cellWidth = (size.width - spacing) / 2
+                let cellHeight = (size.height - spacing) / 2
+
+                HStack(spacing: spacing) {
+                    thumbnailImage(thumbnails[0], width: cellWidth, height: cellHeight)
+                    thumbnailImage(thumbnails[1], width: cellWidth, height: cellHeight)
+                }
+                HStack(spacing: spacing) {
+                    thumbnailImage(thumbnails[2], width: cellWidth, height: cellHeight)
+                    if thumbnails.count > 3 {
+                        thumbnailImage(thumbnails[3], width: cellWidth, height: cellHeight)
+                    }
+                }
+            }
+        }
+    }
+
+    private func thumbnailImage(_ image: UIImage, width: CGFloat, height: CGFloat) -> some View {
+        Image(uiImage: image)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(width: width, height: height)
+            .clipped()
+    }
+
+    private var placeholderView: some View {
+        RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium)
+            .fill(WanderColors.primaryPale)
+            .overlay(
+                Image(systemName: "photo.on.rectangle")
+                    .font(.system(size: 32))
+                    .foregroundColor(WanderColors.primary)
+            )
+    }
+
+    // MARK: - Load Thumbnails
+
+    private func loadThumbnails() {
+        let assetIds = Array(record.allPhotoAssetIdentifiers.prefix(maxPhotos))
+
+        guard !assetIds.isEmpty else {
+            isLoading = false
             return
         }
 
-        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetId], options: nil)
-        guard let asset = fetchResult.firstObject else {
-            logger.warning("🏠 [RecordCard] PHAsset 찾을 수 없음 - \(assetId)")
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: assetIds, options: nil)
+
+        guard fetchResult.count > 0 else {
+            logger.warning("🏠 [MultiPhotoThumbnail] PHAsset 찾을 수 없음")
+            isLoading = false
             return
         }
+
+        // 순서 유지를 위해 딕셔너리로 로드
+        var loadedImages: [String: UIImage] = [:]
+        let group = DispatchGroup()
 
         let options = PHImageRequestOptions()
-        options.deliveryMode = .opportunistic
+        options.deliveryMode = .fastFormat
         options.resizeMode = .fast
         options.isNetworkAccessAllowed = true
+        options.isSynchronous = false
 
-        PHImageManager.default().requestImage(
-            for: asset,
-            targetSize: CGSize(width: 400, height: 240),
-            contentMode: .aspectFill,
-            options: options
-        ) { image, _ in
-            if let image = image {
-                DispatchQueue.main.async {
-                    self.thumbnail = image
+        fetchResult.enumerateObjects { asset, _, _ in
+            group.enter()
+
+            PHImageManager.default().requestImage(
+                for: asset,
+                targetSize: CGSize(width: 300, height: 200),
+                contentMode: .aspectFill,
+                options: options
+            ) { image, info in
+                // 썸네일 이미지만 처리 (고해상도 이미지 무시)
+                let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
+                if let image = image {
+                    DispatchQueue.main.async {
+                        loadedImages[asset.localIdentifier] = image
+
+                        // 저해상도 이미지라도 일단 표시
+                        if isDegraded || loadedImages.count == fetchResult.count {
+                            // 원래 순서대로 정렬
+                            let orderedImages = assetIds.compactMap { loadedImages[$0] }
+                            if !orderedImages.isEmpty {
+                                self.thumbnails = orderedImages
+                                self.isLoading = false
+                            }
+                        }
+                    }
                 }
+
+                if !isDegraded {
+                    group.leave()
+                }
+            }
+        }
+
+        // 타임아웃 처리
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            if self.isLoading && !loadedImages.isEmpty {
+                let orderedImages = assetIds.compactMap { loadedImages[$0] }
+                self.thumbnails = orderedImages
+                self.isLoading = false
             }
         }
     }
