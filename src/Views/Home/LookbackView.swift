@@ -319,12 +319,15 @@ enum LookbackPeriod: String, CaseIterable, Identifiable {
 }
 
 // MARK: - Photo Thumbnail
+// NOTE: PHImageManager 요청을 onDisappear에서 취소하여 메모리 누수 방지
 struct PhotoThumbnail: View {
     let asset: PHAsset
     let isSelected: Bool
     let onToggle: () -> Void
 
     @State private var image: UIImage?
+    /// PHImageManager 요청 ID (취소용)
+    @State private var requestID: PHImageRequestID?
 
     var body: some View {
         Button(action: onToggle) {
@@ -360,6 +363,12 @@ struct PhotoThumbnail: View {
         .onAppear {
             loadImage()
         }
+        .onDisappear {
+            // IMPORTANT: 뷰가 사라질 때 PHImageManager 요청 취소
+            if let requestID = requestID {
+                PHImageManager.default().cancelImageRequest(requestID)
+            }
+        }
     }
 
     private var thumbnailSize: CGFloat {
@@ -371,12 +380,13 @@ struct PhotoThumbnail: View {
         options.deliveryMode = .fastFormat
         options.resizeMode = .fast
 
-        PHImageManager.default().requestImage(
+        // IMPORTANT: 요청 ID 저장하여 취소 가능하게 함
+        requestID = PHImageManager.default().requestImage(
             for: asset,
             targetSize: CGSize(width: 200, height: 200),
             contentMode: .aspectFill,
             options: options
-        ) { image, _ in
+        ) { [self] image, _ in
             if let image = image {
                 self.image = image
             }

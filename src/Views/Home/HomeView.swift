@@ -373,10 +373,14 @@ struct RecordCard: View {
 }
 
 // MARK: - Multi Photo Thumbnail (폴라로이드 스타일 콜라주)
+// NOTE: PHImageManager 요청은 onDisappear에서 반드시 취소해야 메모리 누수 방지
 struct MultiPhotoThumbnail: View {
     let record: TravelRecord
     @State private var thumbnails: [UIImage] = []
     @State private var isLoading = true
+    /// PHImageManager 요청 ID 저장 (취소용)
+    /// - IMPORTANT: 뷰가 사라질 때 모든 요청을 취소하여 메모리 누수 방지
+    @State private var requestIDs: [PHImageRequestID] = []
 
     /// 썸네일에 표시할 최대 사진 수
     private let maxPhotos = 4
@@ -407,6 +411,18 @@ struct MultiPhotoThumbnail: View {
         .onAppear {
             loadThumbnails()
         }
+        .onDisappear {
+            // IMPORTANT: 뷰가 사라질 때 모든 PHImageManager 요청 취소
+            cancelAllRequests()
+        }
+    }
+
+    /// 모든 PHImageManager 요청 취소
+    private func cancelAllRequests() {
+        for requestID in requestIDs {
+            PHImageManager.default().cancelImageRequest(requestID)
+        }
+        requestIDs.removeAll()
     }
 
     // MARK: - Layouts
@@ -482,6 +498,7 @@ struct MultiPhotoThumbnail: View {
     }
 
     // MARK: - Load Thumbnails
+    // NOTE: PHImageManager 요청 ID를 저장하여 뷰 소멸 시 취소 가능하게 함
 
     private func loadThumbnails() {
         let assetIds = Array(record.allPhotoAssetIdentifiers.prefix(maxPhotos))
@@ -499,9 +516,11 @@ struct MultiPhotoThumbnail: View {
             return
         }
 
+        // 기존 요청 취소 후 새로 시작
+        cancelAllRequests()
+
         // 순서 유지를 위해 딕셔너리로 로드
         var loadedImages: [String: UIImage] = [:]
-        let group = DispatchGroup()
 
         let options = PHImageRequestOptions()
         options.deliveryMode = .fastFormat
@@ -510,14 +529,13 @@ struct MultiPhotoThumbnail: View {
         options.isSynchronous = false
 
         fetchResult.enumerateObjects { asset, _, _ in
-            group.enter()
-
-            PHImageManager.default().requestImage(
+            // IMPORTANT: 요청 ID 저장하여 취소 가능하게 함
+            let requestID = PHImageManager.default().requestImage(
                 for: asset,
                 targetSize: CGSize(width: 300, height: 200),
                 contentMode: .aspectFill,
                 options: options
-            ) { image, info in
+            ) { [self] image, info in
                 // 썸네일 이미지만 처리 (고해상도 이미지 무시)
                 let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
                 if let image = image {
@@ -535,15 +553,12 @@ struct MultiPhotoThumbnail: View {
                         }
                     }
                 }
-
-                if !isDegraded {
-                    group.leave()
-                }
             }
+            requestIDs.append(requestID)
         }
 
-        // 타임아웃 처리
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        // 타임아웃 처리 - 2초 후에도 로딩 중이면 현재까지 로드된 이미지로 표시
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [self] in
             if self.isLoading && !loadedImages.isEmpty {
                 let orderedImages = assetIds.compactMap { loadedImages[$0] }
                 self.thumbnails = orderedImages

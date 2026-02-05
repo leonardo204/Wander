@@ -386,6 +386,7 @@ struct QuickSelectChip: View {
 }
 
 // MARK: - Photo Grid Item
+// NOTE: PHImageManager 요청을 onDisappear에서 취소하여 메모리 누수 방지
 struct PhotoGridItem: View {
     let asset: PHAsset
     let isSelected: Bool
@@ -393,6 +394,8 @@ struct PhotoGridItem: View {
     let action: () -> Void
 
     @State private var thumbnail: UIImage?
+    /// PHImageManager 요청 ID (취소용)
+    @State private var requestID: PHImageRequestID?
 
     var body: some View {
         Button(action: action) {
@@ -454,6 +457,12 @@ struct PhotoGridItem: View {
         .onAppear {
             loadThumbnail()
         }
+        .onDisappear {
+            // IMPORTANT: 뷰가 사라질 때 PHImageManager 요청 취소
+            if let requestID = requestID {
+                PHImageManager.default().cancelImageRequest(requestID)
+            }
+        }
     }
 
     private func loadThumbnail() {
@@ -462,12 +471,13 @@ struct PhotoGridItem: View {
         options.deliveryMode = .opportunistic
         options.resizeMode = .fast
 
-        manager.requestImage(
+        // IMPORTANT: 요청 ID 저장하여 취소 가능하게 함
+        requestID = manager.requestImage(
             for: asset,
             targetSize: CGSize(width: 200, height: 200),
             contentMode: .aspectFill,
             options: options
-        ) { image, _ in
+        ) { [self] image, _ in
             self.thumbnail = image
         }
     }
@@ -540,6 +550,7 @@ struct PhotoFramePreferenceKey: PreferenceKey {
 }
 
 // MARK: - Draggable Photo Grid Item
+// NOTE: PHImageManager 요청을 onDisappear에서 취소하여 메모리 누수 방지
 struct DraggablePhotoGridItem: View {
     let asset: PHAsset
     let isSelected: Bool
@@ -550,6 +561,8 @@ struct DraggablePhotoGridItem: View {
 
     @State private var thumbnail: UIImage?
     @State private var isPressed = false
+    /// PHImageManager 요청 ID (취소용)
+    @State private var requestID: PHImageRequestID?
 
     var body: some View {
         GeometryReader { geometry in
@@ -625,6 +638,12 @@ struct DraggablePhotoGridItem: View {
         .onAppear {
             loadThumbnail()
         }
+        .onDisappear {
+            // IMPORTANT: 뷰가 사라질 때 PHImageManager 요청 취소
+            if let requestID = requestID {
+                PHImageManager.default().cancelImageRequest(requestID)
+            }
+        }
     }
 
     private func loadThumbnail() {
@@ -633,12 +652,13 @@ struct DraggablePhotoGridItem: View {
         options.deliveryMode = .opportunistic
         options.resizeMode = .fast
 
-        manager.requestImage(
+        // IMPORTANT: 요청 ID 저장하여 취소 가능하게 함
+        requestID = manager.requestImage(
             for: asset,
             targetSize: CGSize(width: 200, height: 200),
             contentMode: .aspectFill,
             options: options
-        ) { image, _ in
+        ) { [self] image, _ in
             self.thumbnail = image
         }
     }
