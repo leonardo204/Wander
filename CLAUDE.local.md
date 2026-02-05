@@ -665,6 +665,7 @@ options.deliveryMode = .fastFormat
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-05 | P2P 공유 기간 옵션에 '3분' 추가 (테스트용 짧은 만료 시간) |
 | 2026-02-05 | 공유 배지 분리: "공유됨" + "D-day" 두 개 배지 (ShareStatusBadgesView, ExpirationBadgeView) |
 | 2026-02-05 | 만료된 공유 기록 클릭 시 즉시 삭제 기능 (ExpiredRecordPlaceholder) |
 | 2026-02-05 | P2P 공유 기록 만료 시 자동 삭제 기능 추가 (shareExpiresAt 필드, cleanupExpiredSharedRecords) |
