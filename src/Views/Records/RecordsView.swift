@@ -5,9 +5,6 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "RecordsView")
 
-/// 기록 탭 메인 뷰 - 저장된 여행 기록 목록 표시
-/// - NOTE: NavigationStack의 id를 변경하여 네비게이션 리셋 구현
-/// - IMPORTANT: 탭 전환 시 resetTrigger로 초기화면 표시
 struct RecordsView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \TravelRecord.createdAt, order: .reverse) private var records: [TravelRecord]
@@ -16,18 +13,6 @@ struct RecordsView: View {
     @State private var showDeleteConfirmation = false
     @State private var recordToDelete: TravelRecord?
     @State private var showHiddenRecords = false
-
-    /// NavigationStack 재생성용 ID
-    /// - NOTE: resetTrigger 변경 시 UUID를 변경하여 NavigationStack 전체 재생성
-    @State private var stackID = UUID()
-
-    /// 네비게이션 리셋 트리거
-    /// - NOTE: ContentView에서 탭 전환 시 토글하여 초기화면 표시 유도
-    @Binding var resetTrigger: Bool
-
-    init(resetTrigger: Binding<Bool> = .constant(false)) {
-        _resetTrigger = resetTrigger
-    }
 
     /// 숨기지 않은 기록만 반환
     var visibleRecords: [TravelRecord] {
@@ -101,12 +86,6 @@ struct RecordsView: View {
             .sheet(isPresented: $showHiddenRecords) {
                 HiddenRecordsView()
             }
-        }
-        .id(stackID)
-        .onChange(of: resetTrigger) { _, _ in
-            // NOTE: 탭 전환 시 NavigationStack을 재생성하여 초기화면 표시
-            logger.info("📚 [RecordsView] 네비게이션 리셋 - 초기화면 표시")
-            stackID = UUID()
         }
     }
 
