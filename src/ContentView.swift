@@ -7,17 +7,17 @@ private let logger = Logger(subsystem: "com.zerolive.wander", category: "Content
 // Related: CustomTabBar.swift (탭바 UI), HomeView.swift (홈 탭), RecordsView.swift (기록 탭)
 
 /// 앱의 메인 컨테이너 뷰 - 탭 네비게이션 관리
-/// - NOTE: TabView의 .page 스타일로 스와이프 전환 지원
-/// - IMPORTANT: 상세 페이지 진입 시 탭 스와이프 비활성화 (isNavigationActive)
+/// - NOTE: 상세 페이지에서는 탭 스와이프 완전 비활성화 (탭바 클릭으로만 전환)
+/// - IMPORTANT: .page 스타일의 .scrollDisabled()가 불완전하므로 제스처 차단 오버레이 사용
 struct ContentView: View {
     @State private var selectedTab = 0
 
-    /// 상세 페이지 진입 상태 - true면 탭 스와이프 비활성화
+    /// 상세 페이지 진입 상태 - true면 탭 스와이프 완전 비활성화
     /// - NOTE: HomeView의 navigationPath가 비어있지 않으면 true
     @State private var isNavigationActive = false
 
     /// 홈 탭 네비게이션 리셋 트리거
-    /// - NOTE: 같은 탭 클릭 시 값을 변경하여 HomeView에서 navigationPath 초기화 유도
+    /// - NOTE: 탭 전환 또는 같은 탭 클릭 시 값을 변경하여 HomeView에서 navigationPath 초기화 유도
     @State private var homeResetTrigger = false
 
     /// 탭바 높이 (safe area 포함)
@@ -27,23 +27,25 @@ struct ContentView: View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
                 // 페이지 콘텐츠
-                TabView(selection: $selectedTab) {
+                // NOTE: .page 스타일 제거 - 상세 페이지에서 스와이프 차단이 불완전하므로 탭 클릭으로만 전환
+                ZStack {
+                    // IMPORTANT: 각 탭 뷰를 ZStack으로 수동 관리하여 스와이프 제스처 완전 차단
                     HomeView(
                         isNavigationActive: $isNavigationActive,
                         resetTrigger: $homeResetTrigger
                     )
-                    .tag(0)
+                    .opacity(selectedTab == 0 ? 1 : 0)
+                    .allowsHitTesting(selectedTab == 0)
 
                     RecordsView()
-                        .tag(1)
+                        .opacity(selectedTab == 1 ? 1 : 0)
+                        .allowsHitTesting(selectedTab == 1)
 
                     SettingsView()
-                        .tag(2)
+                        .opacity(selectedTab == 2 ? 1 : 0)
+                        .allowsHitTesting(selectedTab == 2)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))  // 스와이프 전환, 인디케이터 숨김
                 .animation(.easeInOut(duration: 0.2), value: selectedTab)
-                .allowsHitTesting(true)  // 항상 터치 허용
-                .scrollDisabled(isNavigationActive)  // 상세 페이지에서는 탭 스와이프만 비활성화
 
                 // 커스텀 하단 탭바
                 VStack(spacing: 0) {
@@ -66,6 +68,13 @@ struct ContentView: View {
         .onChange(of: selectedTab) { oldValue, newValue in
             let tabNames = ["홈", "기록", "설정"]
             logger.info("🚀 [ContentView] 탭 변경: \(tabNames[oldValue]) → \(tabNames[newValue])")
+
+            // IMPORTANT: 다른 탭에서 홈 탭으로 전환 시 홈의 네비게이션도 리셋
+            // 사용자가 홈 탭 클릭 시 항상 홈의 루트 화면이 보여야 함
+            if newValue == 0 && isNavigationActive {
+                logger.info("🚀 [ContentView] 홈 탭 전환 시 네비게이션 리셋")
+                homeResetTrigger.toggle()
+            }
         }
         .onChange(of: isNavigationActive) { _, newValue in
             logger.info("🚀 [ContentView] 네비게이션 상태 변경: \(newValue ? "상세 페이지" : "홈")")
