@@ -27,25 +27,37 @@ struct ContentView: View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
                 // 페이지 콘텐츠
-                // NOTE: .page 스타일 제거 - 상세 페이지에서 스와이프 차단이 불완전하므로 탭 클릭으로만 전환
-                ZStack {
-                    // IMPORTANT: 각 탭 뷰를 ZStack으로 수동 관리하여 스와이프 제스처 완전 차단
+                // NOTE: 루트 화면에서는 스와이프로 탭 전환 가능, 상세 페이지에서만 차단
+                TabView(selection: $selectedTab) {
                     HomeView(
                         isNavigationActive: $isNavigationActive,
                         resetTrigger: $homeResetTrigger
                     )
-                    .opacity(selectedTab == 0 ? 1 : 0)
-                    .allowsHitTesting(selectedTab == 0)
+                    .tag(0)
 
                     RecordsView()
-                        .opacity(selectedTab == 1 ? 1 : 0)
-                        .allowsHitTesting(selectedTab == 1)
+                        .tag(1)
 
                     SettingsView()
-                        .opacity(selectedTab == 2 ? 1 : 0)
-                        .allowsHitTesting(selectedTab == 2)
+                        .tag(2)
                 }
+                .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.easeInOut(duration: 0.2), value: selectedTab)
+                // IMPORTANT: 상세 페이지에서 탭 스와이프 차단용 제스처 오버레이
+                // .scrollDisabled()가 TabView .page 스타일에서 작동하지 않으므로 제스처 가로채기 사용
+                .overlay(
+                    Group {
+                        if isNavigationActive {
+                            Color.clear
+                                .contentShape(Rectangle())
+                                .gesture(
+                                    DragGesture(minimumDistance: 1)
+                                        .onChanged { _ in }
+                                        .onEnded { _ in }
+                                )
+                        }
+                    }
+                )
 
                 // 커스텀 하단 탭바
                 VStack(spacing: 0) {
