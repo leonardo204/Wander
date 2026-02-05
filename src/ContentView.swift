@@ -20,6 +20,11 @@ struct ContentView: View {
     /// - NOTE: 탭 전환 또는 같은 탭 클릭 시 값을 변경하여 HomeView에서 navigationPath 초기화 유도
     @State private var homeResetTrigger = false
 
+    /// 스와이프 차단 후 되돌리는 중인지 여부
+    /// - IMPORTANT: 스와이프 차단 후 selectedTab을 원래 값으로 되돌릴 때 onChange가 다시 호출됨
+    ///   이때 네비게이션 리셋이 발생하지 않도록 이 플래그로 구분
+    @State private var isRevertingSwipe = false
+
     /// 탭바 높이 (safe area 포함)
     private let tabBarHeight: CGFloat = 49
 
@@ -66,10 +71,19 @@ struct ContentView: View {
             let tabNames = ["홈", "기록", "설정"]
             logger.info("🚀 [ContentView] 탭 변경: \(tabNames[oldValue]) → \(tabNames[newValue])")
 
+            // NOTE: 스와이프 차단 후 되돌리는 중이면 무시
+            // 이 경우 네비게이션 리셋이 발생하면 안 됨
+            if isRevertingSwipe {
+                logger.info("🚀 [ContentView] 스와이프 차단 복귀 완료")
+                isRevertingSwipe = false
+                return
+            }
+
             // IMPORTANT: 상세 페이지에서 스와이프로 탭 변경 시도 시 원래 탭으로 되돌림
             // 탭바 클릭은 CustomTabBar에서 처리하므로 여기서는 스와이프만 차단
             if isNavigationActive && oldValue == 0 {
                 logger.info("🚀 [ContentView] 상세 페이지에서 탭 스와이프 차단 - 홈으로 복귀")
+                isRevertingSwipe = true
                 // 애니메이션 없이 즉시 원래 탭으로 복귀
                 withAnimation(.none) {
                     selectedTab = oldValue
