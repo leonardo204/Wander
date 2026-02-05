@@ -5,6 +5,12 @@ import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "HomeView")
 
+// MARK: - HomeView
+// Related: ContentView.swift (탭 컨테이너), RecordDetailFullView.swift (상세 화면)
+
+/// 홈 탭 메인 뷰 - 인사말, 퀵 액션, 최근 기록 표시
+/// - NOTE: navigationPath로 상세 화면 네비게이션 관리
+/// - IMPORTANT: 상세 화면 진입 시 isNavigationActive=true → 탭 스와이프 비활성화
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \TravelRecord.createdAt, order: .reverse) private var records: [TravelRecord]
@@ -15,10 +21,20 @@ struct HomeView: View {
     @State private var savedRecordId: UUID?
 
     /// 상세 페이지 진입 시 탭바 스와이프 비활성화용 (부모에서 바인딩)
+    /// - NOTE: navigationPath가 비어있지 않으면 true로 설정
     @Binding var isNavigationActive: Bool
 
-    init(isNavigationActive: Binding<Bool> = .constant(false)) {
+    /// 네비게이션 리셋 트리거 (부모에서 바인딩)
+    /// - NOTE: 같은 탭 클릭 시 토글되어 navigationPath 초기화 유도
+    /// - IMPORTANT: 값이 변경될 때마다 (true→false 또는 false→true) onChange에서 리셋 수행
+    @Binding var resetTrigger: Bool
+
+    init(
+        isNavigationActive: Binding<Bool> = .constant(false),
+        resetTrigger: Binding<Bool> = .constant(false)
+    ) {
         _isNavigationActive = isNavigationActive
+        _resetTrigger = resetTrigger
     }
 
     var body: some View {
@@ -99,8 +115,16 @@ struct HomeView: View {
                 }
             }
             .onChange(of: navigationPath) { _, newPath in
-                // 네비게이션 경로가 비어있지 않으면 상세 페이지에 있음 -> 탭바 스와이프 비활성화
+                // NOTE: 네비게이션 경로가 비어있지 않으면 상세 페이지에 있음 → 탭 스와이프 비활성화
                 isNavigationActive = !newPath.isEmpty
+            }
+            .onChange(of: resetTrigger) { _, _ in
+                // NOTE: 같은 탭(홈) 클릭 시 트리거됨 → 네비게이션 스택 초기화하여 루트로 이동
+                // IMPORTANT: 상세 페이지에서 홈 탭 클릭 시 홈의 루트 화면으로 돌아가야 함
+                if !navigationPath.isEmpty {
+                    logger.info("🏠 [HomeView] 네비게이션 리셋 - 상세 페이지에서 홈으로 복귀")
+                    navigationPath = NavigationPath()
+                }
             }
         }
     }
