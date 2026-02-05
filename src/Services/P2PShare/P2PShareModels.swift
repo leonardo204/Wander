@@ -105,6 +105,7 @@ enum PhotoQuality: String, CaseIterable, Identifiable {
 
 /// 링크 만료 옵션
 enum LinkExpiration: String, CaseIterable, Identifiable {
+    case threeMinutes = "3min"
     case oneDay = "1day"
     case sevenDays = "7days"
     case thirtyDays = "30days"
@@ -114,6 +115,7 @@ enum LinkExpiration: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
+        case .threeMinutes: return "3분"
         case .oneDay: return "1일"
         case .sevenDays: return "7일"
         case .thirtyDays: return "30일"
@@ -125,6 +127,8 @@ enum LinkExpiration: String, CaseIterable, Identifiable {
     var expirationDate: Date? {
         let calendar = Calendar.current
         switch self {
+        case .threeMinutes:
+            return calendar.date(byAdding: .minute, value: 3, to: Date())
         case .oneDay:
             return calendar.date(byAdding: .day, value: 1, to: Date())
         case .sevenDays:
