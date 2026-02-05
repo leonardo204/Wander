@@ -316,9 +316,12 @@ struct FilterChip: View {
 }
 
 // MARK: - Record List Card
+// NOTE: PHImageManager 요청을 onDisappear에서 취소하여 메모리 누수 방지
 struct RecordListCard: View {
     let record: TravelRecord
     @State private var thumbnails: [UIImage] = []
+    /// PHImageManager 요청 ID (취소용)
+    @State private var requestIDs: [PHImageRequestID] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space3) {
@@ -384,6 +387,9 @@ struct RecordListCard: View {
         .onAppear {
             loadThumbnails()
         }
+        .onDisappear {
+            cancelAllRequests()
+        }
     }
 
     private func formatDateRange(start: Date, end: Date) -> String {
@@ -396,9 +402,18 @@ struct RecordListCard: View {
         return "\(formatter.string(from: start)) ~ \(formatter.string(from: end))"
     }
 
+    private func cancelAllRequests() {
+        for requestID in requestIDs {
+            PHImageManager.default().cancelImageRequest(requestID)
+        }
+        requestIDs.removeAll()
+    }
+
     private func loadThumbnails() {
         let assetIds = Array(record.allPhotoAssetIdentifiers.prefix(4))
         guard !assetIds.isEmpty else { return }
+
+        cancelAllRequests()
 
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: assetIds, options: nil)
 
@@ -412,12 +427,12 @@ struct RecordListCard: View {
         var pendingCount = fetchResult.count
 
         fetchResult.enumerateObjects { asset, _, _ in
-            PHImageManager.default().requestImage(
+            let requestID = PHImageManager.default().requestImage(
                 for: asset,
                 targetSize: CGSize(width: 100, height: 100),
                 contentMode: .aspectFill,
                 options: options
-            ) { image, _ in
+            ) { [self] image, _ in
                 DispatchQueue.main.async {
                     if let image = image {
                         loadedImages.append(image)
@@ -428,6 +443,7 @@ struct RecordListCard: View {
                     }
                 }
             }
+            requestIDs.append(requestID)
         }
     }
 }
@@ -971,10 +987,13 @@ struct DaySection: View {
 }
 
 // MARK: - Place Row
+// NOTE: PHImageManager 요청을 onDisappear에서 취소하여 메모리 누수 방지
 struct PlaceRow: View {
     let place: Place
     @State private var showDetail = false
     @State private var thumbnails: [UIImage] = []
+    /// PHImageManager 요청 ID (취소용)
+    @State private var requestIDs: [PHImageRequestID] = []
 
     var body: some View {
         Button(action: { showDetail = true }) {
@@ -1040,6 +1059,9 @@ struct PlaceRow: View {
         .onAppear {
             loadThumbnails()
         }
+        .onDisappear {
+            cancelAllRequests()
+        }
         .sheet(isPresented: $showDetail) {
             PlaceDetailSheet(place: place)
         }
@@ -1051,9 +1073,18 @@ struct PlaceRow: View {
         return formatter.string(from: date)
     }
 
+    private func cancelAllRequests() {
+        for requestID in requestIDs {
+            PHImageManager.default().cancelImageRequest(requestID)
+        }
+        requestIDs.removeAll()
+    }
+
     private func loadThumbnails() {
         let assetIds = place.photos.prefix(4).compactMap { $0.assetIdentifier }
         guard !assetIds.isEmpty else { return }
+
+        cancelAllRequests()
 
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: Array(assetIds), options: nil)
 
@@ -1066,12 +1097,12 @@ struct PlaceRow: View {
         var pendingCount = fetchResult.count
 
         fetchResult.enumerateObjects { asset, _, _ in
-            PHImageManager.default().requestImage(
+            let requestID = PHImageManager.default().requestImage(
                 for: asset,
                 targetSize: CGSize(width: 88, height: 88),
                 contentMode: .aspectFill,
                 options: options
-            ) { image, _ in
+            ) { [self] image, _ in
                 DispatchQueue.main.async {
                     if let image = image {
                         loadedImages.append(image)
@@ -1082,16 +1113,20 @@ struct PlaceRow: View {
                     }
                 }
             }
+            requestIDs.append(requestID)
         }
     }
 }
 
 // MARK: - Place Detail Sheet
+// NOTE: PHImageManager 요청을 onDisappear에서 취소하여 메모리 누수 방지
 struct PlaceDetailSheet: View {
     let place: Place
     @Environment(\.dismiss) private var dismiss
     @State private var photos: [UIImage] = []
     @State private var selectedPhotoIndex: Int?
+    /// PHImageManager 요청 ID (취소용)
+    @State private var requestIDs: [PHImageRequestID] = []
 
     var body: some View {
         NavigationStack {
@@ -1121,6 +1156,9 @@ struct PlaceDetailSheet: View {
             .onAppear {
                 loadPhotos()
             }
+            .onDisappear {
+                cancelAllRequests()
+            }
             .fullScreenCover(item: Binding(
                 get: { selectedPhotoIndex.map { PhotoViewerItem(index: $0) } },
                 set: { selectedPhotoIndex = $0?.index }
@@ -1128,6 +1166,13 @@ struct PlaceDetailSheet: View {
                 PhotoViewer(photos: photos, initialIndex: item.index)
             }
         }
+    }
+
+    private func cancelAllRequests() {
+        for requestID in requestIDs {
+            PHImageManager.default().cancelImageRequest(requestID)
+        }
+        requestIDs.removeAll()
     }
 
     private var mapSection: some View {
@@ -1252,6 +1297,8 @@ struct PlaceDetailSheet: View {
         let assetIds = place.photos.compactMap { $0.assetIdentifier }
         guard !assetIds.isEmpty else { return }
 
+        cancelAllRequests()
+
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: assetIds, options: nil)
 
         let options = PHImageRequestOptions()
@@ -1262,12 +1309,12 @@ struct PlaceDetailSheet: View {
         var pendingCount = fetchResult.count
 
         fetchResult.enumerateObjects { asset, _, _ in
-            PHImageManager.default().requestImage(
+            let requestID = PHImageManager.default().requestImage(
                 for: asset,
                 targetSize: CGSize(width: 300, height: 300),
                 contentMode: .aspectFill,
                 options: options
-            ) { image, _ in
+            ) { [self] image, _ in
                 DispatchQueue.main.async {
                     if let image = image {
                         loadedImages.append(image)
@@ -1278,6 +1325,7 @@ struct PlaceDetailSheet: View {
                     }
                 }
             }
+            requestIDs.append(requestID)
         }
     }
 }
@@ -2816,11 +2864,14 @@ struct RecordMapSheet: View {
 }
 
 // MARK: - Record Photos Sheet
+// NOTE: PHImageManager 요청을 onDisappear에서 취소하여 메모리 누수 방지
 struct RecordPhotosSheet: View {
     let record: TravelRecord
     @Environment(\.dismiss) private var dismiss
     @State private var photos: [UIImage] = []
     @State private var selectedPhotoIndex: Int?
+    /// PHImageManager 요청 ID (취소용)
+    @State private var requestIDs: [PHImageRequestID] = []
 
     private var allPhotoAssetIds: [String] {
         record.allPhotoAssetIdentifiers
@@ -2878,6 +2929,9 @@ struct RecordPhotosSheet: View {
             .onAppear {
                 loadPhotos()
             }
+            .onDisappear {
+                cancelAllRequests()
+            }
             .fullScreenCover(item: Binding(
                 get: { selectedPhotoIndex.map { PhotoViewerItem(index: $0) } },
                 set: { selectedPhotoIndex = $0?.index }
@@ -2887,8 +2941,17 @@ struct RecordPhotosSheet: View {
         }
     }
 
+    private func cancelAllRequests() {
+        for requestID in requestIDs {
+            PHImageManager.default().cancelImageRequest(requestID)
+        }
+        requestIDs.removeAll()
+    }
+
     private func loadPhotos() {
         guard !allPhotoAssetIds.isEmpty else { return }
+
+        cancelAllRequests()
 
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: allPhotoAssetIds, options: nil)
 
@@ -2901,12 +2964,12 @@ struct RecordPhotosSheet: View {
         var pendingCount = fetchResult.count
 
         fetchResult.enumerateObjects { asset, _, _ in
-            PHImageManager.default().requestImage(
+            let requestID = PHImageManager.default().requestImage(
                 for: asset,
                 targetSize: CGSize(width: 300, height: 300),
                 contentMode: .aspectFill,
                 options: options
-            ) { image, _ in
+            ) { [self] image, _ in
                 DispatchQueue.main.async {
                     if let image = image {
                         loadedImages.append(image)
@@ -2917,6 +2980,7 @@ struct RecordPhotosSheet: View {
                     }
                 }
             }
+            requestIDs.append(requestID)
         }
     }
 }
