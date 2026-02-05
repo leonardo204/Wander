@@ -20,6 +20,10 @@ struct ContentView: View {
     /// - NOTE: 탭 전환 또는 같은 탭 클릭 시 값을 변경하여 HomeView에서 navigationPath 초기화 유도
     @State private var homeResetTrigger = false
 
+    /// 기록 탭 네비게이션 리셋 트리거
+    /// - NOTE: 탭 전환 또는 같은 탭 클릭 시 값을 변경하여 RecordsView에서 NavigationStack 재생성 유도
+    @State private var recordsResetTrigger = false
+
     /// 탭바 높이 (safe area 포함)
     private let tabBarHeight: CGFloat = 49
 
@@ -35,7 +39,7 @@ struct ContentView: View {
                     )
                     .tag(0)
 
-                    RecordsView()
+                    RecordsView(resetTrigger: $recordsResetTrigger)
                         .tag(1)
 
                     SettingsView()
@@ -66,14 +70,17 @@ struct ContentView: View {
             let tabNames = ["홈", "기록", "설정"]
             logger.info("🚀 [ContentView] 탭 변경: \(tabNames[oldValue]) → \(tabNames[newValue])")
 
-            // IMPORTANT: 탭 전환 시 홈 탭의 네비게이션을 리셋하여 항상 초기화면 표시
-            // - 홈에서 다른 탭으로 이동: 홈의 상세 페이지에서 벗어남
-            // - 다른 탭에서 홈으로 이동: 홈의 루트 화면 표시
+            // IMPORTANT: 탭 전환 시 이전 탭의 네비게이션을 리셋하여 항상 초기화면 표시
+            // 홈 탭 리셋
             if oldValue == 0 || newValue == 0 {
-                if isNavigationActive {
-                    logger.info("🚀 [ContentView] 홈 탭 네비게이션 리셋 (초기화면 표시)")
-                    homeResetTrigger.toggle()
-                }
+                logger.info("🚀 [ContentView] 홈 탭 네비게이션 리셋 (초기화면 표시)")
+                homeResetTrigger.toggle()
+            }
+
+            // 기록 탭 리셋
+            if oldValue == 1 || newValue == 1 {
+                logger.info("🚀 [ContentView] 기록 탭 네비게이션 리셋 (초기화면 표시)")
+                recordsResetTrigger.toggle()
             }
         }
         .onChange(of: isNavigationActive) { _, newValue in
@@ -93,8 +100,9 @@ struct ContentView: View {
             homeResetTrigger.toggle()
             logger.info("🚀 [ContentView] 홈 탭 네비게이션 리셋 요청")
         case 1:
-            // 기록 탭: 현재 NavigationStack 직접 관리 안 함 (추후 필요시 구현)
-            logger.info("🚀 [ContentView] 기록 탭 리셋 (미구현)")
+            // 기록 탭: NavigationStack 재생성
+            recordsResetTrigger.toggle()
+            logger.info("🚀 [ContentView] 기록 탭 네비게이션 리셋 요청")
         case 2:
             // 설정 탭: 보통 깊은 네비게이션 없음
             logger.info("🚀 [ContentView] 설정 탭 리셋 (미구현)")
