@@ -13,7 +13,7 @@ struct P2PShareCompleteView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 32) {
+            VStack(spacing: WanderSpacing.space7) {
                 Spacer()
 
                 // 성공 아이콘
@@ -48,10 +48,10 @@ struct P2PShareCompleteView: View {
     // MARK: - Success Icon
 
     private var successIcon: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: WanderSpacing.space4) {
             ZStack {
                 Circle()
-                    .fill(WanderColors.success.opacity(0.1))
+                    .fill(WanderColors.successBackground)
                     .frame(width: 100, height: 100)
 
                 Image(systemName: "checkmark.circle.fill")
@@ -60,85 +60,89 @@ struct P2PShareCompleteView: View {
             }
 
             Text("링크가 생성되었습니다")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(WanderTypography.title2)
+                .foregroundStyle(WanderColors.textPrimary)
         }
     }
 
     // MARK: - Info Section
 
     private var infoSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: WanderSpacing.space4) {
             // 만료 정보
             if let expiresAt = shareResult.expiresAt {
                 HStack {
                     Image(systemName: "clock")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(WanderColors.textSecondary)
 
                     Text("만료: \(expiresAt.formatted(date: .abbreviated, time: .omitted))")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(WanderTypography.bodySmall)
+                        .foregroundStyle(WanderColors.textSecondary)
                 }
             } else {
                 HStack {
                     Image(systemName: "infinity")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(WanderColors.textSecondary)
 
                     Text("만료 없음 (영구)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(WanderTypography.bodySmall)
+                        .foregroundStyle(WanderColors.textSecondary)
                 }
             }
 
             // 사진 수
             HStack {
                 Image(systemName: "photo.stack")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(WanderColors.textSecondary)
 
                 Text("\(shareResult.photoCount)장의 사진 포함")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(WanderTypography.bodySmall)
+                    .foregroundStyle(WanderColors.textSecondary)
             }
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
     }
 
     // MARK: - Share Buttons
 
     private var shareButtons: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: WanderSpacing.space3) {
             // 시스템 공유 시트
             Button {
                 shareViaSystemSheet()
             } label: {
-                HStack {
+                HStack(spacing: WanderSpacing.space2) {
                     Image(systemName: "square.and.arrow.up")
                     Text("공유하기")
                 }
-                .font(.headline)
+                .font(WanderTypography.headline)
                 .frame(maxWidth: .infinity)
-                .padding()
+                .frame(height: WanderSpacing.buttonHeight)
                 .background(WanderColors.primary)
                 .foregroundStyle(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
             }
 
             // 링크 복사
             Button {
                 copyLinkToClipboard()
             } label: {
-                HStack {
+                HStack(spacing: WanderSpacing.space2) {
                     Image(systemName: "doc.on.doc")
                     Text("링크 복사")
                 }
-                .font(.headline)
+                .font(WanderTypography.headline)
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color(.systemGray5))
-                .foregroundStyle(.primary)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .frame(height: WanderSpacing.buttonHeight)
+                .background(WanderColors.surface)
+                .foregroundStyle(WanderColors.textPrimary)
+                .overlay(
+                    RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge)
+                        .stroke(WanderColors.border, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
             }
         }
     }
@@ -149,12 +153,13 @@ struct P2PShareCompleteView: View {
         VStack {
             Spacer()
 
-            HStack {
+            HStack(spacing: WanderSpacing.space2) {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                    .foregroundStyle(WanderColors.success)
                 Text("링크가 복사되었습니다")
+                    .font(WanderTypography.bodySmall)
             }
-            .padding()
+            .padding(WanderSpacing.space4)
             .background(.ultraThinMaterial)
             .clipShape(Capsule())
             .padding(.bottom, 100)

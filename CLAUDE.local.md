@@ -68,7 +68,8 @@ Wander/
 │   │   │   ├── WanderTypography.swift
 │   │   │   └── WanderSpacing.swift
 │   │   └── Utilities/
-│   │       └── KeychainManager.swift
+│   │       ├── KeychainManager.swift
+│   │       └── DeepLinkHandler.swift   ← P2P 공유 딥링크 처리
 │   │
 │   ├── Models/SwiftData/
 │   │   ├── TravelRecord.swift
@@ -106,6 +107,11 @@ Wander/
 │   │   │   └── ShareImageGenerator.swift
 │   │   ├── LocationService/
 │   │   │   └── GeocodingService.swift
+│   │   ├── P2PShare/                    ← P2P 기록 공유 (신규)
+│   │   │   ├── P2PShareModels.swift
+│   │   │   ├── P2PShareService.swift
+│   │   │   ├── CloudKitManager.swift
+│   │   │   └── EncryptionService.swift
 │   │   └── AuthenticationManager.swift
 │   │
 │   ├── ViewModels/
@@ -152,8 +158,14 @@ Wander/
 │   │   │   ├── SharePreviewEditorView.swift
 │   │   │   └── Components/
 │   │   │       └── GlassPanelView.swift
+│   │   ├── P2PShare/                   ← P2P 공유 UI (신규)
+│   │   │   ├── P2PShareOptionsView.swift
+│   │   │   ├── P2PShareCompleteView.swift
+│   │   │   └── P2PShareReceiveView.swift
 │   │   ├── Auth/PINInputView.swift
-│   │   └── Shared/SharedRecordView.swift
+│   │   └── Shared/
+│   │       ├── SharedRecordView.swift
+│   │       └── SharedBadgeView.swift    ← 공유 배지
 │   │
 │   ├── Resources/
 │   │   └── Assets.xcassets/
@@ -189,6 +201,7 @@ Wander/
 | 활동 추론 | 규칙 기반 활동 타입 추론 | `ActivityInferenceService.swift` |
 | AI 스토리 | BYOK AI로 여행 스토리 생성 | `AIStoryView.swift` |
 | SNS 공유 | 일반 공유, 글래스모피즘 템플릿 | `ShareService/`, `Views/Share/` |
+| P2P 공유 | CloudKit 기반 여행 기록 공유 | `P2PShare/`, `Views/P2PShare/` |
 | 내보내기 | 이미지/Markdown 내보내기 | `ExportService.swift` |
 
 ### Wander Intelligence (스마트 분석)
@@ -308,19 +321,95 @@ ResultView/RecordsView
 
 ## 디자인 시스템
 
-### 컬러 (Light Mode)
+> 📄 **상세 디자인 가이드**: `Ref-Concepts/wander_design_concept.md`
+
+### 디자인 토큰 사용 규칙
+
+모든 UI 컴포넌트는 **반드시** 디자인 토큰을 사용해야 합니다:
+
 ```swift
-// Primary - Sky Blue
-static let primary = Color(hex: "#87CEEB")
-static let primaryPale = Color(hex: "#E8F6FC")
+// ❌ 하드코딩 금지
+.background(Color(.systemGray6))
+.font(.headline)
+.padding(16)
 
-// Text
-static let textPrimary = Color(hex: "#1A2B33")
-static let textSecondary = Color(hex: "#5A6B73")
+// ✅ 디자인 토큰 사용
+.background(WanderColors.surface)
+.font(WanderTypography.headline)
+.padding(WanderSpacing.space4)
+```
 
-// Semantic
-static let success = Color(hex: "#4CAF50")
-static let error = Color(hex: "#F44336")
+### 컬러 토큰 (`WanderColors`)
+| 토큰 | Hex | 용도 |
+|-----|-----|------|
+| `primary` | #87CEEB | 브랜드 컬러, Primary 버튼 |
+| `primaryPale` | #E8F6FC | 배경 틴트 |
+| `surface` | #F8FBFD | 카드/섹션 배경 (systemGray6 대신 사용) |
+| `border` | #E5EEF2 | 테두리, 구분선 |
+| `textPrimary` | #1A2B33 | 주요 텍스트 |
+| `textSecondary` | #5A6B73 | 보조 텍스트 |
+| `textTertiary` | #8A9BA3 | 힌트, 비활성 |
+| `success` | #4CAF50 | 성공 상태 |
+| `successBackground` | #E8F5E9 | 성공 배경 |
+| `warning` | #FF9800 | 경고 상태 |
+| `warningBackground` | #FFF3E0 | 경고 배경 |
+| `error` | #F44336 | 에러 상태 |
+| `errorBackground` | #FFEBEE | 에러 배경 |
+
+### 타이포그래피 토큰 (`WanderTypography`)
+| 토큰 | 크기 | Weight | 용도 |
+|-----|------|--------|------|
+| `display` | 34pt | Bold | 대형 타이틀 |
+| `title1` | 28pt | Bold | 페이지 타이틀 |
+| `title2` | 22pt | Bold | 섹션 타이틀 |
+| `title3` | 20pt | Semibold | 카드 타이틀 |
+| `headline` | 17pt | Semibold | 강조 텍스트, 버튼 |
+| `body` | 17pt | Regular | 본문 |
+| `bodySmall` | 15pt | Regular | 보조 본문 |
+| `caption1` | 13pt | Regular | 캡션, 라벨 |
+| `caption2` | 12pt | Regular | 작은 캡션 |
+
+### 간격 토큰 (`WanderSpacing`)
+| 토큰 | 값 | 용도 |
+|-----|-----|------|
+| `space1` | 4pt | 아이콘-텍스트 간격 |
+| `space2` | 8pt | 인라인 요소 간격 |
+| `space3` | 12pt | 작은 요소 간격 |
+| `space4` | 16pt | 기본 패딩 |
+| `space6` | 24pt | 섹션 내부 패딩 |
+| `space7` | 32pt | 섹션 간 간격 |
+| `buttonHeight` | 52pt | 버튼 높이 |
+| `radiusMedium` | 8pt | 버튼, 입력 필드 |
+| `radiusLarge` | 12pt | 카드, 썸네일 |
+| `radiusXL` | 16pt | 모달, 시트 |
+
+### 버튼 스타일
+```swift
+// Primary Button (52pt 높이)
+Button { } label: {
+    Text("버튼 텍스트")
+        .font(WanderTypography.headline)
+        .frame(maxWidth: .infinity)
+        .frame(height: WanderSpacing.buttonHeight)
+        .background(WanderColors.primary)
+        .foregroundStyle(.white)
+        .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
+}
+
+// Secondary Button (테두리 스타일)
+Button { } label: {
+    Text("버튼 텍스트")
+        .font(WanderTypography.headline)
+        .frame(maxWidth: .infinity)
+        .frame(height: WanderSpacing.buttonHeight)
+        .background(WanderColors.surface)
+        .foregroundStyle(WanderColors.textPrimary)
+        .overlay(
+            RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge)
+                .stroke(WanderColors.border, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
+}
 ```
 
 ### 탭바 구조
@@ -480,6 +569,7 @@ settings:
 - ✅ Phase 4: AI 기능 (BYOK, 스토리 생성)
 - ✅ Phase 5: Wander Intelligence (스마트 분석, iOS 17+)
 - ✅ 추가 기능: 보안 잠금, 카테고리, 숨김 기록, 자주 가는 곳
+- ✅ Phase 6: P2P 공유 (CloudKit, 암호화, Deep Link)
 
 ---
 
@@ -520,6 +610,9 @@ options.deliveryMode = .fastFormat
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-05 | P2P 공유 UI 디자인 가이드 준수 적용 (WanderColors, WanderTypography, WanderSpacing 토큰) |
+| 2026-02-05 | CLAUDE.local.md에 디자인 토큰 사용 규칙 문서화 |
+| 2026-02-05 | P2P 기록 공유 기능 구현 (CloudKit, AES-256 암호화, Deep Link) |
 | 2026-02-05 | Instagram 공유 기능 제거 (Feed/Stories), 일반 공유만 유지 |
 | 2026-02-05 | 사진 피커 드래그 선택 버그 수정 (UICollectionView 방식으로 재작성) |
 | 2026-02-05 | 미분류 사진(GPS 없음) 지도 표시 제외 - hasValidCoordinate 필터 추가 |

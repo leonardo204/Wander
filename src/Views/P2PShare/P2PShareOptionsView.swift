@@ -19,7 +19,7 @@ struct P2PShareOptionsView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: WanderSpacing.space6) {
                     // 헤더
                     headerSection
 
@@ -63,17 +63,18 @@ struct P2PShareOptionsView: View {
     // MARK: - Header Section
 
     private var headerSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: WanderSpacing.space3) {
             Image(systemName: "link.badge.plus")
-                .font(.system(size: 48))
+                .font(.system(size: WanderSpacing.iconHuge))
                 .foregroundStyle(WanderColors.primary)
 
             Text(record.title)
-                .font(.headline)
+                .font(WanderTypography.headline)
+                .foregroundStyle(WanderColors.textPrimary)
 
             Text("\(record.photoCount)장의 사진")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(WanderTypography.bodySmall)
+                .foregroundStyle(WanderColors.textSecondary)
         }
         .padding(.vertical)
     }
@@ -81,19 +82,20 @@ struct P2PShareOptionsView: View {
     // MARK: - Photo Quality Section
 
     private var photoQualitySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
             Label("사진 품질", systemImage: "photo")
-                .font(.headline)
+                .font(WanderTypography.headline)
+                .foregroundStyle(WanderColors.textPrimary)
 
-            VStack(spacing: 8) {
+            VStack(spacing: WanderSpacing.space2) {
                 ForEach(PhotoQuality.allCases) { quality in
                     qualityOptionRow(quality)
                 }
             }
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
     }
 
     private func qualityOptionRow(_ quality: PhotoQuality) -> some View {
@@ -101,15 +103,16 @@ struct P2PShareOptionsView: View {
             photoQuality = quality
         } label: {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: WanderSpacing.space1) {
                     HStack {
                         Text(quality.displayName)
-                            .font(.subheadline)
+                            .font(WanderTypography.bodySmall)
                             .fontWeight(.medium)
+                            .foregroundStyle(WanderColors.textPrimary)
 
                         if quality == .optimized {
                             Text("추천")
-                                .font(.caption2)
+                                .font(WanderTypography.caption2)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(WanderColors.primary.opacity(0.2))
@@ -119,16 +122,16 @@ struct P2PShareOptionsView: View {
                     }
 
                     Text(quality.description)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(WanderTypography.caption1)
+                        .foregroundStyle(WanderColors.textSecondary)
                 }
 
                 Spacer()
 
                 Image(systemName: photoQuality == quality ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(photoQuality == quality ? WanderColors.primary : .secondary)
+                    .foregroundStyle(photoQuality == quality ? WanderColors.primary : WanderColors.textTertiary)
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, WanderSpacing.space2)
         }
         .buttonStyle(.plain)
     }
@@ -136,19 +139,20 @@ struct P2PShareOptionsView: View {
     // MARK: - Expiration Section
 
     private var expirationSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
             Label("링크 만료", systemImage: "clock")
-                .font(.headline)
+                .font(WanderTypography.headline)
+                .foregroundStyle(WanderColors.textPrimary)
 
-            HStack(spacing: 8) {
+            HStack(spacing: WanderSpacing.space2) {
                 ForEach(LinkExpiration.allCases) { expiration in
                     expirationButton(expiration)
                 }
             }
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
     }
 
     private func expirationButton(_ expiration: LinkExpiration) -> some View {
@@ -156,20 +160,20 @@ struct P2PShareOptionsView: View {
             linkExpiration = expiration
         } label: {
             Text(expiration.displayName)
-                .font(.subheadline)
+                .font(WanderTypography.bodySmall)
                 .fontWeight(linkExpiration == expiration ? .semibold : .regular)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, WanderSpacing.space3)
+                .padding(.vertical, WanderSpacing.space2)
                 .frame(maxWidth: .infinity)
                 .background(
                     linkExpiration == expiration
                         ? WanderColors.primary
-                        : Color(.systemGray5)
+                        : WanderColors.border
                 )
                 .foregroundStyle(
-                    linkExpiration == expiration ? .white : .primary
+                    linkExpiration == expiration ? .white : WanderColors.textPrimary
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium))
         }
         .buttonStyle(.plain)
     }
@@ -177,21 +181,22 @@ struct P2PShareOptionsView: View {
     // MARK: - Sender Name Section
 
     private var senderNameSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
             Label("보내는 사람 (선택)", systemImage: "person")
-                .font(.headline)
+                .font(WanderTypography.headline)
+                .foregroundStyle(WanderColors.textPrimary)
 
             TextField("이름 입력", text: $senderName)
                 .textFieldStyle(.roundedBorder)
                 .autocorrectionDisabled()
 
             Text("받는 사람에게 표시됩니다")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(WanderTypography.caption1)
+                .foregroundStyle(WanderColors.textSecondary)
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
     }
 
     // MARK: - Error View
@@ -199,16 +204,16 @@ struct P2PShareOptionsView: View {
     private func errorView(_ message: String) -> some View {
         HStack {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
+                .foregroundStyle(WanderColors.warning)
 
             Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(WanderTypography.bodySmall)
+                .foregroundStyle(WanderColors.textSecondary)
         }
-        .padding()
+        .padding(WanderSpacing.space4)
         .frame(maxWidth: .infinity)
-        .background(Color.orange.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background(WanderColors.warningBackground)
+        .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium))
     }
 
     // MARK: - Create Link Button
@@ -217,16 +222,16 @@ struct P2PShareOptionsView: View {
         Button {
             createShareLink()
         } label: {
-            HStack {
+            HStack(spacing: WanderSpacing.space2) {
                 Image(systemName: "link")
                 Text("공유 링크 생성")
             }
-            .font(.headline)
+            .font(WanderTypography.headline)
             .frame(maxWidth: .infinity)
-            .padding()
+            .frame(height: WanderSpacing.buttonHeight)
             .background(WanderColors.primary)
             .foregroundStyle(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
         }
         .disabled(isCreatingLink)
     }
@@ -238,12 +243,12 @@ struct P2PShareOptionsView: View {
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
 
-            VStack(spacing: 16) {
+            VStack(spacing: WanderSpacing.space4) {
                 ProgressView()
                     .scaleEffect(1.5)
 
                 Text(shareService.progressMessage)
-                    .font(.subheadline)
+                    .font(WanderTypography.bodySmall)
                     .foregroundStyle(.white)
 
                 if shareService.progress > 0 {
@@ -252,9 +257,9 @@ struct P2PShareOptionsView: View {
                         .frame(width: 200)
                 }
             }
-            .padding(32)
+            .padding(WanderSpacing.space7)
             .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusXL))
         }
     }
 

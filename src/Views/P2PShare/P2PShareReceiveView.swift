@@ -46,26 +46,27 @@ struct P2PShareReceiveView: View {
     // MARK: - Loading View
 
     private var loadingView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: WanderSpacing.space4) {
             ProgressView()
                 .scaleEffect(1.5)
 
             Text("공유 정보를 불러오는 중...")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(WanderTypography.bodySmall)
+                .foregroundStyle(WanderColors.textSecondary)
         }
     }
 
     // MARK: - Error View
 
     private func errorView(_ message: String) -> some View {
-        VStack(spacing: 24) {
+        VStack(spacing: WanderSpacing.space6) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 60))
-                .foregroundStyle(.orange)
+                .foregroundStyle(WanderColors.warning)
 
             Text(message)
-                .font(.headline)
+                .font(WanderTypography.headline)
+                .foregroundStyle(WanderColors.textPrimary)
                 .multilineTextAlignment(.center)
 
             Button {
@@ -73,23 +74,30 @@ struct P2PShareReceiveView: View {
                     await loadPreview()
                 }
             } label: {
-                HStack {
+                HStack(spacing: WanderSpacing.space2) {
                     Image(systemName: "arrow.clockwise")
                     Text("다시 시도")
                 }
-                .padding()
-                .background(Color(.systemGray5))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .font(WanderTypography.headline)
+                .frame(height: WanderSpacing.buttonHeight)
+                .padding(.horizontal, WanderSpacing.space6)
+                .background(WanderColors.surface)
+                .foregroundStyle(WanderColors.textPrimary)
+                .overlay(
+                    RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge)
+                        .stroke(WanderColors.border, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
             }
         }
-        .padding()
+        .padding(WanderSpacing.space4)
     }
 
     // MARK: - Preview Content
 
     private func previewContent(_ preview: SharePreview) -> some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: WanderSpacing.space6) {
                 // 썸네일
                 thumbnailView(preview)
 
@@ -107,7 +115,7 @@ struct P2PShareReceiveView: View {
                 // 저장 버튼
                 saveButton
             }
-            .padding()
+            .padding(WanderSpacing.space4)
         }
         .overlay {
             if isSaving {
@@ -126,15 +134,15 @@ struct P2PShareReceiveView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(height: 200)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusXL))
             } else {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.systemGray5))
+                RoundedRectangle(cornerRadius: WanderSpacing.radiusXL)
+                    .fill(WanderColors.surface)
                     .frame(height: 200)
                     .overlay {
                         Image(systemName: "photo.stack")
-                            .font(.system(size: 48))
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: WanderSpacing.iconHuge))
+                            .foregroundStyle(WanderColors.textSecondary)
                     }
             }
         }
@@ -143,27 +151,27 @@ struct P2PShareReceiveView: View {
     // MARK: - Info Section
 
     private func infoSection(_ preview: SharePreview) -> some View {
-        VStack(spacing: 12) {
+        VStack(spacing: WanderSpacing.space3) {
             Text(preview.title)
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(WanderTypography.title2)
+                .foregroundStyle(WanderColors.textPrimary)
 
             Text(formatDateRange(start: preview.startDate, end: preview.endDate))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(WanderTypography.bodySmall)
+                .foregroundStyle(WanderColors.textSecondary)
 
-            HStack(spacing: 16) {
+            HStack(spacing: WanderSpacing.space4) {
                 Label("\(preview.placeCount)곳", systemImage: "mappin.and.ellipse")
                 Label(formatDistance(preview.totalDistance), systemImage: "car")
                 Label("\(preview.photoCount)장", systemImage: "photo")
             }
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .font(WanderTypography.bodySmall)
+            .foregroundStyle(WanderColors.textSecondary)
         }
-        .padding()
+        .padding(WanderSpacing.space4)
         .frame(maxWidth: .infinity)
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(WanderColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
     }
 
     // MARK: - Sender Section
@@ -176,19 +184,20 @@ struct P2PShareReceiveView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("공유자")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(WanderTypography.caption1)
+                    .foregroundStyle(WanderColors.textSecondary)
 
                 Text(sender)
-                    .font(.subheadline)
+                    .font(WanderTypography.bodySmall)
                     .fontWeight(.medium)
+                    .foregroundStyle(WanderColors.textPrimary)
             }
 
             Spacer()
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
     }
 
     // MARK: - Expiration Section
@@ -196,23 +205,23 @@ struct P2PShareReceiveView: View {
     private func expirationSection(_ preview: SharePreview) -> some View {
         HStack {
             Image(systemName: "clock")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(WanderColors.textSecondary)
 
             if let expiresAt = preview.expiresAt {
                 Text("만료: \(expiresAt.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(WanderTypography.bodySmall)
+                    .foregroundStyle(WanderColors.textSecondary)
             } else {
                 Text("만료 없음")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(WanderTypography.bodySmall)
+                    .foregroundStyle(WanderColors.textSecondary)
             }
 
             Spacer()
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
     }
 
     // MARK: - Save Button
@@ -221,16 +230,16 @@ struct P2PShareReceiveView: View {
         Button {
             saveRecord()
         } label: {
-            HStack {
+            HStack(spacing: WanderSpacing.space2) {
                 Image(systemName: "square.and.arrow.down")
                 Text("내 기록에 저장")
             }
-            .font(.headline)
+            .font(WanderTypography.headline)
             .frame(maxWidth: .infinity)
-            .padding()
+            .frame(height: WanderSpacing.buttonHeight)
             .background(WanderColors.primary)
             .foregroundStyle(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
         }
         .disabled(isSaving)
     }
@@ -242,12 +251,12 @@ struct P2PShareReceiveView: View {
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
 
-            VStack(spacing: 16) {
+            VStack(spacing: WanderSpacing.space4) {
                 ProgressView()
                     .scaleEffect(1.5)
 
                 Text(shareService.progressMessage)
-                    .font(.subheadline)
+                    .font(WanderTypography.bodySmall)
                     .foregroundStyle(.white)
 
                 if shareService.progress > 0 {
@@ -256,9 +265,9 @@ struct P2PShareReceiveView: View {
                         .frame(width: 200)
                 }
             }
-            .padding(32)
+            .padding(WanderSpacing.space7)
             .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusXL))
         }
     }
 
