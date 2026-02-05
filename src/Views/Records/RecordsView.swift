@@ -80,7 +80,15 @@ struct RecordsView: View {
             .searchable(text: $searchText, prompt: "records.search".localized)
             .navigationDestination(for: UUID.self) { recordId in
                 if let record = records.first(where: { $0.id == recordId }) {
-                    RecordDetailFullView(record: record)
+                    // 만료된 공유 기록은 삭제 후 빈 뷰 반환
+                    if record.isShareExpired {
+                        ExpiredRecordPlaceholder(record: record, modelContext: modelContext) {
+                            // 삭제 후 뒤로 가기
+                            navigationPath = NavigationPath()
+                        }
+                    } else {
+                        RecordDetailFullView(record: record)
+                    }
                 }
             }
             .onAppear {
@@ -344,6 +352,58 @@ struct FilterChip: View {
     }
 }
 
+// MARK: - Expired Record Placeholder
+/// 만료된 공유 기록 클릭 시 삭제 처리 후 표시되는 플레이스홀더
+struct ExpiredRecordPlaceholder: View {
+    let record: TravelRecord
+    let modelContext: ModelContext
+    let onDelete: () -> Void
+
+    @State private var isDeleting = false
+
+    var body: some View {
+        VStack(spacing: WanderSpacing.space6) {
+            Image(systemName: "clock.badge.xmark")
+                .font(.system(size: 60))
+                .foregroundColor(WanderColors.textTertiary)
+
+            Text("만료된 기록")
+                .font(WanderTypography.title2)
+                .foregroundColor(WanderColors.textPrimary)
+
+            Text("이 공유 기록은 만료되어\n더 이상 볼 수 없습니다.")
+                .font(WanderTypography.body)
+                .foregroundColor(WanderColors.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(WanderColors.background)
+        .onAppear {
+            deleteExpiredRecord()
+        }
+    }
+
+    private func deleteExpiredRecord() {
+        guard !isDeleting else { return }
+        isDeleting = true
+
+        logger.info("📚 [RecordsView] 만료된 공유 기록 삭제: \(record.title)")
+
+        // 로컬 사진 폴더 삭제
+        if let shareID = record.originalShareID {
+            P2PShareService.shared.deleteLocalPhotosSync(shareID: shareID.uuidString)
+        }
+
+        modelContext.delete(record)
+        try? modelContext.save()
+
+        // 약간의 딜레이 후 뒤로 가기
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            onDelete()
+        }
+    }
+}
+
 // MARK: - Record List Card
 // NOTE: PHImageManager 요청을 onDisappear에서 취소하여 메모리 누수 방지
 struct RecordListCard: View {
@@ -360,7 +420,7 @@ struct RecordListCard: View {
 
                 // 공유 배지 (만료일 D-day 표시)
                 if record.isShared {
-                    SharedBadgeView(size: .small, expirationStatus: record.expirationStatus)
+                    ShareStatusBadgesView(expirationStatus: record.expirationStatus, size: .small)
                 }
 
                 Spacer()

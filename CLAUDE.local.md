@@ -665,6 +665,8 @@ options.deliveryMode = .fastFormat
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-05 | 공유 배지 분리: "공유됨" + "D-day" 두 개 배지 (ShareStatusBadgesView, ExpirationBadgeView) |
+| 2026-02-05 | 만료된 공유 기록 클릭 시 즉시 삭제 기능 (ExpiredRecordPlaceholder) |
 | 2026-02-05 | P2P 공유 기록 만료 시 자동 삭제 기능 추가 (shareExpiresAt 필드, cleanupExpiredSharedRecords) |
 | 2026-02-05 | 공유 배지 D-day 표시 기능 (영구: 보라색, 여유: 청록색, 곧 만료: 주황색, 오늘/만료: 빨강색) |
 | 2026-02-05 | ShareExpirationStatus enum 추가 (notShared, permanent, normal, soon, today, expired) |

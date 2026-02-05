@@ -262,7 +262,7 @@ struct HomeView: View {
         LazyVStack(spacing: WanderSpacing.space4) {
             ForEach(records.prefix(5)) { record in
                 Button {
-                    navigationPath.append(record.id)
+                    handleRecordTap(record)
                 } label: {
                     RecordCard(record: record)
                 }
@@ -272,6 +272,24 @@ struct HomeView: View {
                 }
             }
         }
+    }
+
+    /// 기록 탭 처리 - 만료된 공유 기록은 삭제, 그 외는 상세 화면으로 이동
+    private func handleRecordTap(_ record: TravelRecord) {
+        // 만료된 공유 기록 클릭 시 삭제
+        if record.isShareExpired {
+            logger.info("🏠 [HomeView] 만료된 공유 기록 삭제: \(record.title)")
+            // 로컬 사진 폴더 삭제
+            if let shareID = record.originalShareID {
+                P2PShareService.shared.deleteLocalPhotosSync(shareID: shareID.uuidString)
+            }
+            modelContext.delete(record)
+            try? modelContext.save()
+            return
+        }
+
+        // 정상 기록은 상세 화면으로 이동
+        navigationPath.append(record.id)
     }
 }
 
@@ -351,7 +369,7 @@ struct RecordCard: View {
                         .lineLimit(1)
 
                     if record.isShared {
-                        SharedBadgeView(size: .small, expirationStatus: record.expirationStatus)
+                        ShareStatusBadgesView(expirationStatus: record.expirationStatus, size: .small)
                     }
 
                     Spacer()

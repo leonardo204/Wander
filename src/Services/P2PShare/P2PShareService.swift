@@ -221,8 +221,14 @@ final class P2PShareService: ObservableObject {
         }
     }
 
-    /// 로컬 사진 파일 삭제
+    /// 로컬 사진 파일 삭제 (내부용)
     private func deleteLocalPhotos(shareID: String) {
+        deleteLocalPhotosSync(shareID: shareID)
+    }
+
+    /// 로컬 사진 파일 삭제 (동기, 외부 호출용)
+    /// - Parameter shareID: 공유 ID
+    func deleteLocalPhotosSync(shareID: String) {
         let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let shareDir = documentsDir.appendingPathComponent("SharedRecords/\(shareID)")
 

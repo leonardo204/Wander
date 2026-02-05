@@ -2,10 +2,9 @@ import SwiftUI
 
 // MARK: - Shared Badge View
 
-/// 공유받은 기록 표시 배지 (만료일 D-day 포함)
+/// 공유받은 기록 표시 배지 ("공유됨" 고정 배지)
 struct SharedBadgeView: View {
     var size: BadgeSize = .medium
-    var expirationStatus: ShareExpirationStatus = .permanent
 
     enum BadgeSize {
         case small   // 리스트 썸네일용
@@ -40,45 +39,69 @@ struct SharedBadgeView: View {
         }
     }
 
+    /// 공유 배지 색상 - 청록색
+    private static let sharedColor = Color(red: 0.2, green: 0.6, blue: 0.7)  // #339CB3
+
+    var body: some View {
+        HStack(spacing: WanderSpacing.space1) {
+            Image(systemName: "link")
+                .font(.system(size: size.iconSize, weight: .bold))
+
+            Text("공유됨")
+                .font(size.fontSize)
+                .fontWeight(.semibold)
+        }
+        .foregroundStyle(.white)
+        .padding(size.padding)
+        .background(
+            LinearGradient(
+                colors: [Self.sharedColor, Self.sharedColor.opacity(0.85)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(Capsule())
+        .shadow(color: Self.sharedColor.opacity(0.3), radius: 2, x: 0, y: 1)
+    }
+}
+
+// MARK: - Expiration Badge View
+
+/// 만료일 D-day 표시 배지 (공유됨 배지와 함께 사용)
+struct ExpirationBadgeView: View {
+    let expirationStatus: ShareExpirationStatus
+    var size: SharedBadgeView.BadgeSize = .medium
+
     // MARK: - Colors
 
-    /// 기본 색상 - 청록색 (여유 있음)
+    /// 여유 색상 - 청록색 (D-4+)
     private static let normalColor = Color(red: 0.2, green: 0.6, blue: 0.7)  // #339CB3
 
-    /// 주의 색상 - 주황색 (곧 만료, D-3 이하)
+    /// 주의 색상 - 주황색 (D-3 이하)
     private static let warningColor = Color(red: 0.95, green: 0.6, blue: 0.2)  // #F29933
 
     /// 긴급 색상 - 빨강색 (오늘 만료)
     private static let urgentColor = Color(red: 0.9, green: 0.3, blue: 0.3)  // #E64D4D
 
-    /// 영구 색상 - 보라색 (영구 보관)
-    private static let permanentColor = Color(red: 0.5, green: 0.4, blue: 0.7)  // #8066B3
-
     // MARK: - Computed Properties
 
     private var badgeColor: Color {
         switch expirationStatus {
-        case .notShared:
+        case .notShared, .permanent:
             return Self.normalColor
-        case .permanent:
-            return Self.permanentColor
         case .normal:
             return Self.normalColor
         case .soon:
             return Self.warningColor
-        case .today:
-            return Self.urgentColor
-        case .expired:
+        case .today, .expired:
             return Self.urgentColor
         }
     }
 
     private var badgeText: String {
         switch expirationStatus {
-        case .notShared:
-            return "공유됨"
-        case .permanent:
-            return "공유됨"
+        case .notShared, .permanent:
+            return ""
         case .normal(let days):
             return "D-\(days)"
         case .soon(let days):
@@ -90,39 +113,49 @@ struct SharedBadgeView: View {
         }
     }
 
-    private var badgeIcon: String {
+    private var shouldShow: Bool {
         switch expirationStatus {
-        case .permanent:
-            return "infinity"
-        case .today, .expired:
-            return "exclamationmark.circle"
+        case .notShared, .permanent:
+            return false
         default:
-            return "link"
+            return true
         }
     }
 
     // MARK: - Body
 
     var body: some View {
-        HStack(spacing: WanderSpacing.space1) {
-            Image(systemName: badgeIcon)
-                .font(.system(size: size.iconSize, weight: .bold))
-
+        if shouldShow {
             Text(badgeText)
                 .font(size.fontSize)
                 .fontWeight(.semibold)
+                .foregroundStyle(.white)
+                .padding(size.padding)
+                .background(
+                    LinearGradient(
+                        colors: [badgeColor, badgeColor.opacity(0.85)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .clipShape(Capsule())
+                .shadow(color: badgeColor.opacity(0.3), radius: 2, x: 0, y: 1)
         }
-        .foregroundStyle(.white)
-        .padding(size.padding)
-        .background(
-            LinearGradient(
-                colors: [badgeColor, badgeColor.opacity(0.85)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(Capsule())
-        .shadow(color: badgeColor.opacity(0.3), radius: 2, x: 0, y: 1)
+    }
+}
+
+// MARK: - Combined Share Status View
+
+/// 공유 상태 뷰 - "공유됨" + "D-day" 배지 조합
+struct ShareStatusBadgesView: View {
+    let expirationStatus: ShareExpirationStatus
+    var size: SharedBadgeView.BadgeSize = .medium
+
+    var body: some View {
+        HStack(spacing: 4) {
+            SharedBadgeView(size: size)
+            ExpirationBadgeView(expirationStatus: expirationStatus, size: size)
+        }
     }
 }
 
@@ -155,7 +188,7 @@ struct SharedFromView: View {
                 Spacer()
 
                 // 만료 상태 배지
-                SharedBadgeView(size: .small, expirationStatus: expirationStatus)
+                ShareStatusBadgesView(expirationStatus: expirationStatus, size: .small)
             }
             .padding(WanderSpacing.space4)
             .background(WanderColors.surface)
@@ -166,24 +199,31 @@ struct SharedFromView: View {
 
 // MARK: - Preview
 
-#Preview("Badge - Normal") {
+#Preview("Badge Combinations") {
     VStack(spacing: 16) {
-        SharedBadgeView(size: .medium, expirationStatus: .permanent)
-        SharedBadgeView(size: .medium, expirationStatus: .normal(days: 7))
-        SharedBadgeView(size: .medium, expirationStatus: .normal(days: 5))
-        SharedBadgeView(size: .medium, expirationStatus: .soon(days: 3))
-        SharedBadgeView(size: .medium, expirationStatus: .soon(days: 1))
-        SharedBadgeView(size: .medium, expirationStatus: .today)
-        SharedBadgeView(size: .medium, expirationStatus: .expired)
+        // 영구 보관 - D-day 배지 없음
+        ShareStatusBadgesView(expirationStatus: .permanent)
+
+        // 여유 있음
+        ShareStatusBadgesView(expirationStatus: .normal(days: 7))
+        ShareStatusBadgesView(expirationStatus: .normal(days: 5))
+
+        // 곧 만료
+        ShareStatusBadgesView(expirationStatus: .soon(days: 3))
+        ShareStatusBadgesView(expirationStatus: .soon(days: 1))
+
+        // 오늘/만료
+        ShareStatusBadgesView(expirationStatus: .today)
+        ShareStatusBadgesView(expirationStatus: .expired)
     }
     .padding()
 }
 
 #Preview("Badge Sizes") {
     VStack(spacing: 20) {
-        SharedBadgeView(size: .small, expirationStatus: .normal(days: 5))
-        SharedBadgeView(size: .medium, expirationStatus: .normal(days: 5))
-        SharedBadgeView(size: .large, expirationStatus: .normal(days: 5))
+        ShareStatusBadgesView(expirationStatus: .normal(days: 5), size: .small)
+        ShareStatusBadgesView(expirationStatus: .normal(days: 5), size: .medium)
+        ShareStatusBadgesView(expirationStatus: .normal(days: 5), size: .large)
     }
     .padding()
 }
