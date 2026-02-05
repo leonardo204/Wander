@@ -21,6 +21,9 @@ struct PhotoGridView: View {
     @State private var dragCurrentIndex: Int?
     @State private var dragSelectionMode: Bool = true  // true: 선택 모드, false: 해제 모드
 
+    // 스크롤 오프셋 추적 (드래그 선택 시 필요)
+    @State private var scrollOffset: CGFloat = 0
+
     // 그리드 레이아웃 (4열)
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 4)
     private let spacing: CGFloat = 2
@@ -28,8 +31,8 @@ struct PhotoGridView: View {
     // MARK: - Body
 
     var body: some View {
-        GeometryReader { geometry in
-            let itemSize = (geometry.size.width - spacing * 3) / 4
+        GeometryReader { outerGeometry in
+            let itemSize = (outerGeometry.size.width - spacing * 3) / 4
 
             ScrollView {
                 LazyVGrid(columns: columns, spacing: spacing) {
@@ -44,32 +47,32 @@ struct PhotoGridView: View {
                         .onTapGesture {
                             toggleSelection(asset)
                         }
-                        .background(
-                            GeometryReader { itemGeometry in
-                                Color.clear
-                                    .preference(
-                                        key: GridPhotoFramePreferenceKey.self,
-                                        value: [index: itemGeometry.frame(in: .named("photoGrid"))]
-                                    )
-                            }
-                        )
                     }
                 }
                 .padding(.horizontal, 2)
+                // 스크롤 오프셋 추적용 배경
+                .background(
+                    GeometryReader { innerGeometry in
+                        Color.clear
+                            .preference(
+                                key: ScrollOffsetPreferenceKey.self,
+                                value: outerGeometry.frame(in: .global).minY - innerGeometry.frame(in: .global).minY
+                            )
+                    }
+                )
             }
-            .coordinateSpace(name: "photoGrid")
+            .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
+                scrollOffset = offset
+            }
             .gesture(
                 DragGesture(minimumDistance: 10)
                     .onChanged { value in
-                        handleDragChanged(value: value, itemSize: itemSize, gridWidth: geometry.size.width)
+                        handleDragChanged(value: value, itemSize: itemSize, gridWidth: outerGeometry.size.width)
                     }
                     .onEnded { _ in
                         handleDragEnded()
                     }
             )
-            .onPreferenceChange(GridPhotoFramePreferenceKey.self) { frames in
-                // 프레임 정보 저장 (필요시 사용)
-            }
         }
     }
 
@@ -135,12 +138,19 @@ struct PhotoGridView: View {
     }
 
     /// 화면 좌표에서 그리드 인덱스 계산
+    /// - 스크롤 오프셋을 고려하여 실제 컨텐츠 위치 계산
     private func indexAt(location: CGPoint, itemSize: CGFloat, gridWidth: CGFloat) -> Int? {
-        guard location.x >= 0, location.y >= 0 else { return nil }
+        guard location.x >= 0 else { return nil }
 
         let adjustedItemSize = itemSize + spacing
+
+        // 스크롤 오프셋을 더해 실제 컨텐츠 위치 계산
+        let contentY = location.y + scrollOffset
+
+        guard contentY >= 0 else { return nil }
+
         let col = Int(location.x / adjustedItemSize)
-        let row = Int(location.y / adjustedItemSize)
+        let row = Int(contentY / adjustedItemSize)
 
         guard col >= 0, col < 4, row >= 0 else { return nil }
 
@@ -266,11 +276,12 @@ class ThumbnailLoader: ObservableObject {
 
 // MARK: - Preference Key
 
-struct GridPhotoFramePreferenceKey: PreferenceKey {
-    static var defaultValue: [Int: CGRect] = [:]
+/// 스크롤 오프셋 추적용 PreferenceKey
+struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
 
-    static func reduce(value: inout [Int: CGRect], nextValue: () -> [Int: CGRect]) {
-        value.merge(nextValue()) { $1 }
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 
