@@ -43,9 +43,6 @@ struct ContentView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.easeInOut(duration: 0.2), value: selectedTab)
-                // IMPORTANT: 상세 페이지에서 탭 스와이프만 차단, 콘텐츠 스크롤과 뒤로가기 제스처는 허용
-                // simultaneousGesture로 TabView의 페이지 스와이프와 경쟁하여 차단
-                .blockTabSwipe(when: isNavigationActive)
 
                 // 커스텀 하단 탭바
                 VStack(spacing: 0) {
@@ -69,7 +66,18 @@ struct ContentView: View {
             let tabNames = ["홈", "기록", "설정"]
             logger.info("🚀 [ContentView] 탭 변경: \(tabNames[oldValue]) → \(tabNames[newValue])")
 
-            // IMPORTANT: 다른 탭에서 홈 탭으로 전환 시 홈의 네비게이션도 리셋
+            // IMPORTANT: 상세 페이지에서 스와이프로 탭 변경 시도 시 원래 탭으로 되돌림
+            // 탭바 클릭은 CustomTabBar에서 처리하므로 여기서는 스와이프만 차단
+            if isNavigationActive && oldValue == 0 {
+                logger.info("🚀 [ContentView] 상세 페이지에서 탭 스와이프 차단 - 홈으로 복귀")
+                // 애니메이션 없이 즉시 원래 탭으로 복귀
+                withAnimation(.none) {
+                    selectedTab = oldValue
+                }
+                return
+            }
+
+            // 다른 탭에서 홈 탭으로 전환 시 홈의 네비게이션도 리셋
             // 사용자가 홈 탭 클릭 시 항상 홈의 루트 화면이 보여야 함
             if newValue == 0 && isNavigationActive {
                 logger.info("🚀 [ContentView] 홈 탭 전환 시 네비게이션 리셋")
@@ -100,28 +108,6 @@ struct ContentView: View {
             logger.info("🚀 [ContentView] 설정 탭 리셋 (미구현)")
         default:
             break
-        }
-    }
-}
-
-// MARK: - View Extension for Tab Swipe Blocking
-
-/// 탭 스와이프 차단 ViewModifier
-/// - NOTE: 상세 페이지에서 TabView의 페이지 스와이프만 차단
-/// - IMPORTANT: simultaneousGesture로 수평 드래그를 가로채지만, 콘텐츠 스크롤과 뒤로가기 제스처는 영향 없음
-extension View {
-    @ViewBuilder
-    func blockTabSwipe(when condition: Bool) -> some View {
-        if condition {
-            // 수평 드래그 제스처를 가로채서 TabView의 페이지 스와이프 차단
-            // minimumDistance: 20으로 설정하여 작은 터치는 통과시킴
-            self.simultaneousGesture(
-                DragGesture(minimumDistance: 20)
-                    .onChanged { _ in }
-                    .onEnded { _ in }
-            )
-        } else {
-            self
         }
     }
 }
