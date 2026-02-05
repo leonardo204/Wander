@@ -290,6 +290,10 @@ extension TravelRecord: ShareableData {
     var shareDateRange: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
+        // 같은 날이면 하나만 표시
+        if Calendar.current.isDate(startDate, inSameDayAs: endDate) {
+            return formatter.string(from: startDate)
+        }
         return "\(formatter.string(from: startDate)) ~ \(formatter.string(from: endDate))"
     }
 
@@ -307,6 +311,46 @@ extension TravelRecord: ShareableData {
 
     var shareAIStory: String? {
         aiStory
+    }
+
+    // MARK: - 통합 통계+날짜 (v2.0)
+
+    /// 통계와 날짜를 한 줄로 통합 (📍 5곳 · 🚗 32km · 2.1~2.3)
+    var shareStatsWithDate: String {
+        let calendar = Calendar.current
+        let startMonth = calendar.component(.month, from: startDate)
+        let startDay = calendar.component(.day, from: startDate)
+        let endMonth = calendar.component(.month, from: endDate)
+        let endDay = calendar.component(.day, from: endDate)
+
+        // 날짜 포맷
+        let dateStr: String
+        if calendar.isDate(startDate, inSameDayAs: endDate) {
+            // 같은 날: "2.5"
+            dateStr = "\(startMonth).\(startDay)"
+        } else if startMonth == endMonth {
+            // 같은 달: "2.1~3"
+            dateStr = "\(startMonth).\(startDay)~\(endDay)"
+        } else {
+            // 다른 달: "1.28~2.2"
+            dateStr = "\(startMonth).\(startDay)~\(endMonth).\(endDay)"
+        }
+
+        return "📍 \(sharePlaceCount)곳 · 🚗 \(Int(shareTotalDistance))km · \(dateStr)"
+    }
+
+    // MARK: - 감성 키워드 생성용 데이터
+
+    var shareActivities: [String] {
+        days.flatMap { $0.places.map { $0.activityLabel } }
+    }
+
+    var shareAddresses: [String] {
+        days.flatMap { $0.places.map { $0.address } }
+    }
+
+    var shareStartDate: Date {
+        startDate
     }
 }
 

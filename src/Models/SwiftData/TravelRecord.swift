@@ -35,6 +35,9 @@ final class TravelRecord {
     /// 분석 레벨 (basic, smart, advanced)
     var analysisLevel: String?
 
+    /// Vision 분석으로 추출된 감성 키워드 (JSON)
+    var keywordsJSON: String?
+
     @Relationship(deleteRule: .cascade, inverse: \TravelDay.record)
     var days: [TravelDay]
 
@@ -189,5 +192,33 @@ final class TravelRecord {
     /// Wander Intelligence 데이터 유무
     var hasWanderIntelligence: Bool {
         tripScoreJSON != nil || travelDNAJSON != nil || travelStoryJSON != nil
+    }
+
+    // MARK: - Vision Keywords (SNS 공유용 감성 키워드)
+
+    /// 감성 키워드 배열 (역직렬화)
+    var keywords: [String] {
+        get {
+            guard let json = keywordsJSON,
+                  let data = json.data(using: .utf8) else { return [] }
+            return (try? JSONDecoder().decode([String].self, from: data)) ?? []
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue) {
+                keywordsJSON = String(data: data, encoding: .utf8)
+            } else {
+                keywordsJSON = nil
+            }
+        }
+    }
+
+    /// 키워드가 있는지 여부
+    var hasKeywords: Bool {
+        !keywords.isEmpty
+    }
+
+    /// 키워드 문자열 (구분자 연결, 기본값 " · ")
+    func keywordsString(separator: String = " · ") -> String {
+        keywords.isEmpty ? "" : keywords.joined(separator: separator)
     }
 }

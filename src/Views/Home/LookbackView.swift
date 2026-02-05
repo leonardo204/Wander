@@ -103,7 +103,7 @@ struct LookbackView: View {
             HStack {
                 Image(systemName: "calendar")
                     .foregroundColor(WanderColors.primary)
-                Text("\(formatDate(startDate)) ~ \(formatDate(endDate))")
+                Text(formatDateRange(start: startDate, end: endDate))
                     .font(WanderTypography.body)
                     .foregroundColor(WanderColors.primary)
             }
@@ -263,6 +263,14 @@ struct LookbackView: View {
         formatter.dateFormat = "M/d (E)"
         formatter.locale = Locale(identifier: "ko_KR")
         return formatter.string(from: date)
+    }
+
+    private func formatDateRange(start: Date, end: Date) -> String {
+        // 같은 날이면 하나만 표시
+        if Calendar.current.isDate(start, inSameDayAs: end) {
+            return formatDate(start)
+        }
+        return "\(formatDate(start)) ~ \(formatDate(end))"
     }
 }
 

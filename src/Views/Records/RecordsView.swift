@@ -383,6 +383,10 @@ struct RecordListCard: View {
     private func formatDateRange(start: Date, end: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
+        // 같은 날이면 하나만 표시
+        if Calendar.current.isDate(start, inSameDayAs: end) {
+            return formatter.string(from: start)
+        }
         return "\(formatter.string(from: start)) ~ \(formatter.string(from: end))"
     }
 
@@ -514,6 +518,11 @@ struct RecordDetailFullView: View {
 
                 // Stats Section (방문장소, 이동거리, 사진, 일자)
                 statsSection
+
+                // Keywords Section (Vision 분석 키워드)
+                if record.hasKeywords {
+                    keywordsSection
+                }
 
                 // Timeline
                 if !record.days.isEmpty {
@@ -762,6 +771,35 @@ struct RecordDetailFullView: View {
         }
     }
 
+    // MARK: - Keywords Section (Vision 분석 키워드)
+    private var keywordsSection: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+            HStack {
+                Image(systemName: "tag.fill")
+                    .foregroundColor(WanderColors.primary)
+                Text("감성 키워드")
+                    .font(WanderTypography.headline)
+                    .foregroundColor(WanderColors.textPrimary)
+            }
+
+            // 키워드 태그들
+            FlowLayout(spacing: WanderSpacing.space2) {
+                ForEach(record.keywords, id: \.self) { keyword in
+                    Text(keyword)
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.primary)
+                        .padding(.horizontal, WanderSpacing.space3)
+                        .padding(.vertical, WanderSpacing.space2)
+                        .background(WanderColors.primaryPale)
+                        .cornerRadius(WanderSpacing.radiusMedium)
+                }
+            }
+        }
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .cornerRadius(WanderSpacing.radiusLarge)
+    }
+
     // MARK: - Wander Intelligence Section
     @ViewBuilder
     private var wanderIntelligenceSection: some View {
@@ -822,6 +860,10 @@ struct RecordDetailFullView: View {
     private func formatDateRange() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy년 M월 d일"
+        // 같은 날이면 하나만 표시
+        if Calendar.current.isDate(record.startDate, inSameDayAs: record.endDate) {
+            return formatter.string(from: record.startDate)
+        }
         return "\(formatter.string(from: record.startDate)) ~ \(formatter.string(from: record.endDate))"
     }
 
@@ -2339,6 +2381,10 @@ struct RecordEditView: View {
     private func formatDateRange() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
+        // 같은 날이면 하나만 표시
+        if Calendar.current.isDate(record.startDate, inSameDayAs: record.endDate) {
+            return formatter.string(from: record.startDate)
+        }
         return "\(formatter.string(from: record.startDate)) ~ \(formatter.string(from: record.endDate))"
     }
 

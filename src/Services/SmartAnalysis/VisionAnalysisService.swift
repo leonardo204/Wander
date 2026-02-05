@@ -109,19 +109,171 @@ class VisionAnalysisService {
         "bakery": .cafe,
         "tea_house": .cafe,
 
-        // 식당/음식
+        // 식당/음식점 (장소)
         "restaurant": .restaurant,
         "dining_room": .restaurant,
         "kitchen": .restaurant,
         "pizzeria": .restaurant,
         "sushi_bar": .restaurant,
         "food_court": .restaurant,
+        "banquet_hall": .restaurant,
+        "bar": .restaurant,
+        "pub": .restaurant,
+        "bistro": .restaurant,
+        "cafeteria": .restaurant,
+        "diner": .restaurant,
+        "fast_food_restaurant": .restaurant,
+        "ramen_shop": .restaurant,
+        "barbecue": .restaurant,
+        "buffet": .restaurant,
+
+        // 음식 (Food - 일반)
         "food": .food,
-        "pizza": .food,
-        "sushi": .food,
+        "meal": .food,
+        "dish": .food,
+        "plate": .food,
+        "bowl": .food,
+        "cuisine": .food,
+
+        // 한식/아시안
+        "korean_food": .food,
+        "kimchi": .food,
+        "bibimbap": .food,
+        "bulgogi": .food,
+        "rice": .food,
+        "fried_rice": .food,
         "noodle": .food,
+        "ramen": .food,
+        "udon": .food,
+        "pho": .food,
+        "pad_thai": .food,
+        "dumpling": .food,
+        "dim_sum": .food,
+        "spring_roll": .food,
+        "sushi": .food,
+        "sashimi": .food,
+        "tempura": .food,
+        "teriyaki": .food,
+        "bento": .food,
+        "curry": .food,
+        "soup": .food,
+        "stew": .food,
+        "hotpot": .food,
+        "tofu": .food,
+
+        // 양식
+        "pizza": .food,
+        "pasta": .food,
+        "spaghetti": .food,
+        "lasagna": .food,
+        "burger": .food,
+        "hamburger": .food,
+        "cheeseburger": .food,
+        "sandwich": .food,
+        "hot_dog": .food,
+        "french_fries": .food,
+        "fries": .food,
+        "steak": .food,
+        "meat": .food,
+        "beef": .food,
+        "pork": .food,
+        "chicken": .food,
+        "fried_chicken": .food,
+        "roast": .food,
+        "grill": .food,
+        "grilled_meat": .food,
+        "salad": .food,
+        "caesar_salad": .food,
+        "omelette": .food,
+        "egg": .food,
+        "bacon": .food,
+        "sausage": .food,
+        "bread": .food,
+        "toast": .food,
+        "croissant": .food,
+        "bagel": .food,
+        "pancake": .food,
+        "waffle": .food,
+        "breakfast": .food,
+        "brunch": .food,
+
+        // 해산물
+        "seafood": .food,
+        "fish": .food,
+        "salmon": .food,
+        "tuna": .food,
+        "shrimp": .food,
+        "lobster": .food,
+        "crab": .food,
+        "oyster": .food,
+        "mussel": .food,
+        "clam": .food,
+        "squid": .food,
+        "octopus": .food,
+
+        // 디저트/간식
         "dessert": .food,
+        "cake": .food,
+        "chocolate_cake": .food,
+        "cheesecake": .food,
+        "pie": .food,
+        "tart": .food,
+        "cookie": .food,
+        "brownie": .food,
+        "donut": .food,
+        "doughnut": .food,
+        "macaron": .food,
+        "muffin": .food,
+        "cupcake": .food,
         "ice_cream": .food,
+        "gelato": .food,
+        "frozen_yogurt": .food,
+        "sundae": .food,
+        "chocolate": .food,
+        "candy": .food,
+        "pudding": .food,
+        "custard": .food,
+        "cream": .food,
+        "whipped_cream": .food,
+        "fruit": .food,
+        "apple": .food,
+        "banana": .food,
+        "orange": .food,
+        "strawberry": .food,
+        "watermelon": .food,
+        "grape": .food,
+        "mango": .food,
+
+        // 음료
+        "beverage": .food,
+        "drink": .food,
+        "coffee": .cafe,
+        "espresso": .cafe,
+        "latte": .cafe,
+        "cappuccino": .cafe,
+        "americano": .cafe,
+        "tea": .cafe,
+        "juice": .food,
+        "smoothie": .food,
+        "milkshake": .food,
+        "cocktail": .food,
+        "wine": .food,
+        "beer": .food,
+        "soda": .food,
+        "water_bottle": .food,
+
+        // 음식 관련 객체
+        "dining_table": .restaurant,
+        "table_setting": .restaurant,
+        "chopsticks": .food,
+        "fork": .food,
+        "spoon": .food,
+        "knife": .food,
+        "cup": .food,
+        "mug": .cafe,
+        "glass": .food,
+        "wine_glass": .food,
+        "bottle": .food,
 
         // 해변/바다
         "beach": .beach,
@@ -284,6 +436,10 @@ class VisionAnalysisService {
                     return
                 }
 
+                // 상위 10개 결과 로깅 (디버깅용)
+                let top10 = results.prefix(10)
+                logger.info("✨ [Vision] 원본 상위 10개: \(top10.map { "\($0.identifier)(\(String(format: "%.2f", $0.confidence)))" }.joined(separator: ", "))")
+
                 // 상위 5개 결과 중 confidence 0.1 이상만 필터
                 let topResults = results
                     .filter { $0.confidence >= 0.1 }
@@ -293,6 +449,11 @@ class VisionAnalysisService {
                         let category = Self.categoryMapping[identifier] ?? .unknown
                         let koreanLabel = Self.koreanLabels[identifier] ?? category.koreanName
 
+                        // 매핑 안된 식별자 경고
+                        if category == .unknown {
+                            logger.warning("✨ [Vision] 매핑 안됨: '\(identifier)' (confidence: \(String(format: "%.2f", observation.confidence)))")
+                        }
+
                         return SceneClassification(
                             identifier: identifier,
                             confidence: observation.confidence,
@@ -301,7 +462,7 @@ class VisionAnalysisService {
                         )
                     }
 
-                logger.info("✨ [Vision] 분류 완료: \(topResults.map { "\($0.identifier)(\($0.confidence))" }.joined(separator: ", "))")
+                logger.info("✨ [Vision] 분류 결과: \(topResults.map { "\($0.identifier)→\($0.category.rawValue)" }.joined(separator: ", "))")
                 continuation.resume(returning: Array(topResults))
             }
 
@@ -408,6 +569,166 @@ class VisionAnalysisService {
         }
 
         return samples
+    }
+
+    // MARK: - Keywords Extraction for SNS Sharing
+
+    /// SNS 공유용 감성 키워드 매핑 (Vision 분류 → 감성 키워드)
+    private static let keywordMapping: [SceneCategory: [String]] = [
+        .cafe: ["카페투어", "브런치", "커피타임", "감성카페", "힐링"],
+        .restaurant: ["맛집탐방", "미식", "먹스타그램", "로컬푸드", "맛있는하루"],
+        .beach: ["바다여행", "파도소리", "일몰", "해변산책", "시원한바람"],
+        .mountain: ["등산", "트레킹", "자연힐링", "정상정복", "산책"],
+        .park: ["피크닉", "공원산책", "여유", "힐링", "자연"],
+        .museum: ["문화탐방", "전시관람", "예술", "역사여행", "감성"],
+        .shopping: ["쇼핑", "힙스터", "빈티지", "플리마켓", "쇼핑투어"],
+        .airport: ["여행시작", "설렘", "공항", "떠나요", "비행"],
+        .hotel: ["호캉스", "휴식", "리프레시", "숙소", "힐링"],
+        .temple: ["사찰여행", "고즈넉함", "힐링", "역사", "명상"],
+        .city: ["도심탈출", "시티투어", "야경", "도시여행", "거리산책"],
+        .nature: ["자연속으로", "힐링여행", "청량함", "숲속", "에코여행"],
+        .food: ["먹방", "맛집", "음식스타그램", "미식여행", "맛있다"],
+        .people: ["추억", "소중한시간", "함께", "우정", "행복"],
+        .landmark: ["명소탐방", "인생샷", "포토스팟", "랜드마크", "여행"],
+        .unknown: ["여행", "추억", "힐링", "일상", "소중한시간"]
+    ]
+
+    /// 여러 사진에서 SNS용 감성 키워드 추출
+    /// - Parameters:
+    ///   - assets: 분석할 PHAsset 배열
+    ///   - maxKeywords: 최대 키워드 수 (기본 5개)
+    /// - Returns: 감성 키워드 배열 (중복 제거, 빈도순 정렬)
+    func extractKeywords(from assets: [PHAsset], maxKeywords: Int = 5) async -> [String] {
+        guard !assets.isEmpty else {
+            return ["여행", "추억", "힐링"]
+        }
+
+        logger.info("✨ [Vision] 키워드 추출 시작 - \(assets.count)장 사진")
+
+        // 최대 5장 샘플링하여 분석
+        let samples = sampleAssets(from: assets, count: min(assets.count, 5))
+
+        var categoryVotes: [SceneCategory: Float] = [:]
+
+        for asset in samples {
+            let classifications = await classifyScene(for: asset)
+
+            for classification in classifications {
+                categoryVotes[classification.category, default: 0] += classification.confidence
+            }
+        }
+
+        // 카테고리별 점수 정렬
+        let allCategorySorted = categoryVotes.sorted { $0.value > $1.value }
+        logger.info("✨ [Vision] 카테고리 점수: \(allCategorySorted.map { "\($0.key.rawValue)(\(String(format: "%.1f", $0.value)))" }.joined(separator: ", "))")
+
+        let sortedCategories = allCategorySorted
+            .prefix(3)
+            .map { $0.key }
+
+        logger.info("✨ [Vision] 상위 3개 카테고리: \(sortedCategories.map { $0.rawValue }.joined(separator: ", "))")
+
+        // 키워드 수집 (상위 카테고리에서 키워드 선택)
+        var keywordScores: [String: Float] = [:]
+
+        for (index, category) in sortedCategories.enumerated() {
+            let weight = Float(3 - index)  // 상위 카테고리에 높은 가중치
+            if let categoryKeywords = Self.keywordMapping[category] {
+                let selectedKeywords = Array(categoryKeywords.prefix(2))
+                logger.info("✨ [Vision] \(category.rawValue) → 키워드: \(selectedKeywords.joined(separator: ", "))")
+                for keyword in selectedKeywords {
+                    keywordScores[keyword, default: 0] += weight
+                }
+            } else {
+                logger.warning("✨ [Vision] \(category.rawValue) 카테고리에 매핑된 키워드 없음")
+            }
+        }
+
+        // 점수순 정렬 후 상위 키워드 선택
+        var keywords = keywordScores
+            .sorted { $0.value > $1.value }
+            .prefix(maxKeywords)
+            .map { $0.key }
+
+        // 최소 3개 보장
+        let fallbackKeywords = ["여행", "추억", "힐링", "소중한시간", "행복"]
+        let originalCount = keywords.count
+        while keywords.count < 3 {
+            for fallback in fallbackKeywords {
+                if !keywords.contains(fallback) {
+                    keywords.append(fallback)
+                    break
+                }
+            }
+        }
+
+        if keywords.count > originalCount {
+            logger.info("✨ [Vision] 폴백 키워드 추가됨 (원본 \(originalCount)개 → \(keywords.count)개)")
+        }
+
+        logger.info("✨ [Vision] 최종 키워드: \(keywords.joined(separator: ", "))")
+
+        return Array(keywords.prefix(maxKeywords))
+    }
+
+    /// UIImage 배열에서 SNS용 감성 키워드 추출 (PHAsset 없이)
+    func extractKeywords(from images: [UIImage], maxKeywords: Int = 5) async -> [String] {
+        guard !images.isEmpty else {
+            return ["여행", "추억", "힐링"]
+        }
+
+        logger.info("✨ [Vision] UIImage 키워드 추출 시작 - \(images.count)장")
+
+        // 최대 5장 샘플링
+        let samples = Array(images.prefix(5))
+
+        var categoryVotes: [SceneCategory: Float] = [:]
+
+        for image in samples {
+            let classifications = await classifyScene(image: image)
+
+            for classification in classifications {
+                categoryVotes[classification.category, default: 0] += classification.confidence
+            }
+        }
+
+        // 카테고리별 점수 정렬
+        let sortedCategories = categoryVotes
+            .sorted { $0.value > $1.value }
+            .prefix(3)
+            .map { $0.key }
+
+        // 키워드 수집
+        var keywordScores: [String: Float] = [:]
+
+        for (index, category) in sortedCategories.enumerated() {
+            let weight = Float(3 - index)
+            if let categoryKeywords = Self.keywordMapping[category] {
+                for keyword in categoryKeywords.prefix(2) {
+                    keywordScores[keyword, default: 0] += weight
+                }
+            }
+        }
+
+        var keywords = keywordScores
+            .sorted { $0.value > $1.value }
+            .prefix(maxKeywords)
+            .map { $0.key }
+
+        // 최소 3개 보장
+        let fallbackKeywords = ["여행", "추억", "힐링", "소중한시간", "행복"]
+        while keywords.count < 3 {
+            for fallback in fallbackKeywords {
+                if !keywords.contains(fallback) {
+                    keywords.append(fallback)
+                    break
+                }
+            }
+        }
+
+        logger.info("✨ [Vision] UIImage 키워드 추출 완료: \(keywords.joined(separator: ", "))")
+
+        return Array(keywords.prefix(maxKeywords))
     }
 }
 

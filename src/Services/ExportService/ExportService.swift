@@ -21,7 +21,7 @@ final class ExportService {
         var text = """
         \(result.title)
 
-        📅 \(formatDate(result.startDate)) ~ \(formatDate(result.endDate))
+        📅 \(formatDateRange(start: result.startDate, end: result.endDate))
         📍 \(result.placeCount)개 장소 | 📸 \(result.photoCount)장 | 🚗 \(String(format: "%.1f", result.totalDistance))km
 
         --- 타임라인 ---
@@ -71,7 +71,7 @@ final class ExportService {
         var markdown = """
         # \(result.title)
 
-        **기간**: \(formatDate(result.startDate)) ~ \(formatDate(result.endDate))
+        **기간**: \(formatDateRange(start: result.startDate, end: result.endDate))
 
         | 항목 | 값 |
         |------|-----|
@@ -213,7 +213,7 @@ final class ExportService {
 
         let dateRect = CGRect(x: 60, y: 160, width: size.width - 120, height: 40)
         let dateString = NSAttributedString(
-            string: "📅 \(formatDate(result.startDate)) ~ \(formatDate(result.endDate))",
+            string: "📅 \(formatDateRange(start: result.startDate, end: result.endDate))",
             attributes: [
                 .font: dateFont,
                 .foregroundColor: dateColor
@@ -560,7 +560,7 @@ final class ExportService {
         let message = """
         🗺️ \(result.title)
 
-        📅 \(formatDate(result.startDate)) ~ \(formatDate(result.endDate))
+        📅 \(formatDateRange(start: result.startDate, end: result.endDate))
         📍 \(result.placeCount)개 장소 방문
         📸 \(result.photoCount)장의 추억
 
@@ -580,6 +580,14 @@ final class ExportService {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
         return formatter.string(from: date)
+    }
+
+    private func formatDateRange(start: Date, end: Date) -> String {
+        // 같은 날이면 하나만 표시
+        if Calendar.current.isDate(start, inSameDayAs: end) {
+            return formatDate(start)
+        }
+        return "\(formatDate(start)) ~ \(formatDate(end))"
     }
 
     private func formatTime(_ date: Date) -> String {

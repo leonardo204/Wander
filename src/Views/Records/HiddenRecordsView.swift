@@ -282,6 +282,10 @@ struct HiddenRecordCard: View {
     private func formatDateRange(start: Date, end: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
+        // 같은 날이면 하나만 표시
+        if Calendar.current.isDate(start, inSameDayAs: end) {
+            return formatter.string(from: start)
+        }
         return "\(formatter.string(from: start)) ~ \(formatter.string(from: end))"
     }
 }

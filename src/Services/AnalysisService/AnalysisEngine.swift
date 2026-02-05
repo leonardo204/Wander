@@ -25,6 +25,7 @@ class AnalysisEngine {
     private let clusteringService = ClusteringService()
     private let activityService = ActivityInferenceService()
     private let smartCoordinator = SmartAnalysisCoordinator()
+    private let visionService = VisionAnalysisService()
 
     /// 사용자 장소 목록 (분석 전 설정)
     var userPlaces: [UserPlace] = []
@@ -194,6 +195,16 @@ class AnalysisEngine {
                 // 스마트 분석 실패해도 기본 결과는 유지
             }
         }
+
+        // ===== Phase 3: 감성 키워드 추출 (Vision SDK) =====
+
+        currentStep = "✨ 감성 키워드 분석 중..."
+        progress = 0.90
+        logger.info("🔬 [Keywords] 감성 키워드 추출 시작")
+
+        let keywords = await visionService.extractKeywords(from: assets, maxKeywords: 5)
+        result.keywords = keywords
+        logger.info("🔬 [Keywords] 키워드 추출 완료: \(keywords.joined(separator: ", "))")
 
         // 최종 완료
         progress = 1.0

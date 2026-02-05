@@ -12,6 +12,14 @@ protocol ShareableData {
     var shareTotalDistance: Double { get }
     var sharePhotoAssetIdentifiers: [String] { get }
     var shareAIStory: String? { get }
+
+    // 통합 통계 문자열 (날짜 포함)
+    var shareStatsWithDate: String { get }
+
+    // 감성 키워드 생성용 데이터
+    var shareActivities: [String] { get }
+    var shareAddresses: [String] { get }
+    var shareStartDate: Date { get }
 }
 
 // MARK: - 공유 대상
@@ -107,7 +115,8 @@ struct ShareConfiguration {
     var destination: ShareDestination
     var templateStyle: ShareTemplateStyle
     var selectedPhotoIndices: [Int]  // 선택된 사진 인덱스
-    var caption: String
+    var caption: String              // 클립보드용 캡션 (SNS 게시글)
+    var impression: String           // 이미지 내 감성 키워드 (로맨틱 · 힐링 · 도심탈출)
     var hashtags: [String]
     var showWatermark: Bool
 
@@ -116,6 +125,7 @@ struct ShareConfiguration {
         templateStyle: ShareTemplateStyle = .modernGlass,
         selectedPhotoIndices: [Int] = [],
         caption: String = "",
+        impression: String = "",
         hashtags: [String] = [],
         showWatermark: Bool = true
     ) {
@@ -123,6 +133,7 @@ struct ShareConfiguration {
         self.templateStyle = templateStyle
         self.selectedPhotoIndices = selectedPhotoIndices
         self.caption = caption
+        self.impression = impression
         self.hashtags = hashtags
         self.showWatermark = showWatermark
     }
@@ -159,6 +170,160 @@ struct SharePhotoItem: Identifiable, Equatable {
         self.image = image
         self.isSelected = isSelected
         self.order = order
+    }
+}
+
+// MARK: - 감성 키워드 생성 (Impression)
+
+/// 여행 데이터 기반 감성 키워드 생성
+/// SNS 공유에 적합한 강한 명사/형용사 조합
+struct ImpressionGenerator {
+
+    // MARK: - 키워드 풀
+
+    /// 분위기 키워드
+    private static let moodKeywords = [
+        "로맨틱", "힐링", "여유", "설렘", "평화로운", "특별한"
+    ]
+
+    /// 활동 키워드
+    private static let activityKeywords: [String: [String]] = [
+        "카페": ["감성카페", "카페투어", "브런치", "여유"],
+        "맛집": ["맛집투어", "미식", "먹방", "로컬푸드"],
+        "관광": ["시티투어", "관광", "여행", "투어"],
+        "쇼핑": ["쇼핑", "힙스터", "빈티지"],
+        "해변": ["바다", "파도", "서핑", "일몰"],
+        "자연": ["힐링", "트레킹", "자연", "숲속"],
+        "문화": ["문화탐방", "전시", "역사"],
+        "휴식": ["충전", "리프레시", "힐링"]
+    ]
+
+    /// 지역 키워드
+    private static let regionKeywords: [String: [String]] = [
+        "제주": ["제주감성", "돌담길", "오름", "바다"],
+        "부산": ["해운대", "광안리", "바다", "야경"],
+        "강원": ["자연", "힐링", "청량함", "산"],
+        "서울": ["도심", "야경", "시티라이프"],
+        "경주": ["역사", "고즈넉함", "힐링"]
+    ]
+
+    /// 계절 키워드
+    private static let seasonKeywords: [Int: [String]] = [
+        3: ["봄꽃", "벚꽃", "설렘"],      // 봄
+        4: ["봄꽃", "벚꽃", "피크닉"],
+        5: ["초여름", "싱그러움", "여유"],
+        6: ["초여름", "바다", "여름시작"],  // 여름
+        7: ["한여름", "바다", "피서"],
+        8: ["바다", "휴가", "여름끝"],
+        9: ["가을", "단풍", "청량함"],     // 가을
+        10: ["단풍", "가을감성", "낭만"],
+        11: ["늦가을", "쓸쓸함", "감성"],
+        12: ["겨울", "설경", "따뜻함"],    // 겨울
+        1: ["겨울여행", "눈", "힐링"],
+        2: ["겨울끝", "봄기운", "설렘"]
+    ]
+
+    // MARK: - Public Methods
+
+    /// 감성 키워드 생성 (최대 3개)
+    static func generate(
+        activities: [String],
+        addresses: [String],
+        date: Date
+    ) -> [String] {
+        var keywords: [String] = []
+
+        // 1. 지역 기반 키워드 (1개)
+        if let regionKeyword = selectRegionKeyword(from: addresses) {
+            keywords.append(regionKeyword)
+        }
+
+        // 2. 활동 기반 키워드 (1개)
+        if let activityKeyword = selectActivityKeyword(from: activities) {
+            keywords.append(activityKeyword)
+        }
+
+        // 3. 계절/분위기 기반 키워드 (1개)
+        let moodKeyword = selectMoodKeyword(from: date)
+        keywords.append(moodKeyword)
+
+        // 중복 제거 및 최대 3개 제한
+        let uniqueKeywords = Array(Set(keywords))
+
+        // 3개 미만이면 기본 키워드 추가
+        var result = Array(uniqueKeywords.prefix(3))
+        let defaults = ["추억", "소중한시간", "행복"]
+        while result.count < 3 {
+            for keyword in defaults {
+                if !result.contains(keyword) {
+                    result.append(keyword)
+                    break
+                }
+            }
+            // 무한루프 방지
+            if result.count < 3 && result.count == Array(Set(result + defaults)).count {
+                result.append("여행")
+            }
+        }
+
+        return Array(result.prefix(3))
+    }
+
+    /// 기본 감성 키워드 (데이터 없을 때 사용)
+    static let defaultImpression = "소중한 추억"
+
+    /// 키워드 문자열 생성 (구분자로 연결)
+    static func generateString(
+        activities: [String],
+        addresses: [String],
+        date: Date,
+        separator: String = " · "
+    ) -> String {
+        let keywords = generate(activities: activities, addresses: addresses, date: date)
+        return keywords.joined(separator: separator)
+    }
+
+    // MARK: - Private Methods
+
+    private static func selectRegionKeyword(from addresses: [String]) -> String? {
+        for (region, keywords) in regionKeywords {
+            for address in addresses {
+                if address.contains(region) {
+                    return keywords.randomElement()
+                }
+            }
+        }
+        return nil
+    }
+
+    private static func selectActivityKeyword(from activities: [String]) -> String? {
+        // 활동 빈도 계산
+        var activityCounts: [String: Int] = [:]
+        for activity in activities {
+            for (key, _) in activityKeywords {
+                if activity.contains(key) {
+                    activityCounts[key, default: 0] += 1
+                }
+            }
+        }
+
+        // 가장 많은 활동 유형 선택
+        if let topActivity = activityCounts.max(by: { $0.value < $1.value })?.key,
+           let keywords = activityKeywords[topActivity] {
+            return keywords.randomElement()
+        }
+
+        return nil
+    }
+
+    private static func selectMoodKeyword(from date: Date) -> String {
+        let month = Calendar.current.component(.month, from: date)
+
+        if let seasonKeyword = seasonKeywords[month]?.randomElement() {
+            return seasonKeyword
+        }
+
+        return moodKeywords.randomElement() ?? "힐링"
     }
 }
 

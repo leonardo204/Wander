@@ -22,7 +22,10 @@ struct ShareEditOptionsView: View {
                     // 사진 선택
                     photoSelectionSection
 
-                    // 캡션 편집
+                    // 감성 키워드 편집 (이미지 내 표시)
+                    impressionSection
+
+                    // 캡션 편집 (클립보드용)
                     captionSection
 
                     // 해시태그 편집
@@ -133,7 +136,50 @@ struct ShareEditOptionsView: View {
         }
     }
 
-    // MARK: - Caption Section
+    // MARK: - Impression Section (감성 키워드)
+
+    private var impressionSection: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+            HStack {
+                Text("감성 키워드")
+                    .font(WanderTypography.headline)
+                    .foregroundColor(WanderColors.textPrimary)
+
+                Spacer()
+
+                // Vision 분석 키워드가 있으면 배지 표시
+                if viewModel.record.hasKeywords {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 12, weight: .medium))
+                        Text("AI 분석")
+                            .font(WanderTypography.caption1)
+                    }
+                    .foregroundColor(WanderColors.primary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(WanderColors.primaryPale)
+                    .cornerRadius(WanderSpacing.radiusSmall)
+                }
+            }
+
+            TextField("로맨틱 · 힐링 · 도심탈출", text: $viewModel.configuration.impression)
+                .font(WanderTypography.body)
+                .padding(WanderSpacing.space3)
+                .background(WanderColors.surface)
+                .cornerRadius(WanderSpacing.radiusMedium)
+                .overlay(
+                    RoundedRectangle(cornerRadius: WanderSpacing.radiusMedium)
+                        .strokeBorder(WanderColors.border, lineWidth: 1)
+                )
+
+            Text("이미지에 표시됩니다. 구분자(·)로 키워드를 구분하세요.")
+                .font(WanderTypography.caption2)
+                .foregroundColor(WanderColors.textTertiary)
+        }
+    }
+
+    // MARK: - Caption Section (클립보드용)
 
     private var captionSection: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space3) {
@@ -164,7 +210,7 @@ struct ShareEditOptionsView: View {
                         .strokeBorder(WanderColors.border, lineWidth: 1)
                 )
 
-            Text("Instagram 공유 시 클립보드에 복사됩니다")
+            Text("SNS 공유 시 클립보드에 복사됩니다 (이미지에 표시되지 않음)")
                 .font(WanderTypography.caption2)
                 .foregroundColor(WanderColors.textTertiary)
         }

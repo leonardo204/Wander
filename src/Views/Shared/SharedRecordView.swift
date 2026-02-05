@@ -236,6 +236,10 @@ struct SharedRecordView: View {
     private func formatDateRange(_ start: Date, _ end: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy년 M월 d일"
+        // 같은 날이면 하나만 표시
+        if Calendar.current.isDate(start, inSameDayAs: end) {
+            return formatter.string(from: start)
+        }
         return "\(formatter.string(from: start)) ~ \(formatter.string(from: end))"
     }
 

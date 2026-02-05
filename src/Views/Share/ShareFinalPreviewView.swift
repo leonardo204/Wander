@@ -158,55 +158,7 @@ struct ShareFinalPreviewView: View {
                 }
             }
             .frame(height: 420)
-
-            // 페이지 인디케이터 (여러 장일 때)
-            if previewImages.count > 1 {
-                HStack(spacing: WanderSpacing.space2) {
-                    // 이전 버튼
-                    Button {
-                        withAnimation {
-                            currentImageIndex = max(0, currentImageIndex - 1)
-                        }
-                    } label: {
-                        Image(systemName: "chevron.left.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(currentImageIndex > 0 ? WanderColors.primary : WanderColors.textTertiary)
-                    }
-                    .disabled(currentImageIndex == 0)
-
-                    Spacer()
-
-                    // 페이지 dots
-                    HStack(spacing: 8) {
-                        ForEach(previewImages.indices, id: \.self) { index in
-                            Circle()
-                                .fill(index == currentImageIndex ? WanderColors.primary : WanderColors.border)
-                                .frame(width: index == currentImageIndex ? 10 : 8, height: index == currentImageIndex ? 10 : 8)
-                                .animation(.easeInOut(duration: 0.2), value: currentImageIndex)
-                        }
-                    }
-
-                    Spacer()
-
-                    // 다음 버튼
-                    Button {
-                        withAnimation {
-                            currentImageIndex = min(previewImages.count - 1, currentImageIndex + 1)
-                        }
-                    } label: {
-                        Image(systemName: "chevron.right.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(currentImageIndex < previewImages.count - 1 ? WanderColors.primary : WanderColors.textTertiary)
-                    }
-                    .disabled(currentImageIndex >= previewImages.count - 1)
-                }
-                .padding(.horizontal, WanderSpacing.space4)
-
-                // 현재 페이지 / 전체 페이지
-                Text("\(currentImageIndex + 1) / \(previewImages.count)")
-                    .font(WanderTypography.caption1)
-                    .foregroundColor(WanderColors.textSecondary)
-            }
+            // 페이지네이션 제거 - 스와이프로만 이동
 
             // 이미지 크기 정보 + 확대 힌트
             if !previewImages.isEmpty {

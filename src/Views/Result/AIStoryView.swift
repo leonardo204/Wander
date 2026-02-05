@@ -440,6 +440,10 @@ struct AIStoryView: View {
     private func formatDateRange() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "M월 d일"
+        // 같은 날이면 하나만 표시
+        if Calendar.current.isDate(record.startDate, inSameDayAs: record.endDate) {
+            return formatter.string(from: record.startDate)
+        }
         return "\(formatter.string(from: record.startDate)) ~ \(formatter.string(from: record.endDate))"
     }
 }

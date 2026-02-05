@@ -237,18 +237,35 @@ final class ShareFlowViewModel: ObservableObject {
     }
 
     private func setupDefaultConfiguration() {
-        // 기본 캡션 설정 (AI 스토리가 있으면 사용)
+        // 캡션 설정 (AI 스토리가 있으면 사용, 없으면 간단한 텍스트)
+        // 캡션은 클립보드로 복사되어 SNS 게시글에 붙여넣기 됨
         if let story = record.aiStory {
             configuration.caption = story
         } else {
-            configuration.caption = "\(record.title)\n\(record.shareDateRange)"
+            configuration.caption = record.title
+        }
+
+        // 감성 키워드 설정 (Vision 분석 결과 우선 사용)
+        // "로맨틱 · 힐링 · 도심탈출" 형식
+        let addresses = record.shareAddresses
+
+        if record.hasKeywords {
+            // Vision SDK로 추출된 키워드 사용
+            configuration.impression = record.keywordsString(separator: " · ")
+        } else {
+            // 키워드가 없으면 기존 방식으로 생성
+            let activities = record.shareActivities
+            configuration.impression = ImpressionGenerator.generateString(
+                activities: activities,
+                addresses: addresses,
+                date: record.startDate
+            )
         }
 
         // 기본 해시태그 설정
         var hashtags: [String] = []
 
         // 지역 기반 해시태그
-        let addresses = record.days.flatMap { $0.places.map { $0.address } }
         hashtags.append(contentsOf: HashtagRecommendation.locationHashtags(from: addresses))
 
         // 시즌 기반 해시태그

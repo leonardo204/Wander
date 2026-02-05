@@ -708,6 +708,12 @@ struct ResultView: View {
             logger.info("💾 [ResultView] 배지 저장: \(result.allBadges.count)개")
         }
 
+        // 감성 키워드 저장 (Vision SDK 분석 결과)
+        if !result.keywords.isEmpty {
+            record.keywords = result.keywords
+            logger.info("💾 [ResultView] 감성 키워드 저장: \(result.keywords.joined(separator: ", "))")
+        }
+
         // 분석 레벨 저장
         if let smartResult = result.smartAnalysisResult {
             record.analysisLevel = smartResult.analysisLevel.displayName

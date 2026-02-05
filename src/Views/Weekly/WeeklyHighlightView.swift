@@ -516,8 +516,18 @@ struct WeeklyAnalyzingView: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "M/d"
 
+        // 날짜 범위 계산 (같은 날이면 하나만 표시)
+        let dateRangeStr: String
+        if weeklyPhotos.isEmpty {
+            dateRangeStr = ""
+        } else if Calendar.current.isDate(weeklyPhotos.first!.date, inSameDayAs: weeklyPhotos.last!.date) {
+            dateRangeStr = formatter.string(from: weeklyPhotos.first!.date)
+        } else {
+            dateRangeStr = "\(formatter.string(from: weeklyPhotos.first!.date)) ~ \(formatter.string(from: weeklyPhotos.last!.date))"
+        }
+
         let result = WeeklyResult(
-            dateRange: weeklyPhotos.isEmpty ? "" : "\(formatter.string(from: weeklyPhotos.first!.date)) ~ \(formatter.string(from: weeklyPhotos.last!.date))",
+            dateRange: dateRangeStr,
             daySummaries: daySummaries,
             totalDistance: 0, // Could calculate based on GPS
             placeCount: allPlaces.count,

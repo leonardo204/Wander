@@ -38,6 +38,10 @@ class PhotoSelectionViewModel {
     var dateRangeText: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
+        // 같은 날이면 하나만 표시
+        if Calendar.current.isDate(startDate, inSameDayAs: endDate) {
+            return formatter.string(from: startDate)
+        }
         return "\(formatter.string(from: startDate)) ~ \(formatter.string(from: endDate))"
     }
 
@@ -184,6 +188,9 @@ struct AnalysisResult {
     var places: [PlaceCluster] = []
     var totalDistance: Double = 0
     var photoCount: Int = 0
+
+    /// Vision SDK로 추출된 감성 키워드 (SNS 공유용)
+    var keywords: [String] = []
 
     /// 스마트 분석 결과 (iOS 17+)
     var smartAnalysisResult: SmartAnalysisCoordinator.SmartAnalysisResult?

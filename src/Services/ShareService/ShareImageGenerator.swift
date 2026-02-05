@@ -15,34 +15,34 @@ final class ShareImageGenerator {
     static let shared = ShareImageGenerator()
     private init() {}
 
-    // MARK: - Constants (UX 개선 - 가독성을 위해 텍스트 크기 대폭 증가)
+    // MARK: - Constants (v2.0 - 날짜 통합, 감성 키워드 추가)
 
     private struct DesignConstants {
-        // 글래스 패널 (캡션/해시태그 포함으로 높이 증가)
-        static let glassPanelHeight: CGFloat = 440  // 텍스트 크기 증가로 패널도 확대
+        // 글래스 패널 (날짜 줄 제거로 높이 축소)
+        static let glassPanelHeight: CGFloat = 340
         static let glassPanelMargin: CGFloat = 30
         static let glassPanelCornerRadius: CGFloat = 24
 
-        // 타이포그래피 (제목 제외 1.5배 증가)
-        static let titleFontSize: CGFloat = 42      // 유지
-        static let statsFontSize: CGFloat = 36      // 24 × 1.5 = 36
-        static let dateFontSize: CGFloat = 33       // 22 × 1.5 = 33
-        static let captionFontSize: CGFloat = 30    // 20 × 1.5 = 30
-        static let hashtagFontSize: CGFloat = 27    // 18 × 1.5 = 27
-        static let watermarkFontSize: CGFloat = 24  // 16 × 1.5 = 24
+        // 타이포그래피 (스펙 문서 기준)
+        static let titleFontSize: CGFloat = 42       // 제목
+        static let statsFontSize: CGFloat = 30       // 통계+날짜 통합
+        static let impressionFontSize: CGFloat = 28  // 감성 키워드 (캡션 대체)
+        static let hashtagFontSize: CGFloat = 24     // 해시태그
+        static let watermarkFontSize: CGFloat = 22   // 워터마크 텍스트
 
         // 워터마크/로고
-        static let watermarkIconSize: CGFloat = 36  // 앱 아이콘 크기
-        static let watermarkWidth: CGFloat = 140    // 전체 로고 영역
+        static let watermarkIconSize: CGFloat = 36   // 앱 아이콘 크기
+        static let watermarkTextSize: CGFloat = 22   // Wander 텍스트 크기
+        static let watermarkWidth: CGFloat = 150     // 전체 로고 영역
 
         // 스토리용
         static let storyTitleFontSize: CGFloat = 38
-        static let storyStatsFontSize: CGFloat = 36
+        static let storyStatsFontSize: CGFloat = 30
 
         // 폴라로이드
-        static let polaroidTitleFontSize: CGFloat = 44  // 유지
-        static let polaroidDateFontSize: CGFloat = 33   // 22 × 1.5 = 33
-        static let polaroidCaptionFontSize: CGFloat = 27
+        static let polaroidTitleFontSize: CGFloat = 42
+        static let polaroidStatsFontSize: CGFloat = 28
+        static let polaroidImpressionFontSize: CGFloat = 26
     }
 
     // MARK: - Public Methods
@@ -178,67 +178,50 @@ final class ShareImageGenerator {
 
             drawGlassPanel(in: panelRect, context: cgContext, cornerRadius: DesignConstants.glassPanelCornerRadius)
 
-            // 4. 패널 내 텍스트
+            // 4. 패널 내 텍스트 (v2.0 - 날짜 통합, 감성 키워드)
             let textMargin: CGFloat = 28
             var currentY = panelRect.minY + textMargin
+            let maxTextWidth = panelRect.width - (textMargin * 2)
 
-            // 제목
+            // 제목 (최대 15자, 초과 시 말줄임)
             let titleAttributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: DesignConstants.titleFontSize, weight: .bold),
                 .foregroundColor: UIColor(hex: "#1A2B33") ?? .black
             ]
-            let title = data.shareTitle
+            let title = truncateText(data.shareTitle, maxLines: 1, width: maxTextWidth, font: UIFont.systemFont(ofSize: DesignConstants.titleFontSize, weight: .bold))
             title.draw(at: CGPoint(x: panelRect.minX + textMargin, y: currentY), withAttributes: titleAttributes)
-            currentY += DesignConstants.titleFontSize + 12
+            currentY += DesignConstants.titleFontSize + 14
 
-            // 날짜
-            let dateAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: DesignConstants.dateFontSize, weight: .regular),
-                .foregroundColor: UIColor(hex: "#5A6B73") ?? .gray
-            ]
-            data.shareDateRange.draw(at: CGPoint(x: panelRect.minX + textMargin, y: currentY), withAttributes: dateAttributes)
-            currentY += DesignConstants.dateFontSize + 14
-
-            // 통계
+            // 통계+날짜 통합 (📍 5곳 · 🚗 32km · 2.1~2.3)
             let statsAttributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: DesignConstants.statsFontSize, weight: .medium),
                 .foregroundColor: UIColor(hex: "#1A2B33")?.withAlphaComponent(0.85) ?? .darkGray
             ]
-            let stats = "📍 \(data.sharePlaceCount)곳  ·  🚗 \(Int(data.shareTotalDistance))km"
-            stats.draw(at: CGPoint(x: panelRect.minX + textMargin, y: currentY), withAttributes: statsAttributes)
+            let statsWithDate = data.shareStatsWithDate
+            statsWithDate.draw(at: CGPoint(x: panelRect.minX + textMargin, y: currentY), withAttributes: statsAttributes)
             currentY += DesignConstants.statsFontSize + 18
 
             // 구분선
             let dividerY = currentY
-            cgContext.setStrokeColor(UIColor(hex: "#1A2B33")?.withAlphaComponent(0.15).cgColor ?? UIColor.gray.cgColor)
-            cgContext.setLineWidth(2)
+            cgContext.setStrokeColor(UIColor(hex: "#1A2B33")?.withAlphaComponent(0.12).cgColor ?? UIColor.gray.cgColor)
+            cgContext.setLineWidth(1.5)
             cgContext.move(to: CGPoint(x: panelRect.minX + textMargin, y: dividerY))
             cgContext.addLine(to: CGPoint(x: panelRect.maxX - textMargin, y: dividerY))
             cgContext.strokePath()
-            currentY += 16
+            currentY += 18
 
-            // 캡션 (첫 번째 이미지에만 표시하거나, 공간이 있으면 모든 이미지에)
-            if !configuration.caption.isEmpty {
-                let captionAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: DesignConstants.captionFontSize, weight: .regular),
+            // 감성 키워드 (로맨틱 · 힐링 · 도심탈출)
+            if !configuration.impression.isEmpty {
+                let impressionAttributes: [NSAttributedString.Key: Any] = [
+                    .font: UIFont.systemFont(ofSize: DesignConstants.impressionFontSize, weight: .regular),
                     .foregroundColor: UIColor(hex: "#1A2B33")?.withAlphaComponent(0.9) ?? .darkGray
                 ]
-
-                // 캡션 텍스트 (최대 2줄)
-                let maxCaptionWidth = panelRect.width - (textMargin * 2)
-                let captionText = truncateText(configuration.caption, maxLines: 2, width: maxCaptionWidth, font: UIFont.systemFont(ofSize: DesignConstants.captionFontSize))
-
-                let captionRect = CGRect(
-                    x: panelRect.minX + textMargin,
-                    y: currentY,
-                    width: maxCaptionWidth,
-                    height: 75
-                )
-                captionText.draw(in: captionRect, withAttributes: captionAttributes)
-                currentY += 75
+                let impressionText = truncateText(configuration.impression, maxLines: 1, width: maxTextWidth, font: UIFont.systemFont(ofSize: DesignConstants.impressionFontSize))
+                impressionText.draw(at: CGPoint(x: panelRect.minX + textMargin, y: currentY), withAttributes: impressionAttributes)
+                currentY += DesignConstants.impressionFontSize + 14
             }
 
-            // 해시태그
+            // 해시태그 (최대 3개)
             if !configuration.hashtags.isEmpty {
                 let hashtagAttributes: [NSAttributedString.Key: Any] = [
                     .font: UIFont.systemFont(ofSize: DesignConstants.hashtagFontSize, weight: .medium),
@@ -246,42 +229,12 @@ final class ShareImageGenerator {
                 ]
 
                 let hashtagText = configuration.hashtags.prefix(3).map { "#\($0)" }.joined(separator: " ")
-                let maxHashtagWidth = panelRect.width - (textMargin * 2)
-                let truncatedHashtags = truncateText(hashtagText, maxLines: 1, width: maxHashtagWidth, font: UIFont.systemFont(ofSize: DesignConstants.hashtagFontSize))
+                let truncatedHashtags = truncateText(hashtagText, maxLines: 1, width: maxTextWidth, font: UIFont.systemFont(ofSize: DesignConstants.hashtagFontSize))
 
                 truncatedHashtags.draw(at: CGPoint(x: panelRect.minX + textMargin, y: currentY), withAttributes: hashtagAttributes)
             }
 
-            // 5. 페이지 인디케이터 (여러 장일 때)
-            if totalPages > 1 {
-                let indicatorText = "\(pageIndex + 1)/\(totalPages)"
-                let indicatorAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: 14, weight: .semibold),
-                    .foregroundColor: UIColor.white
-                ]
-                let indicatorSize = indicatorText.size(withAttributes: indicatorAttributes)
-
-                let indicatorPadding: CGFloat = 10
-                let indicatorRect = CGRect(
-                    x: size.width - indicatorSize.width - indicatorPadding * 2 - 16,
-                    y: 16,
-                    width: indicatorSize.width + indicatorPadding * 2,
-                    height: indicatorSize.height + indicatorPadding
-                )
-
-                cgContext.saveGState()
-                UIColor.black.withAlphaComponent(0.5).setFill()
-                let indicatorPath = UIBezierPath(roundedRect: indicatorRect, cornerRadius: indicatorRect.height / 2)
-                indicatorPath.fill()
-                cgContext.restoreGState()
-
-                indicatorText.draw(
-                    at: CGPoint(x: indicatorRect.minX + indicatorPadding, y: indicatorRect.minY + indicatorPadding / 2),
-                    withAttributes: indicatorAttributes
-                )
-            }
-
-            // 6. 워터마크 (앱 아이콘 + Wander)
+            // 5. 워터마크 (앱 아이콘 + Wander)
             if configuration.showWatermark {
                 drawWatermark(
                     in: CGRect(
@@ -340,42 +293,69 @@ final class ShareImageGenerator {
         return renderer.image { context in
             let cgContext = context.cgContext
 
-            // 1. 배경 (연한 베이지/크림)
-            UIColor(hex: "#FAF8F5")?.setFill()
+            // ===== 프로페셔널 폴라로이드 레이아웃 (v3.0) =====
+
+            // 1. 배경 (따뜻한 크림색)
+            UIColor(hex: "#F8F6F3")?.setFill()
             cgContext.fill(CGRect(origin: .zero, size: size))
 
-            // 2. 폴라로이드 그리드 (최대 3장)
-            let polaroidPhotos = photos
-            let photoCount = polaroidPhotos.count
+            // 2. 레이아웃 상수
+            let horizontalMargin: CGFloat = 40
+            let topMargin: CGFloat = 50
+            let bottomMargin: CGFloat = 50
+            let textAreaHeight: CGFloat = 140
+            let photoToTextGap: CGFloat = 30
 
-            // 사진 개수에 따른 레이아웃 조정 (해상도 축소에 맞춰 크기 조정)
+            // 사진 영역 계산
+            let photoAreaHeight = size.height - topMargin - photoToTextGap - textAreaHeight - bottomMargin
+
+            // 3. 폴라로이드 렌더링 (개수에 따라 레이아웃 최적화)
+            let photoCount = photos.count
             let polaroidSize: CGSize
             let positions: [CGPoint]
             let rotations: [CGFloat]
 
             switch photoCount {
             case 1:
-                polaroidSize = CGSize(width: 380, height: 450)
-                positions = [CGPoint(x: (size.width - polaroidSize.width) / 2, y: 80)]
-                rotations = [-2]
+                // 1장: 중앙에 크게 (캔버스의 65% 활용)
+                let maxWidth = size.width * 0.65
+                let maxHeight = photoAreaHeight * 0.95
+                polaroidSize = CGSize(width: maxWidth, height: min(maxWidth * 1.15, maxHeight))
+                let centerX = (size.width - polaroidSize.width) / 2
+                let centerY = topMargin + (photoAreaHeight - polaroidSize.height) / 2
+                positions = [CGPoint(x: centerX, y: centerY)]
+                rotations = [-2.5]
+
             case 2:
-                polaroidSize = CGSize(width: 300, height: 360)
+                // 2장: 살짝 겹쳐서 다이나믹하게
+                let maxWidth = size.width * 0.48
+                let maxHeight = photoAreaHeight * 0.90
+                polaroidSize = CGSize(width: maxWidth, height: min(maxWidth * 1.15, maxHeight))
+                let baseY = topMargin + (photoAreaHeight - polaroidSize.height) / 2
                 positions = [
-                    CGPoint(x: 60, y: 90),
-                    CGPoint(x: size.width - 360, y: 120)
+                    CGPoint(x: horizontalMargin + 20, y: baseY - 15),
+                    CGPoint(x: size.width - polaroidSize.width - horizontalMargin - 20, y: baseY + 25)
                 ]
-                rotations = [-5, 4]
-            default: // 3
-                polaroidSize = CGSize(width: 220, height: 270)
+                rotations = [-6, 5]
+
+            default: // 3장
+                // 3장: 부채꼴 배치
+                let maxWidth = size.width * 0.36
+                let maxHeight = photoAreaHeight * 0.85
+                polaroidSize = CGSize(width: maxWidth, height: min(maxWidth * 1.15, maxHeight))
+                let baseY = topMargin + (photoAreaHeight - polaroidSize.height) / 2
+                let spacing = (size.width - polaroidSize.width * 3) / 4
                 positions = [
-                    CGPoint(x: 40, y: 80),
-                    CGPoint(x: (size.width - polaroidSize.width) / 2, y: 110),
-                    CGPoint(x: size.width - polaroidSize.width - 40, y: 80)
+                    CGPoint(x: spacing, y: baseY + 20),
+                    CGPoint(x: spacing * 2 + polaroidSize.width, y: baseY - 10),
+                    CGPoint(x: spacing * 3 + polaroidSize.width * 2, y: baseY + 15)
                 ]
-                rotations = [-6, 2, -3]
+                rotations = [-5, 0, 4]
             }
 
-            for (index, photo) in polaroidPhotos.enumerated() {
+            var maxPolaroidBottom: CGFloat = 0
+
+            for (index, photo) in photos.enumerated() {
                 let rotation = rotations[index % rotations.count] * .pi / 180
                 let position = positions[index % positions.count]
 
@@ -391,101 +371,105 @@ final class ShareImageGenerator {
                 // 폴라로이드 프레임 (흰색 + 그림자)
                 let frameRect = CGRect(origin: position, size: polaroidSize)
 
-                cgContext.setShadow(offset: CGSize(width: 0, height: 5), blur: 12, color: UIColor.black.withAlphaComponent(0.18).cgColor)
+                cgContext.setShadow(offset: CGSize(width: 0, height: 8), blur: 20, color: UIColor.black.withAlphaComponent(0.15).cgColor)
                 UIColor.white.setFill()
                 cgContext.fill(frameRect)
                 cgContext.setShadow(offset: .zero, blur: 0)
 
-                // 사진 영역 (프레임 안쪽)
-                let photoMargin: CGFloat = 15
+                // 사진 영역 (폴라로이드 스타일: 상단/좌우 얇게, 하단 넓게)
+                let photoMarginSide: CGFloat = 14
+                let photoMarginTop: CGFloat = 14
+                let photoMarginBottom: CGFloat = 50  // 폴라로이드 하단 여백
                 let photoRect = CGRect(
-                    x: position.x + photoMargin,
-                    y: position.y + photoMargin,
-                    width: polaroidSize.width - photoMargin * 2,
-                    height: polaroidSize.height - photoMargin * 2 - 30
+                    x: position.x + photoMarginSide,
+                    y: position.y + photoMarginTop,
+                    width: polaroidSize.width - photoMarginSide * 2,
+                    height: polaroidSize.height - photoMarginTop - photoMarginBottom
                 )
                 drawImageFill(photo, in: photoRect, context: cgContext)
 
                 cgContext.restoreGState()
+
+                maxPolaroidBottom = max(maxPolaroidBottom, position.y + polaroidSize.height)
             }
 
-            // 3. 하단 정보
-            let lastPolaroidBottom = positions.last!.y + polaroidSize.height
-            let infoY = max(lastPolaroidBottom + 40, size.height - 240)
+            // 4. 하단 정보 영역 (컴팩트)
+            let textStartY = maxPolaroidBottom + photoToTextGap
+            let maxTextWidth = size.width - (horizontalMargin * 2)
 
-            // 제목
+            // 제목 (Rounded 폰트)
+            let titleFontSize: CGFloat = 36
+            let titleFont: UIFont
+            if let descriptor = UIFont.systemFont(ofSize: titleFontSize, weight: .bold)
+                .fontDescriptor.withDesign(.rounded) {
+                titleFont = UIFont(descriptor: descriptor, size: titleFontSize)
+            } else {
+                titleFont = UIFont.systemFont(ofSize: titleFontSize, weight: .bold)
+            }
+
             let titleAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont(name: "Noteworthy-Bold", size: DesignConstants.polaroidTitleFontSize) ?? UIFont.systemFont(ofSize: DesignConstants.polaroidTitleFontSize, weight: .bold),
-                .foregroundColor: UIColor(hex: "#1A2B33") ?? .black
+                .font: titleFont,
+                .foregroundColor: UIColor(hex: "#2C3E50") ?? .black
             ]
-            let titleSize = data.shareTitle.size(withAttributes: titleAttributes)
-            data.shareTitle.draw(
-                at: CGPoint(x: (size.width - titleSize.width) / 2, y: infoY),
+            let truncatedTitle = truncateText(data.shareTitle, maxLines: 1, width: maxTextWidth, font: titleFont)
+            let titleSize = truncatedTitle.size(withAttributes: titleAttributes)
+            truncatedTitle.draw(
+                at: CGPoint(x: (size.width - titleSize.width) / 2, y: textStartY),
                 withAttributes: titleAttributes
             )
 
-            // 날짜
-            let dateAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: DesignConstants.polaroidDateFontSize, weight: .regular),
-                .foregroundColor: UIColor(hex: "#5A6B73") ?? .gray
+            // 통계+날짜
+            var currentY = textStartY + titleFontSize + 8
+            let statsFont = UIFont.systemFont(ofSize: 24, weight: .medium)
+            let statsAttributes: [NSAttributedString.Key: Any] = [
+                .font: statsFont,
+                .foregroundColor: UIColor(hex: "#7F8C8D") ?? .gray
             ]
-            let dateSize = data.shareDateRange.size(withAttributes: dateAttributes)
-            data.shareDateRange.draw(
-                at: CGPoint(x: (size.width - dateSize.width) / 2, y: infoY + 40),
-                withAttributes: dateAttributes
+            let statsText = data.shareStatsWithDate
+            let statsSize = statsText.size(withAttributes: statsAttributes)
+            statsText.draw(
+                at: CGPoint(x: (size.width - statsSize.width) / 2, y: currentY),
+                withAttributes: statsAttributes
             )
+            currentY += 24 + 8
 
-            // 캡션 (짧게)
-            var currentInfoY = infoY + 65
-            if !configuration.caption.isEmpty {
-                let captionAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: DesignConstants.polaroidCaptionFontSize, weight: .regular),
+            // 감성 키워드
+            if !configuration.impression.isEmpty {
+                let impressionFont = UIFont.systemFont(ofSize: 22, weight: .regular)
+                let impressionAttributes: [NSAttributedString.Key: Any] = [
+                    .font: impressionFont,
                     .foregroundColor: UIColor(hex: "#5A6B73") ?? .gray
                 ]
-                let maxWidth = size.width - 80
-                let captionText = truncateText(configuration.caption, maxLines: 2, width: maxWidth, font: UIFont.systemFont(ofSize: DesignConstants.polaroidCaptionFontSize))
-                let captionSize = captionText.size(withAttributes: captionAttributes)
-                captionText.draw(
-                    at: CGPoint(x: (size.width - min(captionSize.width, maxWidth)) / 2, y: currentInfoY),
-                    withAttributes: captionAttributes
+                let impressionText = truncateText(configuration.impression, maxLines: 1, width: maxTextWidth, font: impressionFont)
+                let impressionSize = impressionText.size(withAttributes: impressionAttributes)
+                impressionText.draw(
+                    at: CGPoint(x: (size.width - impressionSize.width) / 2, y: currentY),
+                    withAttributes: impressionAttributes
                 )
-                currentInfoY += 35
+                currentY += 22 + 6
             }
 
             // 해시태그
             if !configuration.hashtags.isEmpty {
+                let hashtagFont = UIFont.systemFont(ofSize: 20, weight: .medium)
                 let hashtagAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: DesignConstants.hashtagFontSize, weight: .medium),
+                    .font: hashtagFont,
                     .foregroundColor: UIColor(hex: "#87CEEB") ?? .systemBlue
                 ]
-                let hashtagText = configuration.hashtags.prefix(4).map { "#\($0)" }.joined(separator: " ")
+                let hashtagText = configuration.hashtags.prefix(3).map { "#\($0)" }.joined(separator: " ")
                 let hashtagSize = hashtagText.size(withAttributes: hashtagAttributes)
                 hashtagText.draw(
-                    at: CGPoint(x: (size.width - hashtagSize.width) / 2, y: currentInfoY),
+                    at: CGPoint(x: (size.width - hashtagSize.width) / 2, y: currentY),
                     withAttributes: hashtagAttributes
                 )
             }
 
-            // 4. 페이지 인디케이터 (여러 장일 때)
-            if totalPages > 1 {
-                let indicatorText = "\(pageIndex + 1)/\(totalPages)"
-                let indicatorAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: 14, weight: .semibold),
-                    .foregroundColor: UIColor(hex: "#5A6B73") ?? .gray
-                ]
-                let indicatorSize = indicatorText.size(withAttributes: indicatorAttributes)
-                indicatorText.draw(
-                    at: CGPoint(x: (size.width - indicatorSize.width) / 2, y: size.height - 50),
-                    withAttributes: indicatorAttributes
-                )
-            }
-
-            // 5. 워터마크 (앱 아이콘 + Wander)
+            // 5. 워터마크
             if configuration.showWatermark {
                 drawWatermark(
                     in: CGRect(
-                        x: size.width - DesignConstants.watermarkWidth - 20,
-                        y: size.height - 55,
+                        x: size.width - DesignConstants.watermarkWidth - horizontalMargin,
+                        y: size.height - bottomMargin - DesignConstants.watermarkIconSize,
                         width: DesignConstants.watermarkWidth,
                         height: DesignConstants.watermarkIconSize
                     ),
@@ -539,167 +523,182 @@ final class ShareImageGenerator {
         return renderer.image { context in
             let cgContext = context.cgContext
 
-            // 1. 배경 (화이트)
-            UIColor.white.setFill()
+            // ===== 프로페셔널 레이아웃 (v3.0) =====
+            // 캔버스: 1080 x 1350 (4:5)
+            // 구성: 상단 마진 → 사진 영역 (70%) → 텍스트 영역 → 하단 마진
+
+            // 1. 배경 (소프트 화이트)
+            UIColor(hex: "#FAFAFA")?.setFill() ?? UIColor.white.setFill()
             cgContext.fill(CGRect(origin: .zero, size: size))
 
-            // 2. 사진 그리드 (개수에 따라 레이아웃 변경)
-            let photoMargin: CGFloat = 36
-            let photoSpacing: CGFloat = 12
-            let cornerRadius: CGFloat = 16
-            let availableWidth = size.width - (photoMargin * 2)
-            let photoAreaTop: CGFloat = 40
+            // 2. 레이아웃 상수 정의
+            let horizontalMargin: CGFloat = 40       // 좌우 마진
+            let topMargin: CGFloat = 40              // 상단 마진
+            let bottomMargin: CGFloat = 50          // 하단 마진
+            let photoSpacing: CGFloat = 10           // 사진 간격
+            let cornerRadius: CGFloat = 12           // 사진 모서리
 
+            // 텍스트 영역 높이 (컴팩트하게)
+            let textAreaHeight: CGFloat = 160
+            let photoToTextGap: CGFloat = 24         // 사진과 텍스트 사이 간격
+
+            // 사진 영역 계산
+            let availableWidth = size.width - (horizontalMargin * 2)
+            let photoAreaTop = topMargin
+            let photoAreaHeight = size.height - topMargin - photoToTextGap - textAreaHeight - bottomMargin
+            var photoAreaBottom: CGFloat = 0
+
+            // 3. 사진 그리드 렌더링 (사진 개수별 최적화)
             switch photos.count {
             case 1:
-                // 1장: 전체 크기
-                let photoHeight: CGFloat = size.height * 0.50
+                // 1장: 꽉 차게 배치
                 let photoRect = CGRect(
-                    x: photoMargin,
+                    x: horizontalMargin,
                     y: photoAreaTop,
                     width: availableWidth,
-                    height: photoHeight
+                    height: photoAreaHeight
                 )
-                drawRoundedImage(photos[0], in: photoRect, cornerRadius: cornerRadius, context: cgContext)
+                let drawnRect = drawRoundedImageFill(photos[0], in: photoRect, cornerRadius: cornerRadius, context: cgContext)
+                photoAreaBottom = drawnRect.maxY
 
             case 2:
-                // 2장: 세로 2분할
-                let photoHeight = (size.height * 0.50 - photoSpacing) / 2
+                // 2장: 좌우 배치 (가로형) 또는 상하 배치 (세로형)
+                let cellWidth = (availableWidth - photoSpacing) / 2
+                let cellHeight = photoAreaHeight
+
                 for (index, photo) in photos.enumerated() {
                     let photoRect = CGRect(
-                        x: photoMargin,
-                        y: photoAreaTop + CGFloat(index) * (photoHeight + photoSpacing),
-                        width: availableWidth,
-                        height: photoHeight
+                        x: horizontalMargin + CGFloat(index) * (cellWidth + photoSpacing),
+                        y: photoAreaTop,
+                        width: cellWidth,
+                        height: cellHeight
                     )
-                    drawRoundedImage(photo, in: photoRect, cornerRadius: cornerRadius, context: cgContext)
+                    let drawnRect = drawRoundedImageFill(photo, in: photoRect, cornerRadius: cornerRadius, context: cgContext)
+                    photoAreaBottom = max(photoAreaBottom, drawnRect.maxY)
                 }
 
             case 3:
-                // 3장: 상단 1장 크게 + 하단 2장 작게
-                let topPhotoHeight = size.height * 0.32
-                let bottomPhotoHeight = size.height * 0.16
-                let halfWidth = (availableWidth - photoSpacing) / 2
+                // 3장: 좌측 1장 크게 + 우측 2장 세로 배치
+                let leftWidth = availableWidth * 0.55
+                let rightWidth = availableWidth - leftWidth - photoSpacing
+                let rightCellHeight = (photoAreaHeight - photoSpacing) / 2
 
-                let topRect = CGRect(x: photoMargin, y: photoAreaTop, width: availableWidth, height: topPhotoHeight)
-                drawRoundedImage(photos[0], in: topRect, cornerRadius: cornerRadius, context: cgContext)
+                // 좌측 큰 사진
+                let leftRect = CGRect(
+                    x: horizontalMargin,
+                    y: photoAreaTop,
+                    width: leftWidth,
+                    height: photoAreaHeight
+                )
+                let leftDrawn = drawRoundedImageFill(photos[0], in: leftRect, cornerRadius: cornerRadius, context: cgContext)
+                photoAreaBottom = leftDrawn.maxY
 
-                for (index, photo) in photos.dropFirst().enumerated() {
-                    let photoRect = CGRect(
-                        x: photoMargin + CGFloat(index) * (halfWidth + photoSpacing),
-                        y: photoAreaTop + topPhotoHeight + photoSpacing,
-                        width: halfWidth,
-                        height: bottomPhotoHeight
-                    )
-                    drawRoundedImage(photo, in: photoRect, cornerRadius: cornerRadius, context: cgContext)
-                }
+                // 우측 상단
+                let rightTopRect = CGRect(
+                    x: horizontalMargin + leftWidth + photoSpacing,
+                    y: photoAreaTop,
+                    width: rightWidth,
+                    height: rightCellHeight
+                )
+                _ = drawRoundedImageFill(photos[1], in: rightTopRect, cornerRadius: cornerRadius, context: cgContext)
+
+                // 우측 하단
+                let rightBottomRect = CGRect(
+                    x: horizontalMargin + leftWidth + photoSpacing,
+                    y: photoAreaTop + rightCellHeight + photoSpacing,
+                    width: rightWidth,
+                    height: rightCellHeight
+                )
+                _ = drawRoundedImageFill(photos[2], in: rightBottomRect, cornerRadius: cornerRadius, context: cgContext)
 
             default: // 4장
-                // 4장: 2x2 그리드
-                let photoSize = (availableWidth - photoSpacing) / 2
-                let photoHeight = (size.height * 0.48 - photoSpacing) / 2
+                // 4장: 2x2 그리드 (꽉 차게)
+                let cellWidth = (availableWidth - photoSpacing) / 2
+                let cellHeight = (photoAreaHeight - photoSpacing) / 2
 
                 for (index, photo) in photos.enumerated() {
                     let row = index / 2
                     let col = index % 2
                     let photoRect = CGRect(
-                        x: photoMargin + CGFloat(col) * (photoSize + photoSpacing),
-                        y: photoAreaTop + CGFloat(row) * (photoHeight + photoSpacing),
-                        width: photoSize,
-                        height: photoHeight
+                        x: horizontalMargin + CGFloat(col) * (cellWidth + photoSpacing),
+                        y: photoAreaTop + CGFloat(row) * (cellHeight + photoSpacing),
+                        width: cellWidth,
+                        height: cellHeight
                     )
-                    drawRoundedImage(photo, in: photoRect, cornerRadius: cornerRadius, context: cgContext)
+                    let drawnRect = drawRoundedImageFill(photo, in: photoRect, cornerRadius: cornerRadius, context: cgContext)
+                    photoAreaBottom = max(photoAreaBottom, drawnRect.maxY)
                 }
             }
 
-            // 3. 하단 정보 (센터 정렬)
-            let infoY = size.height * 0.58
+            // 4. 하단 정보 영역 (컴팩트 + 균형잡힌 배치)
+            let textStartY = photoAreaBottom + photoToTextGap
+            let maxTextWidth = size.width - (horizontalMargin * 2)
 
-            // 제목
+            // 제목 (Bold, 중앙 정렬)
+            let titleFont = UIFont.systemFont(ofSize: 38, weight: .bold)
             let titleAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: DesignConstants.titleFontSize, weight: .bold),
+                .font: titleFont,
                 .foregroundColor: UIColor(hex: "#1A2B33") ?? .black
             ]
-            let titleSize = data.shareTitle.size(withAttributes: titleAttributes)
-            data.shareTitle.draw(
-                at: CGPoint(x: (size.width - titleSize.width) / 2, y: infoY),
+            let truncatedTitle = truncateText(data.shareTitle, maxLines: 1, width: maxTextWidth, font: titleFont)
+            let titleSize = truncatedTitle.size(withAttributes: titleAttributes)
+            truncatedTitle.draw(
+                at: CGPoint(x: (size.width - titleSize.width) / 2, y: textStartY),
                 withAttributes: titleAttributes
             )
 
-            // 날짜
-            let dateAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: DesignConstants.dateFontSize, weight: .regular),
-                .foregroundColor: UIColor(hex: "#5A6B73") ?? .gray
-            ]
-            let dateSize = data.shareDateRange.size(withAttributes: dateAttributes)
-            data.shareDateRange.draw(
-                at: CGPoint(x: (size.width - dateSize.width) / 2, y: infoY + 35),
-                withAttributes: dateAttributes
-            )
-
-            // 통계
+            // 통계 (📍 5곳 · 🚗 32km · 2.1~2.3)
+            var currentY = textStartY + 38 + 10
+            let statsFont = UIFont.systemFont(ofSize: 26, weight: .medium)
             let statsAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: DesignConstants.statsFontSize, weight: .regular),
-                .foregroundColor: UIColor(hex: "#5A6B73") ?? .gray
+                .font: statsFont,
+                .foregroundColor: UIColor(hex: "#6B7B83") ?? .gray
             ]
-            let stats = "📍 \(data.sharePlaceCount)곳  ·  🚗 \(Int(data.shareTotalDistance))km"
-            let statsSize = stats.size(withAttributes: statsAttributes)
-            stats.draw(
-                at: CGPoint(x: (size.width - statsSize.width) / 2, y: infoY + 58),
+            let statsText = data.shareStatsWithDate
+            let statsSize = statsText.size(withAttributes: statsAttributes)
+            statsText.draw(
+                at: CGPoint(x: (size.width - statsSize.width) / 2, y: currentY),
                 withAttributes: statsAttributes
             )
+            currentY += 26 + 10
 
-            // 캡션
-            var currentInfoY: CGFloat = infoY + 85
-            if !configuration.caption.isEmpty {
-                let captionAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: DesignConstants.captionFontSize, weight: .regular),
-                    .foregroundColor: UIColor(hex: "#1A2B33")?.withAlphaComponent(0.8) ?? .darkGray
+            // 감성 키워드
+            if !configuration.impression.isEmpty {
+                let impressionFont = UIFont.systemFont(ofSize: 24, weight: .regular)
+                let impressionAttributes: [NSAttributedString.Key: Any] = [
+                    .font: impressionFont,
+                    .foregroundColor: UIColor(hex: "#1A2B33")?.withAlphaComponent(0.7) ?? .darkGray
                 ]
-                let maxWidth = size.width - 60
-                let captionText = truncateText(configuration.caption, maxLines: 2, width: maxWidth, font: UIFont.systemFont(ofSize: DesignConstants.captionFontSize))
-                let captionSize = captionText.size(withAttributes: captionAttributes)
-                captionText.draw(
-                    at: CGPoint(x: (size.width - min(captionSize.width, maxWidth)) / 2, y: currentInfoY),
-                    withAttributes: captionAttributes
+                let impressionText = truncateText(configuration.impression, maxLines: 1, width: maxTextWidth, font: impressionFont)
+                let impressionSize = impressionText.size(withAttributes: impressionAttributes)
+                impressionText.draw(
+                    at: CGPoint(x: (size.width - impressionSize.width) / 2, y: currentY),
+                    withAttributes: impressionAttributes
                 )
-                currentInfoY += 40
+                currentY += 24 + 8
             }
 
-            // 해시태그
+            // 해시태그 (최대 3개)
             if !configuration.hashtags.isEmpty {
+                let hashtagFont = UIFont.systemFont(ofSize: 22, weight: .medium)
                 let hashtagAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: DesignConstants.hashtagFontSize, weight: .medium),
+                    .font: hashtagFont,
                     .foregroundColor: UIColor(hex: "#87CEEB") ?? .systemBlue
                 ]
-                let hashtagText = configuration.hashtags.prefix(5).map { "#\($0)" }.joined(separator: " ")
+                let hashtagText = configuration.hashtags.prefix(3).map { "#\($0)" }.joined(separator: " ")
                 let hashtagSize = hashtagText.size(withAttributes: hashtagAttributes)
                 hashtagText.draw(
-                    at: CGPoint(x: (size.width - hashtagSize.width) / 2, y: currentInfoY),
+                    at: CGPoint(x: (size.width - hashtagSize.width) / 2, y: currentY),
                     withAttributes: hashtagAttributes
                 )
             }
 
-            // 4. 페이지 인디케이터 (여러 장일 때)
-            if totalPages > 1 {
-                let indicatorText = "\(pageIndex + 1)/\(totalPages)"
-                let indicatorAttributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: 14, weight: .semibold),
-                    .foregroundColor: UIColor(hex: "#5A6B73") ?? .gray
-                ]
-                let indicatorSize = indicatorText.size(withAttributes: indicatorAttributes)
-                indicatorText.draw(
-                    at: CGPoint(x: (size.width - indicatorSize.width) / 2, y: size.height - 50),
-                    withAttributes: indicatorAttributes
-                )
-            }
-
-            // 5. 워터마크 (앱 아이콘 + Wander)
+            // 5. 워터마크 (우하단, 텍스트 영역과 수평 정렬)
             if configuration.showWatermark {
                 drawWatermark(
                     in: CGRect(
-                        x: (size.width - DesignConstants.watermarkWidth) / 2,
-                        y: size.height - 60,
+                        x: size.width - DesignConstants.watermarkWidth - horizontalMargin,
+                        y: size.height - bottomMargin - DesignConstants.watermarkIconSize,
                         width: DesignConstants.watermarkWidth,
                         height: DesignConstants.watermarkIconSize
                     ),
@@ -739,8 +738,9 @@ final class ShareImageGenerator {
 
             drawGlassPanel(in: stickerRect, context: cgContext, cornerRadius: 18)
 
-            // 3. 스티커 내 텍스트
+            // 3. 스티커 내 텍스트 (v2.0 - 날짜 통합)
             let textMargin: CGFloat = 20
+            let maxTextWidth = stickerRect.width - (textMargin * 2)
             var currentY = stickerRect.minY + textMargin
 
             // 제목
@@ -748,30 +748,20 @@ final class ShareImageGenerator {
                 .font: UIFont.systemFont(ofSize: DesignConstants.storyTitleFontSize, weight: .bold),
                 .foregroundColor: UIColor(hex: "#1A2B33") ?? .black
             ]
-            data.shareTitle.draw(
+            let truncatedTitle = truncateText(data.shareTitle, maxLines: 1, width: maxTextWidth, font: UIFont.systemFont(ofSize: DesignConstants.storyTitleFontSize, weight: .bold))
+            truncatedTitle.draw(
                 at: CGPoint(x: stickerRect.minX + textMargin, y: currentY),
                 withAttributes: titleAttributes
             )
-            currentY += DesignConstants.storyTitleFontSize + 8
+            currentY += DesignConstants.storyTitleFontSize + 10
 
-            // 날짜
-            let dateAttributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 14, weight: .regular),
-                .foregroundColor: UIColor(hex: "#5A6B73") ?? .gray
-            ]
-            data.shareDateRange.draw(
-                at: CGPoint(x: stickerRect.minX + textMargin, y: currentY),
-                withAttributes: dateAttributes
-            )
-            currentY += 22
-
-            // 통계
+            // 통계+날짜 통합
             let statsAttributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: DesignConstants.storyStatsFontSize, weight: .medium),
                 .foregroundColor: UIColor(hex: "#1A2B33")?.withAlphaComponent(0.85) ?? .darkGray
             ]
-            let stats = "📍 \(data.sharePlaceCount)곳 방문  ·  🚗 \(Int(data.shareTotalDistance))km"
-            stats.draw(
+            let statsWithDate = data.shareStatsWithDate
+            statsWithDate.draw(
                 at: CGPoint(x: stickerRect.minX + textMargin, y: currentY),
                 withAttributes: statsAttributes
             )
@@ -819,13 +809,125 @@ final class ShareImageGenerator {
         context.restoreGState()
     }
 
-    /// 둥근 모서리 이미지 그리기
+    /// 둥근 모서리 이미지 그리기 (Aspect Fill - 크롭)
     private func drawRoundedImage(_ image: UIImage, in rect: CGRect, cornerRadius: CGFloat, context: CGContext) {
         let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
         context.saveGState()
         path.addClip()
         drawImageFill(image, in: rect, context: context)
         context.restoreGState()
+    }
+
+    /// 이미지를 영역에 맞게 축소 (Aspect Fit - 비율 유지, 크롭 없음)
+    private func drawImageFit(_ image: UIImage, in rect: CGRect, context: CGContext, backgroundColor: UIColor = .white) -> CGRect {
+        let imageSize = image.size
+        let targetSize = rect.size
+
+        let widthRatio = targetSize.width / imageSize.width
+        let heightRatio = targetSize.height / imageSize.height
+        let scale = min(widthRatio, heightRatio)  // Aspect Fit: min 사용
+
+        let scaledWidth = imageSize.width * scale
+        let scaledHeight = imageSize.height * scale
+
+        let drawRect = CGRect(
+            x: rect.minX + (targetSize.width - scaledWidth) / 2,
+            y: rect.minY + (targetSize.height - scaledHeight) / 2,
+            width: scaledWidth,
+            height: scaledHeight
+        )
+
+        image.draw(in: drawRect)
+        return drawRect  // 실제 그려진 영역 반환
+    }
+
+    /// 둥근 모서리 이미지 그리기 (세로 사진은 정사각형 크롭, 가로/정사각형은 Fit)
+    private func drawRoundedImageAdaptive(_ image: UIImage, in rect: CGRect, cornerRadius: CGFloat, context: CGContext) -> CGRect {
+        let imageSize = image.size
+        let isPortrait = imageSize.height > imageSize.width * 1.2  // 세로 비율이 1.2배 이상이면 세로 사진
+
+        if isPortrait {
+            // 세로 사진: 정사각형에 가깝게 크롭 (Aspect Fill)
+            let targetSize = rect.size
+            let squareSize = min(targetSize.width, targetSize.height)
+            let squareRect = CGRect(
+                x: rect.minX + (targetSize.width - squareSize) / 2,
+                y: rect.minY + (targetSize.height - squareSize) / 2,
+                width: squareSize,
+                height: squareSize
+            )
+
+            let path = UIBezierPath(roundedRect: squareRect, cornerRadius: cornerRadius)
+            context.saveGState()
+            path.addClip()
+            drawImageFill(image, in: squareRect, context: context)
+            context.restoreGState()
+
+            return squareRect
+        } else {
+            // 가로/정사각형 사진: 기존 Aspect Fit
+            return drawRoundedImageFit(image, in: rect, cornerRadius: cornerRadius, context: context)
+        }
+    }
+
+    /// 둥근 모서리 이미지 그리기 (Aspect Fit - 비율 유지)
+    private func drawRoundedImageFit(_ image: UIImage, in rect: CGRect, cornerRadius: CGFloat, context: CGContext, backgroundColor: UIColor = .white) -> CGRect {
+        let imageSize = image.size
+        let targetSize = rect.size
+
+        let widthRatio = targetSize.width / imageSize.width
+        let heightRatio = targetSize.height / imageSize.height
+        let scale = min(widthRatio, heightRatio)
+
+        let scaledWidth = imageSize.width * scale
+        let scaledHeight = imageSize.height * scale
+
+        let drawRect = CGRect(
+            x: rect.minX + (targetSize.width - scaledWidth) / 2,
+            y: rect.minY + (targetSize.height - scaledHeight) / 2,
+            width: scaledWidth,
+            height: scaledHeight
+        )
+
+        // 둥근 모서리로 클리핑
+        let path = UIBezierPath(roundedRect: drawRect, cornerRadius: cornerRadius)
+        context.saveGState()
+        path.addClip()
+        image.draw(in: drawRect)
+        context.restoreGState()
+
+        return drawRect  // 실제 그려진 영역 반환
+    }
+
+    /// 둥근 모서리 이미지 그리기 (Aspect Fill - 크롭하여 영역 꽉 채움)
+    private func drawRoundedImageFill(_ image: UIImage, in rect: CGRect, cornerRadius: CGFloat, context: CGContext) -> CGRect {
+        let imageSize = image.size
+        let targetSize = rect.size
+
+        // Aspect Fill: 영역을 꽉 채우도록 확대 (잘림 허용)
+        let widthRatio = targetSize.width / imageSize.width
+        let heightRatio = targetSize.height / imageSize.height
+        let scale = max(widthRatio, heightRatio)  // Fill은 max 사용
+
+        let scaledWidth = imageSize.width * scale
+        let scaledHeight = imageSize.height * scale
+
+        // 중앙 정렬 (넘치는 부분은 잘림)
+        let drawRect = CGRect(
+            x: rect.minX + (targetSize.width - scaledWidth) / 2,
+            y: rect.minY + (targetSize.height - scaledHeight) / 2,
+            width: scaledWidth,
+            height: scaledHeight
+        )
+
+        // 둥근 모서리로 클리핑 (rect 기준으로 클리핑)
+        context.saveGState()
+        let clipPath = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
+        clipPath.addClip()
+        image.draw(in: drawRect)
+        context.restoreGState()
+
+        return rect  // 클리핑 영역 반환
     }
 
     /// 글래스 패널 그리기
@@ -873,10 +975,10 @@ final class ShareImageGenerator {
     /// 워터마크 그리기 (앱 아이콘 + 텍스트)
     private func drawWatermark(in rect: CGRect, context: CGContext) {
         let iconSize = DesignConstants.watermarkIconSize
-        let spacing: CGFloat = 8
+        let spacing: CGFloat = 10
 
-        // 1. 앱 아이콘 그리기
-        if let appIcon = UIImage(named: "AppIcon") {
+        // 1. 앱 아이콘 그리기 (Bundle에서 직접 로드)
+        if let appIcon = loadAppIcon() {
             let iconRect = CGRect(
                 x: rect.minX,
                 y: rect.minY + (rect.height - iconSize) / 2,
@@ -894,7 +996,7 @@ final class ShareImageGenerator {
 
         // 2. "Wander" 텍스트 그리기
         let watermarkAttributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: DesignConstants.watermarkFontSize, weight: .semibold),
+            .font: UIFont.systemFont(ofSize: DesignConstants.watermarkTextSize, weight: .bold),
             .foregroundColor: UIColor(hex: "#87CEEB") ?? .systemBlue
         ]
         let watermarkText = "Wander"
@@ -904,9 +1006,33 @@ final class ShareImageGenerator {
         watermarkText.draw(at: CGPoint(x: textX, y: textY), withAttributes: watermarkAttributes)
     }
 
-    /// 텍스트 자르기 (최대 줄 수 제한)
+    /// 앱 아이콘 로드 (Assets에서 직접)
+    private func loadAppIcon() -> UIImage? {
+        // WanderIcon 에셋에서 로드 (AppIcon의 복사본)
+        if let icon = UIImage(named: "WanderIcon") {
+            return icon
+        }
+
+        // 폴백: Bundle의 앱 아이콘 파일 직접 로드
+        if let iconsDictionary = Bundle.main.infoDictionary?["CFBundleIcons"] as? [String: Any],
+           let primaryIconsDictionary = iconsDictionary["CFBundlePrimaryIcon"] as? [String: Any],
+           let iconFiles = primaryIconsDictionary["CFBundleIconFiles"] as? [String],
+           let lastIcon = iconFiles.last,
+           let icon = UIImage(named: lastIcon) {
+            return icon
+        }
+
+        return nil
+    }
+
+    /// 텍스트 자르기 (최대 줄 수 제한, 개선된 버전)
     private func truncateText(_ text: String, maxLines: Int, width: CGFloat, font: UIFont) -> String {
+        // 빈 텍스트 처리
+        guard !text.isEmpty else { return "" }
+
         let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        guard !words.isEmpty else { return "" }
+
         var result = ""
         var currentLine = ""
         var lineCount = 0
@@ -919,14 +1045,40 @@ final class ShareImageGenerator {
                 if !currentLine.isEmpty {
                     lineCount += 1
                     if lineCount >= maxLines {
-                        result += currentLine + "..."
+                        // 말줄임 추가 전 너비 확인
+                        let ellipsisLine = currentLine + "..."
+                        let ellipsisSize = ellipsisLine.size(withAttributes: [.font: font])
+                        if ellipsisSize.width > width {
+                            // 말줄임도 넘으면 글자 수 줄이기
+                            var truncated = currentLine
+                            while !truncated.isEmpty {
+                                truncated = String(truncated.dropLast())
+                                let testEllipsis = truncated + "..."
+                                if testEllipsis.size(withAttributes: [.font: font]).width <= width {
+                                    result += testEllipsis
+                                    return result
+                                }
+                            }
+                        }
+                        result += ellipsisLine
                         return result
                     }
                     result += currentLine + "\n"
                     currentLine = word
                 } else {
-                    // 단어 자체가 너무 길면 자르기
-                    currentLine = String(word.prefix(Int(width / 8)))
+                    // 단어 자체가 너무 길면 글자 단위로 자르기
+                    var truncated = word
+                    while !truncated.isEmpty {
+                        let testTruncated = truncated + "..."
+                        if testTruncated.size(withAttributes: [.font: font]).width <= width {
+                            currentLine = truncated + "..."
+                            break
+                        }
+                        truncated = String(truncated.dropLast())
+                    }
+                    if truncated.isEmpty {
+                        currentLine = "..."
+                    }
                 }
             } else {
                 currentLine = testLine
@@ -934,10 +1086,46 @@ final class ShareImageGenerator {
         }
 
         if !currentLine.isEmpty {
+            // 마지막 줄 너비 확인
+            let finalSize = currentLine.size(withAttributes: [.font: font])
+            if finalSize.width > width {
+                var truncated = currentLine
+                while !truncated.isEmpty {
+                    truncated = String(truncated.dropLast())
+                    let testEllipsis = truncated + "..."
+                    if testEllipsis.size(withAttributes: [.font: font]).width <= width {
+                        result += testEllipsis
+                        return result
+                    }
+                }
+            }
             result += currentLine
         }
 
         return result
+    }
+
+    /// 제목용 텍스트 자르기 (15자 기준, 폰트 크기 조정 포함)
+    private func truncateTitleText(_ text: String, maxWidth: CGFloat, baseFontSize: CGFloat) -> (String, CGFloat) {
+        let baseFont = UIFont.systemFont(ofSize: baseFontSize, weight: .bold)
+
+        // 기본 폰트로 시도
+        let textSize = text.size(withAttributes: [.font: baseFont])
+        if textSize.width <= maxWidth {
+            return (text, baseFontSize)
+        }
+
+        // 폰트 크기 축소 시도 (최소 36pt)
+        let reducedFontSize = max(baseFontSize - 6, 36)
+        let reducedFont = UIFont.systemFont(ofSize: reducedFontSize, weight: .bold)
+        let reducedSize = text.size(withAttributes: [.font: reducedFont])
+        if reducedSize.width <= maxWidth {
+            return (text, reducedFontSize)
+        }
+
+        // 그래도 안되면 말줄임
+        let truncated = truncateText(text, maxLines: 1, width: maxWidth, font: reducedFont)
+        return (truncated, reducedFontSize)
     }
 }
 
