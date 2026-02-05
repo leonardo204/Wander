@@ -83,14 +83,14 @@ struct LookbackView: View {
                     Text(period.title)
                         .font(WanderTypography.caption1)
                         .foregroundColor(selectedPeriod == period ? .white : WanderColors.textSecondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, WanderSpacing.space3)
+                        .padding(.vertical, WanderSpacing.space2)
                         .background(selectedPeriod == period ? WanderColors.primary : WanderColors.surface)
                         .cornerRadius(WanderSpacing.radiusMedium)
                 }
             }
         }
-        .padding(4)
+        .padding(WanderSpacing.space1)
         .background(WanderColors.surface)
         .cornerRadius(WanderSpacing.radiusMedium)
     }
@@ -160,7 +160,7 @@ struct LookbackView: View {
     // MARK: - Photo Grid
     private var photoGrid: some View {
         ScrollView {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 4), spacing: 4) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: WanderSpacing.space1), count: 4), spacing: WanderSpacing.space1) {
                 ForEach(photos, id: \.localIdentifier) { asset in
                     PhotoThumbnail(
                         asset: asset,
@@ -351,7 +351,7 @@ struct PhotoThumbnail: View {
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.white)
                         )
-                        .padding(4)
+                        .padding(WanderSpacing.space1)
                 }
             }
             .cornerRadius(WanderSpacing.radiusMedium)

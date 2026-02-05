@@ -133,11 +133,11 @@ struct QuickModeView: View {
             // Photo grid
             ScrollView {
                 LazyVGrid(columns: [
-                    GridItem(.flexible(), spacing: 4),
-                    GridItem(.flexible(), spacing: 4),
-                    GridItem(.flexible(), spacing: 4),
-                    GridItem(.flexible(), spacing: 4)
-                ], spacing: 4) {
+                    GridItem(.flexible(), spacing: WanderSpacing.space1),
+                    GridItem(.flexible(), spacing: WanderSpacing.space1),
+                    GridItem(.flexible(), spacing: WanderSpacing.space1),
+                    GridItem(.flexible(), spacing: WanderSpacing.space1)
+                ], spacing: WanderSpacing.space1) {
                     ForEach(recentPhotos, id: \.localIdentifier) { asset in
                         QuickModePhotoCell(
                             asset: asset,
@@ -271,7 +271,7 @@ struct QuickModePhotoCell: View {
                                 .foregroundColor(.white)
                         }
                     }
-                    .padding(4)
+                    .padding(WanderSpacing.space1)
                 }
 
                 // GPS indicator
@@ -513,9 +513,9 @@ struct QuickModeResultView: View {
 
     private var photoGridSection: some View {
         LazyVGrid(columns: [
-            GridItem(.flexible(), spacing: 4),
-            GridItem(.flexible(), spacing: 4)
-        ], spacing: 4) {
+            GridItem(.flexible(), spacing: WanderSpacing.space1),
+            GridItem(.flexible(), spacing: WanderSpacing.space1)
+        ], spacing: WanderSpacing.space1) {
             ForEach(0..<result.photos.count, id: \.self) { index in
                 Image(uiImage: result.photos[index])
                     .resizable()

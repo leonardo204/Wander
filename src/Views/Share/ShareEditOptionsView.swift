@@ -122,7 +122,7 @@ struct ShareEditOptionsView: View {
                 }
 
                 // 안내 텍스트
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: WanderSpacing.space1) {
                     if viewModel.configuration.templateStyle == .polaroidGrid {
                         Text("폴라로이드 스타일은 최대 3장까지 표시됩니다")
                             .font(WanderTypography.caption2)

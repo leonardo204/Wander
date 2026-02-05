@@ -21,26 +21,26 @@ struct SharedBadgeView: View {
 
         var fontSize: Font {
             switch self {
-            case .small: return .caption2
-            case .medium: return .caption
-            case .large: return .footnote
+            case .small: return WanderTypography.caption2
+            case .medium: return WanderTypography.caption1
+            case .large: return WanderTypography.footnote
             }
         }
 
         var padding: EdgeInsets {
             switch self {
             case .small:
-                return EdgeInsets(top: 2, leading: 4, bottom: 2, trailing: 4)
+                return EdgeInsets(top: 2, leading: WanderSpacing.space1, bottom: 2, trailing: WanderSpacing.space1)
             case .medium:
-                return EdgeInsets(top: 4, leading: 6, bottom: 4, trailing: 6)
+                return EdgeInsets(top: WanderSpacing.space1, leading: 6, bottom: WanderSpacing.space1, trailing: 6)
             case .large:
-                return EdgeInsets(top: 6, leading: 8, bottom: 6, trailing: 8)
+                return EdgeInsets(top: 6, leading: WanderSpacing.space2, bottom: 6, trailing: WanderSpacing.space2)
             }
         }
     }
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: WanderSpacing.space1) {
             Image(systemName: "link")
                 .font(.system(size: size.iconSize, weight: .semibold))
 
@@ -70,26 +70,27 @@ struct SharedFromView: View {
 
     var body: some View {
         if let sender = senderName {
-            HStack(spacing: 8) {
+            HStack(spacing: WanderSpacing.space2) {
                 Image(systemName: "person.circle")
                     .foregroundStyle(WanderColors.primary)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(sender)님이 공유")
-                        .font(.subheadline)
+                        .font(WanderTypography.bodySmall)
+                        .foregroundStyle(WanderColors.textPrimary)
 
                     if let date = sharedAt {
                         Text(date.formatted(date: .abbreviated, time: .omitted))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(WanderTypography.caption1)
+                            .foregroundStyle(WanderColors.textSecondary)
                     }
                 }
 
                 Spacer()
             }
-            .padding()
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(WanderSpacing.space4)
+            .background(WanderColors.surface)
+            .clipShape(RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge))
         }
     }
 }

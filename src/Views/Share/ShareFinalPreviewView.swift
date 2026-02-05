@@ -427,9 +427,9 @@ struct ZoomableImageViewer: View {
 
                 // 줌 힌트
                 Text("두 손가락으로 확대/축소")
-                    .font(.caption)
+                    .font(WanderTypography.caption1)
                     .foregroundColor(.white.opacity(0.6))
-                    .padding(.bottom, 20)
+                    .padding(.bottom, WanderSpacing.space5)
             }
         }
         .onChange(of: currentIndex) { _, _ in
