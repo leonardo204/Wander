@@ -103,6 +103,11 @@ struct HomeView: View {
                 for (index, record) in records.prefix(5).enumerated() {
                     logger.info("🏠 [HomeView] 기록[\(index)]: \(record.title), days: \(record.days.count), places: \(record.placeCount)")
                 }
+
+                // 만료된 공유 기록 정리
+                Task {
+                    await P2PShareService.shared.cleanupExpiredSharedRecords(modelContext: modelContext)
+                }
             }
             .onChange(of: savedRecordId) { _, newRecordId in
                 if let recordId = newRecordId {
@@ -346,7 +351,7 @@ struct RecordCard: View {
                         .lineLimit(1)
 
                     if record.isShared {
-                        SharedBadgeView(size: .small)
+                        SharedBadgeView(size: .small, expirationStatus: record.expirationStatus)
                     }
 
                     Spacer()

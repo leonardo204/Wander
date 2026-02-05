@@ -85,6 +85,11 @@ struct RecordsView: View {
             }
             .onAppear {
                 logger.info("📚 [RecordsView] 나타남 - 전체 기록: \(records.count)개")
+
+                // 만료된 공유 기록 정리
+                Task {
+                    await P2PShareService.shared.cleanupExpiredSharedRecords(modelContext: modelContext)
+                }
             }
             .onChange(of: resetTrigger) { _, _ in
                 // NOTE: 탭 전환 또는 같은 탭 클릭 시 트리거됨 → 네비게이션 스택 초기화하여 루트로 이동
@@ -353,9 +358,9 @@ struct RecordListCard: View {
             HStack {
                 DateBadge(date: record.startDate)
 
-                // 공유 배지
+                // 공유 배지 (만료일 D-day 표시)
                 if record.isShared {
-                    SharedBadgeView(size: .small)
+                    SharedBadgeView(size: .small, expirationStatus: record.expirationStatus)
                 }
 
                 Spacer()

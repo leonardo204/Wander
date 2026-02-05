@@ -665,6 +665,9 @@ options.deliveryMode = .fastFormat
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-05 | P2P 공유 기록 만료 시 자동 삭제 기능 추가 (shareExpiresAt 필드, cleanupExpiredSharedRecords) |
+| 2026-02-05 | 공유 배지 D-day 표시 기능 (영구: 보라색, 여유: 청록색, 곧 만료: 주황색, 오늘/만료: 빨강색) |
+| 2026-02-05 | ShareExpirationStatus enum 추가 (notShared, permanent, normal, soon, today, expired) |
 | 2026-02-05 | P2P 공유받은 사진 표시 버그 수정 - localFilePath 지원 추가 (HomeView, RecordsView) |
 | 2026-02-05 | P2P 공유 기록 placeCount/photoCount 저장 누락 버그 수정 |
 | 2026-02-05 | 홈 화면 RecordCard에 "공유됨" 배지 추가, 배지 디자인 개선 (더 진한 청록색) |

@@ -29,6 +29,9 @@ final class TravelRecord {
     /// 원본 공유 ID (중복 저장 방지용)
     var originalShareID: UUID?
 
+    /// 공유 기록 만료일 (nil이면 영구 보관)
+    var shareExpiresAt: Date?
+
     // MARK: - Wander Intelligence Data (JSON 직렬화)
 
     /// 여행 점수 데이터 (JSON)
@@ -88,6 +91,53 @@ final class TravelRecord {
     var categoryIcon: String {
         category?.icon ?? "✈️"
     }
+
+    // MARK: - Share Expiration Computed Properties
+
+    /// 공유 기록이 만료되었는지 확인
+    var isShareExpired: Bool {
+        guard isShared, let expiresAt = shareExpiresAt else { return false }
+        return expiresAt < Date()
+    }
+
+    /// 만료까지 남은 일수 (nil이면 영구 또는 비공유)
+    var daysUntilExpiration: Int? {
+        guard isShared, let expiresAt = shareExpiresAt else { return nil }
+        let calendar = Calendar.current
+        let now = calendar.startOfDay(for: Date())
+        let expiry = calendar.startOfDay(for: expiresAt)
+        let components = calendar.dateComponents([.day], from: now, to: expiry)
+        return components.day
+    }
+
+    /// 만료 상태 (배지 표시용)
+    var expirationStatus: ShareExpirationStatus {
+        guard isShared else { return .notShared }
+        guard let days = daysUntilExpiration else { return .permanent }
+
+        if days < 0 {
+            return .expired
+        } else if days == 0 {
+            return .today
+        } else if days <= 3 {
+            return .soon(days: days)
+        } else {
+            return .normal(days: days)
+        }
+    }
+}
+
+/// 공유 기록 만료 상태
+enum ShareExpirationStatus {
+    case notShared          // 공유 기록 아님
+    case permanent          // 영구 보관
+    case normal(days: Int)  // 여유 있음 (D-N)
+    case soon(days: Int)    // 곧 만료 (D-3 이하)
+    case today              // 오늘 만료
+    case expired            // 만료됨
+}
+
+extension TravelRecord {
 
     /// 첫 번째 사진의 assetIdentifier 반환 (썸네일용)
     var firstPhotoAssetIdentifier: String? {

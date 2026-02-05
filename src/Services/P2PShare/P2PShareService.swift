@@ -171,6 +171,71 @@ final class P2PShareService: ObservableObject {
         )
     }
 
+    // MARK: - Cleanup Expired Records
+
+    /// 만료된 공유 기록 정리
+    /// - Parameter modelContext: SwiftData 컨텍스트
+    /// - Returns: 삭제된 기록 수
+    @discardableResult
+    func cleanupExpiredSharedRecords(modelContext: ModelContext) async -> Int {
+        logger.info("🧹 [cleanupExpiredSharedRecords] 만료된 공유 기록 정리 시작")
+
+        do {
+            // 만료된 공유 기록 조회
+            let now = Date()
+            let descriptor = FetchDescriptor<TravelRecord>(
+                predicate: #Predicate<TravelRecord> {
+                    $0.isShared == true && $0.shareExpiresAt != nil && $0.shareExpiresAt! < now
+                }
+            )
+
+            let expiredRecords = try modelContext.fetch(descriptor)
+
+            guard !expiredRecords.isEmpty else {
+                logger.info("🧹 만료된 공유 기록 없음")
+                return 0
+            }
+
+            logger.info("🧹 만료된 공유 기록 \(expiredRecords.count)개 발견")
+
+            for record in expiredRecords {
+                logger.info("🧹 삭제: \(record.title) (만료일: \(record.shareExpiresAt?.formatted() ?? "unknown"))")
+
+                // 로컬 사진 파일 삭제
+                if let shareID = record.originalShareID?.uuidString {
+                    deleteLocalPhotos(shareID: shareID)
+                }
+
+                // SwiftData에서 삭제
+                modelContext.delete(record)
+            }
+
+            try modelContext.save()
+            logger.info("🧹 만료된 공유 기록 \(expiredRecords.count)개 삭제 완료")
+
+            return expiredRecords.count
+
+        } catch {
+            logger.error("❌ 만료된 공유 기록 정리 실패: \(error.localizedDescription)")
+            return 0
+        }
+    }
+
+    /// 로컬 사진 파일 삭제
+    private func deleteLocalPhotos(shareID: String) {
+        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let shareDir = documentsDir.appendingPathComponent("SharedRecords/\(shareID)")
+
+        do {
+            if FileManager.default.fileExists(atPath: shareDir.path) {
+                try FileManager.default.removeItem(at: shareDir)
+                logger.info("🧹 로컬 사진 폴더 삭제: \(shareDir.lastPathComponent)")
+            }
+        } catch {
+            logger.error("❌ 로컬 사진 폴더 삭제 실패: \(error.localizedDescription)")
+        }
+    }
+
     /// 공유 기록 저장
     /// - Parameters:
     ///   - url: 공유 URL
@@ -476,6 +541,13 @@ final class P2PShareService: ObservableObject {
         record.sharedFrom = package.senderName
         record.sharedAt = Date()
         record.originalShareID = UUID(uuidString: shareID)
+        record.shareExpiresAt = package.expiresAt  // 만료일 저장
+
+        if let expiresAt = package.expiresAt {
+            logger.info("📦 - 만료일: \(expiresAt.formatted())")
+        } else {
+            logger.info("📦 - 만료일: 영구 보관")
+        }
 
         // 통계 카운터
         var totalPlaceCount = 0
