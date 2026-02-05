@@ -127,20 +127,23 @@ struct SharedRecordView: View {
 
     // MARK: - Map Section
     private var mapSection: some View {
-        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+        // 유효한 좌표가 있는 장소만 필터링 (미분류 사진 제외)
+        let validPlaces = sharedData.places.filter { abs($0.latitude) > 0.0001 || abs($0.longitude) > 0.0001 }
+
+        return VStack(alignment: .leading, spacing: WanderSpacing.space3) {
             Text("여행 동선")
                 .font(WanderTypography.headline)
                 .foregroundColor(WanderColors.textPrimary)
 
             Map {
-                ForEach(Array(sharedData.places.enumerated()), id: \.element.id) { index, place in
+                ForEach(Array(validPlaces.enumerated()), id: \.element.id) { index, place in
                     Annotation("", coordinate: CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)) {
                         SharedPlaceMarker(number: index + 1)
                     }
                 }
 
-                if sharedData.places.count > 1 {
-                    MapPolyline(coordinates: sharedData.places.map {
+                if validPlaces.count > 1 {
+                    MapPolyline(coordinates: validPlaces.map {
                         CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
                     })
                     .stroke(WanderColors.primary, lineWidth: 3)

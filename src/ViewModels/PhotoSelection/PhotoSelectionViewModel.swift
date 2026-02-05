@@ -312,6 +312,13 @@ class PlaceCluster: Identifiable, Hashable {
         coordinate
     }
 
+    /// GPS 좌표가 유효한지 확인 (0,0은 유효하지 않음 - 미분류 사진)
+    var hasValidCoordinate: Bool {
+        // (0, 0)은 대서양 중간이므로 유효하지 않은 좌표로 간주
+        // 또한 매우 작은 값 (거의 0에 가까운)도 필터링
+        return abs(latitude) > 0.0001 || abs(longitude) > 0.0001
+    }
+
     /// 최종 표시용 이름 (betterName 우선)
     var displayName: String {
         betterName ?? name

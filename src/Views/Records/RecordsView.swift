@@ -2713,10 +2713,12 @@ struct RecordMapSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var camera: MapCameraPosition = .automatic
 
+    /// 유효한 좌표가 있는 장소만 필터링 (미분류 사진 제외)
     private var allPlaces: [Place] {
         record.days
             .sorted { $0.dayNumber < $1.dayNumber }
             .flatMap { $0.places.sorted { $0.order < $1.order } }
+            .filter { $0.hasValidCoordinate }
     }
 
     var body: some View {
@@ -2869,10 +2871,12 @@ struct RecordMiniMapView: View {
     let record: TravelRecord
     @State private var camera: MapCameraPosition = .automatic
 
+    /// 유효한 좌표가 있는 장소만 필터링 (미분류 사진 제외)
     private var allPlaces: [Place] {
         record.days
             .sorted { $0.dayNumber < $1.dayNumber }
             .flatMap { $0.places.sorted { $0.order < $1.order } }
+            .filter { $0.hasValidCoordinate }
     }
 
     var body: some View {

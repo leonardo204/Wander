@@ -90,7 +90,9 @@ struct ResultView: View {
 
                 Spacer()
 
-                NavigationLink(destination: MapDetailView(places: result.places)) {
+                // 유효한 좌표가 있는 장소만 지도에 표시 (미분류 사진 제외)
+                let validPlaces = result.places.filter { $0.hasValidCoordinate }
+                NavigationLink(destination: MapDetailView(places: validPlaces)) {
                     HStack(spacing: WanderSpacing.space1) {
                         Text("전체 보기")
                             .font(WanderTypography.caption1)
@@ -101,16 +103,17 @@ struct ResultView: View {
                 }
             }
 
-            // Mini Map
+            // Mini Map - 유효한 좌표가 있는 장소만 표시
+            let validPlacesForMap = result.places.filter { $0.hasValidCoordinate }
             Map {
-                ForEach(Array(result.places.enumerated()), id: \.element.id) { index, place in
+                ForEach(Array(validPlacesForMap.enumerated()), id: \.element.id) { index, place in
                     Annotation("", coordinate: place.coordinate) {
                         PlaceMarker(number: index + 1, activityType: place.activityType)
                     }
                 }
 
-                if result.places.count > 1 {
-                    MapPolyline(coordinates: result.places.map { $0.coordinate })
+                if validPlacesForMap.count > 1 {
+                    MapPolyline(coordinates: validPlacesForMap.map { $0.coordinate })
                         .stroke(WanderColors.primary, lineWidth: 3)
                 }
             }

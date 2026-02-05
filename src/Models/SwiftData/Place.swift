@@ -25,6 +25,11 @@ final class Place {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 
+    /// GPS 좌표가 유효한지 확인 (0,0은 유효하지 않음 - 미분류 사진)
+    var hasValidCoordinate: Bool {
+        abs(latitude) > 0.0001 || abs(longitude) > 0.0001
+    }
+
     init(
         name: String,
         address: String,
