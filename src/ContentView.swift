@@ -43,21 +43,9 @@ struct ContentView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.easeInOut(duration: 0.2), value: selectedTab)
-                // IMPORTANT: 상세 페이지에서 탭 스와이프 차단용 제스처 오버레이
-                // .scrollDisabled()가 TabView .page 스타일에서 작동하지 않으므로 제스처 가로채기 사용
-                .overlay(
-                    Group {
-                        if isNavigationActive {
-                            Color.clear
-                                .contentShape(Rectangle())
-                                .gesture(
-                                    DragGesture(minimumDistance: 1)
-                                        .onChanged { _ in }
-                                        .onEnded { _ in }
-                                )
-                        }
-                    }
-                )
+                // IMPORTANT: 상세 페이지에서 탭 스와이프만 차단, 콘텐츠 스크롤과 뒤로가기 제스처는 허용
+                // simultaneousGesture로 TabView의 페이지 스와이프와 경쟁하여 차단
+                .blockTabSwipe(when: isNavigationActive)
 
                 // 커스텀 하단 탭바
                 VStack(spacing: 0) {
@@ -112,6 +100,28 @@ struct ContentView: View {
             logger.info("🚀 [ContentView] 설정 탭 리셋 (미구현)")
         default:
             break
+        }
+    }
+}
+
+// MARK: - View Extension for Tab Swipe Blocking
+
+/// 탭 스와이프 차단 ViewModifier
+/// - NOTE: 상세 페이지에서 TabView의 페이지 스와이프만 차단
+/// - IMPORTANT: simultaneousGesture로 수평 드래그를 가로채지만, 콘텐츠 스크롤과 뒤로가기 제스처는 영향 없음
+extension View {
+    @ViewBuilder
+    func blockTabSwipe(when condition: Bool) -> some View {
+        if condition {
+            // 수평 드래그 제스처를 가로채서 TabView의 페이지 스와이프 차단
+            // minimumDistance: 20으로 설정하여 작은 터치는 통과시킴
+            self.simultaneousGesture(
+                DragGesture(minimumDistance: 20)
+                    .onChanged { _ in }
+                    .onEnded { _ in }
+            )
+        } else {
+            self
         }
     }
 }
