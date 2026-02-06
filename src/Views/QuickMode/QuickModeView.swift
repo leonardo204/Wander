@@ -11,8 +11,10 @@ struct QuickModeView: View {
     @State private var selectedAssets: [PHAsset] = []
     @State private var isLoading = true
     @State private var showAnalyzing = false
-    @State private var resultToShow: QuickModeResult?  // sheet(item:) 용
-    @State private var pendingResult: QuickModeResult?  // fullScreenCover 닫히는 동안 임시 저장
+    @State private var viewModel = PhotoSelectionViewModel()
+
+    /// 분석 완료 후 저장된 기록 콜백
+    var onSaveComplete: ((TravelRecord) -> Void)?
 
     var body: some View {
         NavigationStack {
@@ -43,33 +45,12 @@ struct QuickModeView: View {
                 loadRecentPhotos()
             }
             .fullScreenCover(isPresented: $showAnalyzing, onDismiss: {
-                // fullScreenCover가 닫힌 후 pendingResult가 있으면 sheet 표시
-                if let result = pendingResult {
-                    logger.info("💬 [QuickMode] fullScreenCover 닫힘 - 결과 sheet 표시 예정: \(result.placeName)")
-                    pendingResult = nil  // 임시 저장 초기화
-                    // 약간의 딜레이 후 sheet 표시 (애니메이션 충돌 방지)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        self.resultToShow = result
-                    }
+                // AnalyzingView/ResultView에서 저장 완료 후 QuickModeView도 닫기
+                if viewModel.shouldDismissPhotoSelection {
+                    dismiss()
                 }
             }) {
-                QuickModeAnalyzingView(
-                    selectedAssets: selectedAssets,
-                    onComplete: { result in
-                        logger.info("💬 [QuickMode] 분석 완료 - 결과 수신: \(result.placeName)")
-                        // fullScreenCover 닫히는 동안 임시 저장
-                        self.pendingResult = result
-                        self.showAnalyzing = false
-                    },
-                    onCancel: {
-                        logger.info("💬 [QuickMode] 분석 취소")
-                        self.pendingResult = nil
-                        self.showAnalyzing = false
-                    }
-                )
-            }
-            .sheet(item: $resultToShow) { result in
-                QuickModeResultView(result: result)
+                AnalyzingView(viewModel: viewModel, onSaveComplete: onSaveComplete)
             }
         }
     }
@@ -178,7 +159,12 @@ struct QuickModeView: View {
 
                 Spacer()
 
-                Button(action: { showAnalyzing = true }) {
+                Button(action: {
+                    // NOTE: LookbackView와 동일한 패턴 - ViewModel에 선택된 사진 설정 후 분석 시작
+                    viewModel.selectedAssets = selectedAssets
+                    viewModel.shouldDismissPhotoSelection = false
+                    showAnalyzing = true
+                }) {
                     Text("분석하기")
                         .font(WanderTypography.headline)
                         .foregroundColor(.white)
@@ -321,259 +307,6 @@ struct QuickModePhotoCell: View {
             options: options
         ) { [self] image, _ in
             self.thumbnail = image
-        }
-    }
-}
-
-// MARK: - Quick Mode Result Model
-struct QuickModeResult: Identifiable {
-    let id = UUID()
-    var summary: String
-    var placeName: String
-    var address: String
-    var time: String
-    var photos: [UIImage]
-    var coordinate: CLLocationCoordinate2D?
-}
-
-// MARK: - Quick Mode Analyzing View
-import CoreLocation
-
-struct QuickModeAnalyzingView: View {
-    let selectedAssets: [PHAsset]
-    let onComplete: (QuickModeResult) -> Void
-    let onCancel: () -> Void
-
-    @State private var progress: Double = 0
-    @State private var currentStep = "분석 준비 중..."
-
-    var body: some View {
-        VStack(spacing: WanderSpacing.space6) {
-            Spacer()
-
-            // Progress circle
-            ZStack {
-                Circle()
-                    .stroke(WanderColors.primaryPale, lineWidth: 8)
-                    .frame(width: 100, height: 100)
-
-                Circle()
-                    .trim(from: 0, to: progress)
-                    .stroke(WanderColors.primary, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                    .frame(width: 100, height: 100)
-                    .rotationEffect(.degrees(-90))
-                    .animation(.easeInOut, value: progress)
-
-                Image(systemName: "sparkles")
-                    .font(.system(size: 32))
-                    .foregroundColor(WanderColors.primary)
-            }
-
-            VStack(spacing: WanderSpacing.space2) {
-                Text("분석 중...")
-                    .font(WanderTypography.title3)
-                    .foregroundColor(WanderColors.textPrimary)
-
-                Text(currentStep)
-                    .font(WanderTypography.body)
-                    .foregroundColor(WanderColors.textSecondary)
-            }
-
-            Spacer()
-
-            Button("취소") {
-                onCancel()
-            }
-            .foregroundColor(WanderColors.textSecondary)
-            .padding(.bottom, WanderSpacing.space8)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(WanderColors.background)
-        .ignoresSafeArea()
-        .task {
-            await analyze()
-        }
-    }
-
-    private func analyze() async {
-        // Step 1: Load photos
-        currentStep = "사진 정보 추출 중..."
-        progress = 0.2
-        try? await Task.sleep(nanoseconds: 500_000_000)
-
-        // Step 2: Get location
-        currentStep = "위치 정보 확인 중..."
-        progress = 0.5
-
-        var placeName = "알 수 없는 장소"
-        var address = ""
-        var coordinate: CLLocationCoordinate2D?
-
-        // Get first photo with GPS
-        if let firstWithGPS = selectedAssets.first(where: { $0.location != nil }),
-           let location = firstWithGPS.location {
-            coordinate = location.coordinate
-
-            // Reverse geocode
-            let geocoder = CLGeocoder()
-            if let placemarks = try? await geocoder.reverseGeocodeLocation(location),
-               let placemark = placemarks.first {
-                placeName = placemark.name ?? placemark.locality ?? "알 수 없는 장소"
-                address = [placemark.locality, placemark.subLocality].compactMap { $0 }.joined(separator: " ")
-            }
-        }
-
-        progress = 0.7
-        currentStep = "결과 생성 중..."
-        try? await Task.sleep(nanoseconds: 300_000_000)
-
-        // Step 3: Load photo images
-        var photos: [UIImage] = []
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .highQualityFormat
-        options.isSynchronous = true
-
-        for asset in selectedAssets.prefix(4) {
-            PHImageManager.default().requestImage(
-                for: asset,
-                targetSize: CGSize(width: 300, height: 300),
-                contentMode: .aspectFill,
-                options: options
-            ) { image, _ in
-                if let image = image {
-                    photos.append(image)
-                }
-            }
-        }
-
-        progress = 1.0
-
-        // Create result
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "a h시 m분"
-        timeFormatter.locale = Locale(identifier: "ko_KR")
-        let timeString = timeFormatter.string(from: selectedAssets.first?.creationDate ?? Date())
-
-        // Generate summary
-        let hour = Calendar.current.component(.hour, from: Date())
-        let timeOfDay: String
-        switch hour {
-        case 6..<12: timeOfDay = "아침"
-        case 12..<14: timeOfDay = "점심"
-        case 14..<18: timeOfDay = "오후"
-        case 18..<22: timeOfDay = "저녁"
-        default: timeOfDay = "밤"
-        }
-
-        let summary = "\(placeName)에서 \(timeOfDay) 시간을 보내는 중!"
-
-        let result = QuickModeResult(
-            summary: summary,
-            placeName: placeName,
-            address: address,
-            time: timeString,
-            photos: photos,
-            coordinate: coordinate
-        )
-
-        try? await Task.sleep(nanoseconds: 200_000_000)
-
-        await MainActor.run {
-            onComplete(result)
-        }
-    }
-}
-
-// MARK: - Quick Mode Result View
-struct QuickModeResultView: View {
-    let result: QuickModeResult
-    @Environment(\.dismiss) private var dismiss
-    @State private var showShareSheet = false
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: WanderSpacing.space5) {
-                    // Photo grid
-                    if !result.photos.isEmpty {
-                        photoGridSection
-                    }
-
-                    // Summary card
-                    summaryCard
-
-                    // Share options
-                    shareOptionsSection
-                }
-                .padding(WanderSpacing.screenMargin)
-            }
-            .background(WanderColors.background)
-            .navigationTitle("결과")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("완료") { dismiss() }
-                }
-            }
-            .sheet(isPresented: $showShareSheet) {
-                ShareSheet(items: [result.summary])
-            }
-        }
-    }
-
-    private var photoGridSection: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible(), spacing: WanderSpacing.space1),
-            GridItem(.flexible(), spacing: WanderSpacing.space1)
-        ], spacing: WanderSpacing.space1) {
-            ForEach(0..<result.photos.count, id: \.self) { index in
-                Image(uiImage: result.photos[index])
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(minHeight: 150)
-                    .clipped()
-                    .cornerRadius(WanderSpacing.radiusMedium)
-            }
-        }
-    }
-
-    private var summaryCard: some View {
-        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
-            Text(result.summary)
-                .font(WanderTypography.title3)
-                .foregroundColor(WanderColors.textPrimary)
-
-            Divider()
-
-            HStack(spacing: WanderSpacing.space4) {
-                Label(result.placeName, systemImage: "mappin")
-                    .font(WanderTypography.caption1)
-                    .foregroundColor(WanderColors.textSecondary)
-
-                Label(result.time, systemImage: "clock")
-                    .font(WanderTypography.caption1)
-                    .foregroundColor(WanderColors.textSecondary)
-            }
-        }
-        .padding(WanderSpacing.space4)
-        .background(WanderColors.surface)
-        .cornerRadius(WanderSpacing.radiusLarge)
-    }
-
-    private var shareOptionsSection: some View {
-        VStack(spacing: WanderSpacing.space3) {
-            Button(action: { showShareSheet = true }) {
-                HStack {
-                    Image(systemName: "square.and.arrow.up")
-                    Text("공유하기")
-                }
-                .font(WanderTypography.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: WanderSpacing.buttonHeight)
-                .background(WanderColors.primary)
-                .cornerRadius(WanderSpacing.radiusLarge)
-            }
         }
     }
 }

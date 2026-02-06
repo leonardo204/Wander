@@ -71,15 +71,27 @@ struct ResultView: View {
                     }
                 }
 
+                // NOTE: 공유는 저장 후에만 가능 - 저장 전에는 아이콘 미표시
                 ToolbarItem(placement: .primaryAction) {
-                    Button(action: { showShareSheet = true }) {
-                        Image(systemName: "square.and.arrow.up")
+                    if isSaved {
+                        Menu {
+                            Button(action: { showShareSheet = true }) {
+                                Label("일반 이미지 공유", systemImage: "square.and.arrow.up")
+                            }
+
+                            Button(action: { showP2PShareOptions = true }) {
+                                Label("Wander 공유", systemImage: "link.badge.plus")
+                            }
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
                     }
                 }
             }
             .sheet(isPresented: $showShareSheet) {
-                ShareSheetView(result: result)
-                    .presentationDetents([.medium])
+                if let record = savedRecord {
+                    ShareFlowView(record: record)
+                }
             }
             // P2P 공유 옵션 시트
             .sheet(isPresented: $showP2PShareOptions, onDismiss: {
@@ -594,7 +606,11 @@ struct ResultView: View {
     }
 
     // MARK: - Save Record
-    private func saveRecord() {
+
+    /// 공유 전 기록 자동 저장 (auto-dismiss 없음)
+    /// - NOTE: saveRecord()과 동일한 저장 로직, 화면 전환만 생략
+    private func ensureSaved() {
+        guard !isSaved else { return }
         let record = TravelRecord(
             title: result.title,
             startDate: result.startDate,
@@ -757,6 +773,11 @@ struct ResultView: View {
         withAnimation {
             isSaved = true
         }
+    }
+
+    /// 기록 저장 + 자동 닫기 (저장 버튼 액션)
+    private func saveRecord() {
+        ensureSaved()
 
         // 저장 후 1초 뒤 자동으로 닫기
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {

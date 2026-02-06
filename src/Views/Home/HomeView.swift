@@ -93,7 +93,10 @@ struct HomeView: View {
                 })
             }
             .sheet(isPresented: $showQuickMode) {
-                QuickModeView()
+                QuickModeView(onSaveComplete: { savedRecord in
+                    logger.info("🏠 [HomeView] 퀵모드 저장 완료: \(savedRecord.title)")
+                    savedRecordId = savedRecord.id
+                })
             }
             .sheet(isPresented: $showLookback) {
                 LookbackView()

@@ -48,3 +48,9 @@ src/Resources/Secrets.plist
 # Temporary files
 *.swp
 *~.nib
+
+# Gemini CLI internal state
+.omc/
+
+# Xcode workspace shared data (usually user-specific or temporary)
+src/Wander.xcodeproj/project.xcworkspace/xcshareddata/
