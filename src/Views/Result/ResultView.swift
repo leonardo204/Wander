@@ -776,69 +776,68 @@ struct ResultView: View {
 
     @ViewBuilder
     private var aiEnhancementButton: some View {
-        if result.isAIEnhanced {
-            // 완료 상태 배지
-            HStack(spacing: WanderSpacing.space2) {
-                Image(systemName: "checkmark.seal.fill")
-                Text("AI로 다듬어짐")
-                if let provider = result.aiEnhancedProvider {
-                    Text("· \(provider)")
-                        .foregroundColor(WanderColors.textSecondary)
+        if hasConfiguredAIProvider {
+            VStack(spacing: WanderSpacing.space2) {
+                if result.isAIEnhanced {
+                    // 완료 상태 배지
+                    HStack(spacing: WanderSpacing.space2) {
+                        Image(systemName: "checkmark.seal.fill")
+                        Text("AI로 다듬어짐")
+                        if let provider = result.aiEnhancedProvider {
+                            Text("· \(provider)")
+                                .foregroundColor(WanderColors.textSecondary)
+                        }
+                    }
+                    .font(WanderTypography.bodySmall)
+                    .foregroundColor(WanderColors.success)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, WanderSpacing.space2)
                 }
-            }
-            .font(WanderTypography.bodySmall)
-            .foregroundColor(WanderColors.success)
-            .frame(maxWidth: .infinity)
-            .frame(height: WanderSpacing.buttonHeight)
-            .background(WanderColors.successBackground)
-            .cornerRadius(WanderSpacing.radiusLarge)
-        } else if hasConfiguredAIProvider {
-            Button(action: {
-                let providers = configuredProviders
-                if providers.count == 1, let singleProvider = providers.first {
-                    // 단일 프로바이더 → 바로 다듬기 시작
-                    performAIEnhancement(provider: singleProvider)
-                } else {
-                    // 복수 프로바이더 → 선택 팝업
-                    showAIEnhancement = true
-                }
-            }) {
-                HStack(spacing: WanderSpacing.space2) {
-                    if isEnhancing {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(0.8)
+
+                Button(action: {
+                    let providers = configuredProviders
+                    if providers.count == 1, let singleProvider = providers.first {
+                        performAIEnhancement(provider: singleProvider)
                     } else {
-                        Image(systemName: "sparkles")
+                        showAIEnhancement = true
                     }
-                    Text(isEnhancing ? "다듬는 중..." : "AI로 다듬기")
-                }
-                .font(WanderTypography.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: WanderSpacing.buttonHeight)
-                .background(
-                    LinearGradient(
-                        colors: [WanderColors.primary, Color.purple.opacity(0.7)],
-                        startPoint: .leading,
-                        endPoint: .trailing
+                }) {
+                    HStack(spacing: WanderSpacing.space2) {
+                        if isEnhancing {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "sparkles")
+                        }
+                        Text(isEnhancing ? "다듬는 중..." : (result.isAIEnhanced ? "다시 다듬기" : "AI로 다듬기"))
+                    }
+                    .font(WanderTypography.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: WanderSpacing.buttonHeight)
+                    .background(
+                        LinearGradient(
+                            colors: [WanderColors.primary, Color.purple.opacity(0.7)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
-                .cornerRadius(WanderSpacing.radiusLarge)
-            }
-            .disabled(isEnhancing)
-            .sheet(isPresented: $showAIEnhancement) {
-                AIEnhancementSheet(
-                    isEnhancing: $isEnhancing,
-                    enhancementError: $enhancementError,
-                    onEnhance: { provider in
-                        performAIEnhancement(provider: provider)
-                    }
-                )
-                .presentationDetents([.medium])
+                    .cornerRadius(WanderSpacing.radiusLarge)
+                }
+                .disabled(isEnhancing)
+                .sheet(isPresented: $showAIEnhancement) {
+                    AIEnhancementSheet(
+                        isEnhancing: $isEnhancing,
+                        enhancementError: $enhancementError,
+                        onEnhance: { provider in
+                            performAIEnhancement(provider: provider)
+                        }
+                    )
+                    .presentationDetents([.medium])
+                }
             }
         }
-        // API 키 미설정 시 버튼 숨김
     }
 
     /// API 키 또는 OAuth가 설정된 프로바이더가 있는지 확인

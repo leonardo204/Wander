@@ -640,7 +640,6 @@ struct RecordDetailFullView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @State private var showShareSheet = false
-    @State private var showAIStorySheet = false
     @State private var showEditSheet = false
     @State private var showDeleteConfirmation = false
     @State private var showMapDetail = false
@@ -681,9 +680,6 @@ struct RecordDetailFullView: View {
                         .padding()
                 }
 
-                // AI Story Section
-                aiStoryOrButtonSection
-
                 // Wander Intelligence Section (if available)
                 if record.hasWanderIntelligence {
                     wanderIntelligenceSection
@@ -717,9 +713,6 @@ struct RecordDetailFullView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
-                    Button(action: { showAIStorySheet = true }) {
-                        Label("AI 스토리 생성", systemImage: "sparkles")
-                    }
                     Button(action: { showEditSheet = true }) {
                         Label("편집", systemImage: "pencil")
                     }
@@ -764,9 +757,6 @@ struct RecordDetailFullView: View {
         }
         .sheet(isPresented: $showShareSheet) {
             ShareFlowView(record: record)
-        }
-        .sheet(isPresented: $showAIStorySheet) {
-            AIStoryView(record: record)
         }
         .sheet(isPresented: $showEditSheet) {
             RecordEditView(record: record)
@@ -858,51 +848,6 @@ struct RecordDetailFullView: View {
             }
         }
         .padding(.top, WanderSpacing.space4)
-    }
-
-    @ViewBuilder
-    private var aiStoryOrButtonSection: some View {
-        if let story = record.aiStory {
-            aiStorySection(story: story)
-        } else {
-            // AI Story Generation Button
-            Button(action: { showAIStorySheet = true }) {
-                HStack(spacing: WanderSpacing.space3) {
-                    ZStack {
-                        Circle()
-                            .fill(WanderColors.primaryPale)
-                            .frame(width: 44, height: 44)
-
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 20))
-                            .foregroundColor(WanderColors.primary)
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("AI 스토리 생성하기")
-                            .font(WanderTypography.headline)
-                            .foregroundColor(WanderColors.textPrimary)
-
-                        Text("여행 데이터로 감성적인 스토리를 만들어 보세요")
-                            .font(WanderTypography.caption1)
-                            .foregroundColor(WanderColors.textSecondary)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(WanderColors.textTertiary)
-                }
-                .padding(WanderSpacing.space4)
-                .background(WanderColors.surface)
-                .cornerRadius(WanderSpacing.radiusLarge)
-                .overlay(
-                    RoundedRectangle(cornerRadius: WanderSpacing.radiusLarge)
-                        .stroke(WanderColors.border, lineWidth: 1)
-                )
-            }
-            .buttonStyle(.plain)
-        }
     }
 
     // MARK: - Map Section
@@ -1045,25 +990,6 @@ struct RecordDetailFullView: View {
         }
     }
 
-    private func aiStorySection(story: String) -> some View {
-        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
-            HStack {
-                Image(systemName: "sparkles")
-                    .foregroundColor(WanderColors.primary)
-                Text("AI 스토리")
-                    .font(WanderTypography.headline)
-                    .foregroundColor(WanderColors.textPrimary)
-            }
-
-            Text(story)
-                .font(WanderTypography.body)
-                .foregroundColor(WanderColors.textSecondary)
-                .padding(WanderSpacing.space4)
-                .background(WanderColors.primaryPale)
-                .cornerRadius(WanderSpacing.radiusLarge)
-        }
-    }
-
     private func formatDateRange() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy년 M월 d일"
@@ -1095,48 +1021,50 @@ struct RecordDetailFullView: View {
 
     @ViewBuilder
     private var recordAIEnhancementButton: some View {
-        if record.isAIEnhanced {
-            // 완료 상태 배지
-            HStack(spacing: WanderSpacing.space2) {
-                Image(systemName: "checkmark.seal.fill")
-                Text("AI로 다듬어짐")
-                if let provider = record.aiEnhancedProvider {
-                    Text("· \(provider)")
-                        .foregroundColor(WanderColors.textSecondary)
-                }
-            }
-            .font(WanderTypography.bodySmall)
-            .foregroundColor(WanderColors.success)
-            .frame(maxWidth: .infinity)
-            .frame(height: WanderSpacing.buttonHeight)
-            .background(WanderColors.successBackground)
-            .cornerRadius(WanderSpacing.radiusLarge)
-        } else if hasConfiguredAIProvider {
-            Button(action: { showAIEnhancement = true }) {
-                HStack(spacing: WanderSpacing.space2) {
-                    if isEnhancing {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(0.8)
-                    } else {
-                        Image(systemName: "sparkles")
+        if hasConfiguredAIProvider {
+            VStack(spacing: WanderSpacing.space2) {
+                if record.isAIEnhanced {
+                    // 완료 상태 배지
+                    HStack(spacing: WanderSpacing.space2) {
+                        Image(systemName: "checkmark.seal.fill")
+                        Text("AI로 다듬어짐")
+                        if let provider = record.aiEnhancedProvider {
+                            Text("· \(provider)")
+                                .foregroundColor(WanderColors.textSecondary)
+                        }
                     }
-                    Text(isEnhancing ? "다듬는 중..." : "AI로 다듬기")
+                    .font(WanderTypography.bodySmall)
+                    .foregroundColor(WanderColors.success)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, WanderSpacing.space2)
                 }
-                .font(WanderTypography.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: WanderSpacing.buttonHeight)
-                .background(
-                    LinearGradient(
-                        colors: [WanderColors.primary, Color.purple.opacity(0.7)],
-                        startPoint: .leading,
-                        endPoint: .trailing
+
+                Button(action: { showAIEnhancement = true }) {
+                    HStack(spacing: WanderSpacing.space2) {
+                        if isEnhancing {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                        } else {
+                            Image(systemName: "sparkles")
+                        }
+                        Text(isEnhancing ? "다듬는 중..." : (record.isAIEnhanced ? "다시 다듬기" : "AI로 다듬기"))
+                    }
+                    .font(WanderTypography.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: WanderSpacing.buttonHeight)
+                    .background(
+                        LinearGradient(
+                            colors: [WanderColors.primary, Color.purple.opacity(0.7)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
-                .cornerRadius(WanderSpacing.radiusLarge)
+                    .cornerRadius(WanderSpacing.radiusLarge)
+                }
+                .disabled(isEnhancing)
             }
-            .disabled(isEnhancing)
         }
     }
 
