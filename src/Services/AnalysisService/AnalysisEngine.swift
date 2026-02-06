@@ -184,6 +184,22 @@ class AnalysisEngine {
 
                 // 추가 정보 저장 (나중에 UI에서 활용)
                 result.smartAnalysisResult = smartResult
+                
+                // [추가] Vision 분석 결과 기반으로 활동 타입 재추론 (보정)
+                logger.info("🔬 [Smart] Vision 결과로 활동 타입 보정 시작")
+                for cluster in clusters {
+                    if let scene = cluster.sceneCategory {
+                        let newActivity = activityService.infer(
+                            placeType: cluster.placeType,
+                            time: cluster.startTime,
+                            sceneCategory: scene
+                        )
+                        if newActivity != cluster.activityType {
+                            logger.info("🔬 [Smart] 활동 타입 변경: \(cluster.name) (\(cluster.activityType.rawValue) -> \(newActivity.rawValue))")
+                            cluster.activityType = newActivity
+                        }
+                    }
+                }
 
                 logger.info("🔬 [Smart] 스마트 분석 완료!")
                 logger.info("🔬 [Smart] - 스마트 제목: \(smartResult.smartTitle)")
@@ -279,6 +295,18 @@ class AnalysisEngine {
         result.photoCount = assets.count
         result.places = clusters
         result.totalDistance = calculateTotalDistance(clusters: clusters)
+        
+        // Layout Type 결정
+        if assets.count < 5 {
+            result.layoutType = "magazine"
+        } else if clusters.count > 5 {
+            result.layoutType = "grid"
+        } else {
+            result.layoutType = "timeline"
+        }
+
+        // Theme 결정
+        result.theme = determineBasicTheme(clusters: clusters)
 
         return result
     }
@@ -394,6 +422,32 @@ class AnalysisEngine {
         }
 
         return .other
+    }
+
+    /// 기본 여행 테마 결정 (활동 유형 빈도 기반)
+    private func determineBasicTheme(clusters: [PlaceCluster]) -> String? {
+        var counts: [ActivityType: Int] = [:]
+        for cluster in clusters {
+            counts[cluster.activityType, default: 0] += 1
+        }
+
+        let sorted = counts.sorted { $0.value > $1.value }
+        guard let top = sorted.first else { return nil }
+
+        // 전체 장소의 40% 이상을 차지하는 활동이 있으면 테마로 선정
+        if Double(top.value) / Double(clusters.count) >= 0.4 {
+            switch top.key {
+            case .cafe: return "카페 투어"
+            case .restaurant: return "식도락 여행"
+            case .beach: return "바다 여행"
+            case .mountain, .nature: return "힐링 여행"
+            case .culture, .tourist: return "문화 탐방"
+            case .shopping: return "쇼핑 여행"
+            case .nightlife: return "밤거리 탐방"
+            default: return nil
+            }
+        }
+        return nil
     }
 }
 

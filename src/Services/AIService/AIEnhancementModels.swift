@@ -10,6 +10,8 @@ struct AIEnhancementInput: Codable {
     let endDate: String
     let totalDistance: Double
     let photoCount: Int
+    let currentLayout: String?
+    let currentTheme: String?
 
     let places: [PlaceInput]
     let storyContext: StoryContextInput?
@@ -95,6 +97,8 @@ struct AIEnhancementResult: Codable {
     let momentHighlights: [EnhancedMomentHighlight]?
     let travelDNADescription: String?
     let corrections: [PlaceCorrection]?  // AI 사실 보정
+    let suggestedLayout: String?         // AI 제안 레이아웃 (timeline, magazine, grid)
+    let suggestedTheme: String?          // AI 제안 테마 (식도락, 힐링 등)
 
     struct EnhancedStory: Codable {
         let title: String?

@@ -110,6 +110,8 @@ final class AIEnhancementService {
             endDate: dateFormatter.string(from: result.endDate),
             totalDistance: result.totalDistance,
             photoCount: result.photoCount,
+            currentLayout: result.layoutType,
+            currentTheme: result.theme,
             places: places,
             storyContext: storyContext,
             insights: insights,
@@ -231,8 +233,18 @@ final class AIEnhancementService {
             result.aiEnhancedDNADescription = dnaDesc
             logger.info("✨ [Merge] TravelDNA 설명 교체")
         }
+        
+        // 7. 레이아웃 & 테마
+        if let layout = enhancement.suggestedLayout, !layout.isEmpty {
+            result.layoutType = layout
+            logger.info("✨ [Merge] 레이아웃 설정: \(layout)")
+        }
+        if let theme = enhancement.suggestedTheme, !theme.isEmpty {
+            result.theme = theme
+            logger.info("✨ [Merge] 테마 설정: \(theme)")
+        }
 
-        // 7. 사실 보정 (corrections)
+        // 8. 사실 보정 (corrections)
         if let corrections = enhancement.corrections, !corrections.isEmpty {
             applyCorrections(corrections, to: &result)
         }
@@ -335,6 +347,8 @@ final class AIEnhancementService {
             endDate: dateFormatter.string(from: record.endDate),
             totalDistance: record.totalDistance,
             photoCount: record.photoCount,
+            currentLayout: record.layoutType,
+            currentTheme: record.theme,
             places: places,
             storyContext: storyContext,
             insights: insights,
@@ -408,8 +422,18 @@ final class AIEnhancementService {
             record.aiEnhancedDNADescription = dnaDesc
             logger.info("✨ [Merge/Record] TravelDNA 설명 교체")
         }
+        
+        // 6. 레이아웃 & 테마
+        if let layout = enhancement.suggestedLayout, !layout.isEmpty {
+            record.layoutType = layout
+            logger.info("✨ [Merge/Record] 레이아웃 설정: \(layout)")
+        }
+        if let theme = enhancement.suggestedTheme, !theme.isEmpty {
+            record.theme = theme
+            logger.info("✨ [Merge/Record] 테마 설정: \(theme)")
+        }
 
-        // 6. 사실 보정 (corrections) → TravelRecord의 장소에 반영
+        // 7. 사실 보정 (corrections) → TravelRecord의 장소에 반영
         if let corrections = enhancement.corrections, !corrections.isEmpty {
             applyCorrections(corrections, to: record)
         }
@@ -424,33 +448,27 @@ final class AIEnhancementService {
 
     private static func buildSystemPrompt() -> String {
         """
-        여행 기록 편집자. 온디바이스 분석의 사실 데이터를 보정하고 약간의 감성을 추가.
+        여행 기록 전문 에디터. 분석된 데이터를 바탕으로 깔끔하고 세련된 여행 요약을 완성.
 
-        역할:
-        1. 사실 보정: 사진(첨부 시)/GPS/시간 정보를 보고 온디바이스 분석 오류 교정
-           - 활동 유형 오분류 (예: 카페→음식점) → corrections에 기재
-           - 장면 분류 오인식 → corrections에 기재
-        2. 감성 추가: 보정된 사실 위에 짧은 감성 한두 문장 추가
+        [핵심 역할]
+        1. 팩트 체크 및 보정 (Corrections):
+           - 온디바이스 분석의 활동 유형(예: 식당↔카페)이나 장면 분류 오류를 발견하면 적극적으로 수정 제안.
+           - 사진 설명을 참고하여 더 정확한 활동/장소 맥락 파악.
 
-        원칙:
-        1. 팩트 70% + 감성 30% 비율 유지
-        2. 각 항목 1~2문장, 짧고 간결하게
-        3. 장소명, 시간, 거리, 수치는 절대 변경 금지 (보정 필요 시 corrections에 기재)
-        4. 입력에 없는 사실을 지어내지 않음 (사진에 보이는 것만 근거)
-        5. 사진이 첨부된 경우 사진의 실제 모습과 분위기를 우선시
-        6. 한국어로 작성
-        7. 반드시 유효한 JSON으로만 응답
+        2. 콘텐츠 에디팅 (Story & Insights):
+           - 과도한 감성이나 소설 같은 문체 지양. 담백하고 명료한 '에디터 노트' 스타일.
+           - 'Chapter 1', '오프닝' 같은 형식적 구조 대신, 여행의 흐름이 자연스럽게 읽히도록 구성.
+           - 인사이트는 정말 의미 있는 통계나 패턴이 있을 때만 포함.
 
-        길이 가이드:
-        - title: 15자 이내
-        - story.opening: 1~2문장 (40~80자)
-        - story.chapters[].content: 1~2문장 (40~80자)
-        - story.climax: 1문장 (30~60자)
-        - story.closing: 1문장 (30~60자)
-        - story.tagline: 15~25자
-        - insights[].description: 1문장 (30~60자)
-        - travelDNADescription: 1~2문장 (40~80자)
-        - tripScoreSummary: 1문장 (30~60자)
+        3. 구성 제안 (Layout & Theme):
+           - 여행 성격에 맞는 최적의 UI 레이아웃(timeline/magazine/grid) 제안.
+           - 여행을 관통하는 핵심 테마 키워드(예: '식도락', '호캉스', '골목 투어') 선정.
+
+        [작성 원칙]
+        - 제목: 15자 이내, 핵심만 간결하게.
+        - 어조: 정중하면서도 친근한 해요체. (너무 딱딱하거나 지나치게 감상적이지 않게)
+        - 절대 원칙: 장소명, 시간, 수치 데이터는 절대 임의 변경 금지 (보정 필요 시 corrections 필드 이용).
+        - 출력: 반드시 유효한 JSON 포맷으로 응답.
         """
     }
 
@@ -465,6 +483,8 @@ final class AIEnhancementService {
         총 이동 거리: \(String(format: "%.1f", input.totalDistance))km
         촬영 사진: \(input.photoCount)장
         방문 장소: \(input.places.count)곳
+        현재 레이아웃: \(input.currentLayout ?? "미지정")
+        현재 테마: \(input.currentTheme ?? "미지정")
         """)
 
         // 장소 상세
@@ -570,8 +590,11 @@ final class AIEnhancementService {
           "tripScoreSummary": "여행 점수 요약",
           "momentHighlights": [{"placeName": "장소명", "highlights": ["하이라이트"]}],
           "travelDNADescription": "여행 DNA 설명",
+          "suggestedLayout": "timeline",
+          "suggestedTheme": "식도락 여행",
           "corrections": [{"placeName": "장소명", "correctedActivityType": "보정된 활동유형", "correctedSceneCategory": "보정된 장면분류", "note": "보정 이유"}]
         }
+        suggestedLayout 옵션: timeline, magazine, grid
         corrections는 온디바이스 분석이 틀린 경우에만 포함. 보정할 것이 없으면 빈 배열 또는 생략.
         """)
 

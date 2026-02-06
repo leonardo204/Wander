@@ -185,6 +185,13 @@ struct AnalysisResult {
     var title: String = ""
     var startDate: Date = Date()
     var endDate: Date = Date()
+    
+    /// 결과 화면 레이아웃 타입 (timeline, magazine, grid)
+    var layoutType: String = "timeline"
+    
+    /// 여행 테마 (예: "식도락", "힐링", "액티비티" 등)
+    var theme: String?
+    
     var places: [PlaceCluster] = []
     var totalDistance: Double = 0
     var photoCount: Int = 0

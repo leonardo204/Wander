@@ -4,8 +4,19 @@ import os.log
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "ActivityInference")
 
 class ActivityInferenceService {
-    func infer(placeType: String?, time: Date?) -> ActivityType {
-        logger.info("🎯 [ActivityInference] infer 호출 - placeType: \(placeType ?? "nil"), time: \(time?.description ?? "nil")")
+    func infer(
+        placeType: String?,
+        time: Date?,
+        sceneCategory: VisionAnalysisService.SceneCategory? = nil
+    ) -> ActivityType {
+        logger.info("🎯 [ActivityInference] infer 호출 - placeType: \(placeType ?? "nil"), scene: \(sceneCategory?.rawValue ?? "nil")")
+        
+        // 1. Vision 분석 결과(SceneCategory)가 있으면 최우선 반영
+        if let scene = sceneCategory, scene != .unknown {
+            logger.info("🎯 [ActivityInference] SceneCategory 기반 추론: \(scene.rawValue) -> \(scene.toActivityType.rawValue)")
+            return scene.toActivityType
+        }
+
         let hour = Calendar.current.component(.hour, from: time ?? Date())
 
         // First, try to infer from place type

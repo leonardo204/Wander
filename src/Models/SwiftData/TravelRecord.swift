@@ -14,6 +14,12 @@ final class TravelRecord {
     var createdAt: Date
     var updatedAt: Date
     var isHidden: Bool = false
+    
+    /// 결과 화면 레이아웃 타입 (timeline, magazine, grid)
+    var layoutType: String = "timeline"
+    
+    /// 여행 테마 (예: "식도락", "힐링", "액티비티" 등)
+    var theme: String?
 
     // MARK: - P2P Share Fields (공유 관련)
 
