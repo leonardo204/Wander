@@ -1140,7 +1140,9 @@ struct RecordDetailFullView: View {
         }
     }
 
+    /// API 키 또는 OAuth가 설정된 프로바이더가 있는지 확인
     private var hasConfiguredAIProvider: Bool {
+        GoogleOAuthService.shared.isAuthenticated ||
         AIProvider.allCases.contains { provider in
             (try? KeychainManager.shared.getAPIKey(for: provider.keychainType)) != nil
         }

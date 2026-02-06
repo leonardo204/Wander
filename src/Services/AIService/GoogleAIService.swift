@@ -5,6 +5,7 @@ private let logger = Logger(subsystem: "com.zerolive.wander", category: "GoogleA
 
 /// Google Gemini 모델 목록
 enum GeminiModel: String, CaseIterable, Identifiable {
+    case gemini25Flash = "gemini-2.5-flash"
     case gemini2Flash = "gemini-2.0-flash"
     case gemini2FlashLite = "gemini-2.0-flash-lite"
     case gemini15Pro = "gemini-1.5-pro"
@@ -14,6 +15,7 @@ enum GeminiModel: String, CaseIterable, Identifiable {
 
     var displayName: String {
         switch self {
+        case .gemini25Flash: return "Gemini 2.5 Flash"
         case .gemini2Flash: return "Gemini 2.0 Flash"
         case .gemini2FlashLite: return "Gemini 2.0 Flash Lite"
         case .gemini15Pro: return "Gemini 1.5 Pro"
@@ -23,7 +25,8 @@ enum GeminiModel: String, CaseIterable, Identifiable {
 
     var description: String {
         switch self {
-        case .gemini2Flash: return "최신 모델, 빠르고 정확"
+        case .gemini25Flash: return "최신 모델, 추론 능력 강화"
+        case .gemini2Flash: return "빠르고 정확한 모델"
         case .gemini2FlashLite: return "경량 모델, 더 빠른 응답"
         case .gemini15Pro: return "고성능 모델"
         case .gemini15Flash: return "균형잡힌 성능"
@@ -33,25 +36,29 @@ enum GeminiModel: String, CaseIterable, Identifiable {
     /// 스토리 생성 시 권장 최대 출력 토큰
     var storyMaxTokens: Int {
         switch self {
-        case .gemini2Flash: return 1024      // 충분한 스토리 길이
-        case .gemini2FlashLite: return 512   // 경량 모델은 짧게
-        case .gemini15Pro: return 1024       // 고성능
-        case .gemini15Flash: return 800      // 균형
+        case .gemini25Flash: return 1024
+        case .gemini2Flash: return 1024
+        case .gemini2FlashLite: return 512
+        case .gemini15Pro: return 1024
+        case .gemini15Flash: return 800
         }
     }
 
     /// 스토리 생성 temperature (창의성 조절)
     var storyTemperature: Double {
         switch self {
+        case .gemini25Flash: return 0.7
         case .gemini2Flash: return 0.7
-        case .gemini2FlashLite: return 0.6   // 경량 모델은 더 일관되게
-        case .gemini15Pro: return 0.8        // 고성능은 더 창의적으로
+        case .gemini2FlashLite: return 0.6
+        case .gemini15Pro: return 0.8
         case .gemini15Flash: return 0.7
         }
     }
 }
 
 /// Google Gemini API 서비스
+/// - NOTE: OAuth → Cloud Code Assist API (cloudcode-pa.googleapis.com)
+/// - NOTE: API Key → 표준 Gemini API (generativelanguage.googleapis.com)
 final class GoogleAIService: AIServiceProtocol {
     let provider: AIProvider = .google
 
@@ -63,8 +70,19 @@ final class GoogleAIService: AIServiceProtocol {
         try? KeychainManager.shared.getAPIKey(for: .google)
     }
 
-    private var baseURL: String {
+    /// OAuth 인증이 활성화되어 있는지 확인
+    private var hasOAuth: Bool {
+        GoogleOAuthService.shared.isAuthenticated
+    }
+
+    /// 표준 Gemini API 엔드포인트 (API Key 방식)
+    private var standardBaseURL: String {
         "https://generativelanguage.googleapis.com/v1beta/models/\(model)"
+    }
+
+    /// 인증 방식 확인 (OAuth 또는 API Key가 하나라도 있으면 true)
+    var hasAnyAuth: Bool {
+        hasOAuth || apiKey != nil
     }
 
     // MARK: - Model Selection
@@ -76,40 +94,81 @@ final class GoogleAIService: AIServiceProtocol {
            let model = GeminiModel(rawValue: rawValue) {
             return model
         }
-        return .gemini2Flash  // 기본값
+        return .gemini25Flash  // 기본값
     }
 
     static func setSelectedModel(_ model: GeminiModel) {
         UserDefaults.standard.set(model.rawValue, forKey: modelKey)
     }
 
-    // MARK: - Test Connection
+    // MARK: - Request Builder
 
-    func testConnection() async throws -> Bool {
-        logger.info("💎 [Google] testConnection 시작 - model: \(self.model)")
+    /// 인증 방식에 따른 URLRequest 생성
+    /// - OAuth: Cloud Code Assist API (cloudcode-pa.googleapis.com/v1internal)
+    /// - API Key: 표준 Gemini API (generativelanguage.googleapis.com/v1beta)
+    private func buildGeminiRequest(
+        contents: [GeminiContent],
+        generationConfig: GeminiGenerationConfig?,
+        timeoutInterval: TimeInterval = 30
+    ) async throws -> URLRequest {
+        let geminiRequest = GeminiRequest(contents: contents, generationConfig: generationConfig)
+
+        if hasOAuth {
+            // Cloud Code Assist API (OAuth)
+            do {
+                let token = try await GoogleOAuthService.shared.getValidAccessToken()
+                let projectID = try await GoogleOAuthService.shared.getProjectID()
+
+                let url = URL(string: "\(GoogleOAuthService.cloudCodeBaseURL):generateContent")!
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                request.timeoutInterval = timeoutInterval
+
+                let wrappedBody = CloudCodeRequest(
+                    model: model,
+                    project: projectID,
+                    request: geminiRequest
+                )
+                request.httpBody = try JSONEncoder().encode(wrappedBody)
+
+                logger.info("💎 [Google] Cloud Code API - project: \(projectID), model: \(self.model)")
+                return request
+            } catch {
+                logger.warning("💎 [Google] OAuth 요청 생성 실패, API Key 시도: \(error.localizedDescription)")
+                // API Key 폴백
+            }
+        }
+
+        // 표준 Gemini API (API Key)
         guard let apiKey = apiKey else {
-            logger.error("💎 [Google] API 키 없음")
             throw AIServiceError.noAPIKey
         }
 
-        let url = URL(string: "\(baseURL):generateContent")!
-
-        // 연결 테스트는 최소 토큰만 사용 (비용/한도 절약)
-        let requestBody = GeminiRequest(
-            contents: [
-                GeminiContent(parts: [GeminiPart(text: "1")])  // 최소 입력
-            ],
-            generationConfig: GeminiGenerationConfig(maxOutputTokens: 1)  // 최소 출력
-        )
-
+        let url = URL(string: "\(standardBaseURL):generateContent")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
-        request.httpBody = try JSONEncoder().encode(requestBody)
+        request.timeoutInterval = timeoutInterval
+        request.httpBody = try JSONEncoder().encode(geminiRequest)
+
+        return request
+    }
+
+    // MARK: - Test Connection
+
+    func testConnection() async throws -> Bool {
+        logger.info("💎 [Google] testConnection 시작 - model: \(self.model)")
+
+        let request = try await buildGeminiRequest(
+            contents: [GeminiContent(parts: [GeminiPart(text: "1")])],
+            generationConfig: GeminiGenerationConfig(maxOutputTokens: 1)
+        )
 
         do {
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: request)
 
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw AIServiceError.invalidResponse
@@ -120,17 +179,18 @@ final class GoogleAIService: AIServiceProtocol {
                 logger.info("💎 [Google] 연결 테스트 성공")
                 return true
             case 429:
-                // Rate limit은 키가 유효함을 의미 - 성공으로 처리
-                logger.info("💎 [Google] 429 - Rate limit (키 유효, 요청 제한)")
+                logger.info("💎 [Google] 429 - Rate limit (인증 유효, 요청 제한)")
                 return true
             case 400:
                 logger.error("💎 [Google] 400 - 잘못된 요청")
                 throw AIServiceError.invalidAPIKey
-            case 403:
-                logger.error("💎 [Google] 403 - 권한 없음 또는 잘못된 API 키")
+            case 401, 403:
+                let errorBody = String(data: data, encoding: .utf8) ?? "no body"
+                logger.error("💎 [Google] \(httpResponse.statusCode) - body: \(errorBody)")
                 throw AIServiceError.invalidAPIKey
             default:
-                logger.error("💎 [Google] 서버 오류: \(httpResponse.statusCode)")
+                let errorBody = String(data: data, encoding: .utf8) ?? "no body"
+                logger.error("💎 [Google] 서버 오류: \(httpResponse.statusCode), body: \(errorBody)")
                 throw AIServiceError.serverError(httpResponse.statusCode)
             }
         } catch let error as AIServiceError {
@@ -145,34 +205,18 @@ final class GoogleAIService: AIServiceProtocol {
 
     func generateStory(from travelData: TravelStoryInput) async throws -> String {
         let selectedModel = Self.getSelectedModel()
-        logger.info("💎 [Google] generateStory 시작 - model: \(selectedModel.displayName), places: \(travelData.places.count)개, maxTokens: \(selectedModel.storyMaxTokens)")
-
-        guard let apiKey = apiKey else {
-            logger.error("💎 [Google] API 키 없음")
-            throw AIServiceError.noAPIKey
-        }
+        logger.info("💎 [Google] generateStory 시작 - model: \(selectedModel.displayName), places: \(travelData.places.count)개")
 
         let prompt = buildPrompt(from: travelData)
         let fullPrompt = "\(systemPrompt)\n\n\(prompt)"
 
-        let url = URL(string: "\(baseURL):generateContent")!
-
-        // 모델별 최적화된 설정 사용
-        let requestBody = GeminiRequest(
-            contents: [
-                GeminiContent(parts: [GeminiPart(text: fullPrompt)])
-            ],
+        let request = try await buildGeminiRequest(
+            contents: [GeminiContent(parts: [GeminiPart(text: fullPrompt)])],
             generationConfig: GeminiGenerationConfig(
                 temperature: selectedModel.storyTemperature,
                 maxOutputTokens: selectedModel.storyMaxTokens
             )
         )
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
-        request.httpBody = try JSONEncoder().encode(requestBody)
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
@@ -183,7 +227,7 @@ final class GoogleAIService: AIServiceProtocol {
 
             switch httpResponse.statusCode {
             case 200:
-                let result = try JSONDecoder().decode(GeminiResponse.self, from: data)
+                let result = try decodeGeminiResponse(from: data)
                 guard let text = result.candidates?.first?.content.parts.first?.text else {
                     logger.error("💎 [Google] 응답 파싱 실패 - text 없음")
                     throw AIServiceError.invalidResponse
@@ -191,7 +235,9 @@ final class GoogleAIService: AIServiceProtocol {
                 logger.info("💎 [Google] 스토리 생성 성공 - length: \(text.count)자")
                 return text
 
-            case 400, 403:
+            case 400, 401, 403:
+                let errorBody = String(data: data, encoding: .utf8) ?? "no body"
+                logger.error("💎 [Google] generateStory 실패 - status: \(httpResponse.statusCode), body: \(errorBody)")
                 throw AIServiceError.invalidAPIKey
             case 429:
                 throw AIServiceError.rateLimitExceeded
@@ -215,31 +261,32 @@ final class GoogleAIService: AIServiceProtocol {
         maxTokens: Int,
         temperature: Double
     ) async throws -> String {
-        logger.info("💎 [Google] generateContent 시작 - maxTokens: \(maxTokens)")
+        let selectedModel = Self.getSelectedModel()
 
-        guard let apiKey = apiKey else {
-            throw AIServiceError.noAPIKey
+        // gemini-2.5-flash는 사고(thinking) 토큰이 maxOutputTokens 예산을 소비하므로
+        // 실제 출력 토큰보다 충분히 큰 예산 할당 (4배)
+        let adjustedMaxTokens: Int
+        let adjustedTimeout: TimeInterval
+        if selectedModel == .gemini25Flash {
+            adjustedMaxTokens = maxTokens * 4
+            adjustedTimeout = 120  // 사고 시간 고려
+        } else {
+            adjustedMaxTokens = maxTokens
+            adjustedTimeout = 60
         }
 
-        let fullPrompt = "\(systemPrompt)\n\n\(userPrompt)"
-        let url = URL(string: "\(baseURL):generateContent")!
+        logger.info("💎 [Google] generateContent 시작 - model: \(selectedModel.displayName), maxTokens: \(maxTokens) → \(adjustedMaxTokens)")
 
-        let requestBody = GeminiRequest(
-            contents: [
-                GeminiContent(parts: [GeminiPart(text: fullPrompt)])
-            ],
+        let fullPrompt = "\(systemPrompt)\n\n\(userPrompt)"
+
+        let request = try await buildGeminiRequest(
+            contents: [GeminiContent(parts: [GeminiPart(text: fullPrompt)])],
             generationConfig: GeminiGenerationConfig(
                 temperature: temperature,
-                maxOutputTokens: maxTokens
-            )
+                maxOutputTokens: adjustedMaxTokens
+            ),
+            timeoutInterval: adjustedTimeout
         )
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
-        request.httpBody = try JSONEncoder().encode(requestBody)
-        request.timeoutInterval = 60
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
@@ -248,26 +295,53 @@ final class GoogleAIService: AIServiceProtocol {
             }
             switch httpResponse.statusCode {
             case 200:
-                let result = try JSONDecoder().decode(GeminiResponse.self, from: data)
-                guard let text = result.candidates?.first?.content.parts.first?.text else {
-                    throw AIServiceError.invalidResponse
+                let responseBody = String(data: data, encoding: .utf8) ?? "no body"
+                logger.info("💎 [Google] generateContent 응답 (처음 500자): \(String(responseBody.prefix(500)))")
+
+                do {
+                    let result = try decodeGeminiResponse(from: data)
+                    guard let text = result.candidates?.first?.content.parts.first?.text else {
+                        logger.error("💎 [Google] generateContent 파싱 실패 - candidates nil 또는 text 없음")
+                        throw AIServiceError.invalidResponse
+                    }
+                    logger.info("💎 [Google] generateContent 성공 - \(text.count)자")
+                    return text
+                } catch {
+                    logger.error("💎 [Google] JSON 디코딩 실패: \(error.localizedDescription)")
+                    logger.error("💎 [Google] 원본 응답: \(String(responseBody.prefix(1000)))")
+                    throw AIServiceError.decodingError
                 }
-                logger.info("💎 [Google] generateContent 성공 - \(text.count)자")
-                return text
-            case 400, 403:
+            case 400, 401, 403:
+                let errorBody = String(data: data, encoding: .utf8) ?? "no body"
+                logger.error("💎 [Google] generateContent 실패 - status: \(httpResponse.statusCode), body: \(errorBody)")
                 throw AIServiceError.invalidAPIKey
             case 429:
                 throw AIServiceError.rateLimitExceeded
             default:
+                let errorBody = String(data: data, encoding: .utf8) ?? "no body"
+                logger.error("💎 [Google] generateContent 서버 오류 - status: \(httpResponse.statusCode), body: \(errorBody)")
                 throw AIServiceError.serverError(httpResponse.statusCode)
             }
         } catch let error as AIServiceError {
             throw error
-        } catch is DecodingError {
-            throw AIServiceError.decodingError
         } catch {
             throw AIServiceError.networkError(error)
         }
+    }
+
+    // MARK: - Response Decoder
+
+    /// Cloud Code API / 표준 API 양쪽 응답 포맷을 모두 처리
+    /// - Cloud Code: `{ "response": { "candidates": [...] } }`
+    /// - Standard:   `{ "candidates": [...] }`
+    private func decodeGeminiResponse(from data: Data) throws -> GeminiResponse {
+        // Cloud Code API 래핑 응답 먼저 시도
+        if let wrapped = try? JSONDecoder().decode(CloudCodeResponse.self, from: data) {
+            logger.info("💎 [Google] Cloud Code 래핑 응답 디코딩 성공")
+            return wrapped.response
+        }
+        // 표준 Gemini API 응답
+        return try JSONDecoder().decode(GeminiResponse.self, from: data)
     }
 
     // MARK: - Private Helpers
@@ -315,13 +389,27 @@ final class GoogleAIService: AIServiceProtocol {
 
 // MARK: - Gemini API Models
 
+/// Cloud Code Assist API용 래핑 요청
+/// - model과 project가 최상위, 실제 요청은 request 필드 안에 래핑
+private struct CloudCodeRequest: Encodable {
+    let model: String
+    let project: String
+    let request: GeminiRequest
+}
+
 private struct GeminiRequest: Encodable {
     let contents: [GeminiContent]
     let generationConfig: GeminiGenerationConfig?
 }
 
 private struct GeminiContent: Codable {
+    let role: String?
     let parts: [GeminiPart]
+
+    init(role: String? = "user", parts: [GeminiPart]) {
+        self.role = role
+        self.parts = parts
+    }
 }
 
 private struct GeminiPart: Codable {
@@ -344,4 +432,10 @@ private struct GeminiResponse: Decodable {
     struct Candidate: Decodable {
         let content: GeminiContent
     }
+}
+
+/// Cloud Code Assist API 응답 래퍼
+/// - Cloud Code API는 `{ "response": { "candidates": [...] } }` 형태로 응답을 래핑
+private struct CloudCodeResponse: Decodable {
+    let response: GeminiResponse
 }

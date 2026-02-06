@@ -42,6 +42,9 @@ build/
 *.app
 *.ipa
 
+# Secrets
+src/Resources/Secrets.plist
+
 # Temporary files
 *.swp
 *~.nib

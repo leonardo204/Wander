@@ -15,18 +15,20 @@ struct AIStoryView: View {
     @State private var showProviderSelection = false
 
     private var hasConfiguredProvider: Bool {
-        for provider in AIProvider.allCases {
-            if KeychainManager.shared.hasAPIKey(for: provider.keychainType) {
-                return true
-            }
+        GoogleOAuthService.shared.isAuthenticated ||
+        AIProvider.allCases.contains { provider in
+            KeychainManager.shared.hasAPIKey(for: provider.keychainType)
         }
-        return false
     }
 
     private var configuredProviders: [AIProvider] {
-        AIProvider.allCases.filter { provider in
+        var providers = AIProvider.allCases.filter { provider in
             KeychainManager.shared.hasAPIKey(for: provider.keychainType)
         }
+        if GoogleOAuthService.shared.isAuthenticated && !providers.contains(.google) {
+            providers.append(.google)
+        }
+        return providers
     }
 
     var body: some View {

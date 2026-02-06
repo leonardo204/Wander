@@ -793,7 +793,16 @@ struct ResultView: View {
             .background(WanderColors.successBackground)
             .cornerRadius(WanderSpacing.radiusLarge)
         } else if hasConfiguredAIProvider {
-            Button(action: { showAIEnhancement = true }) {
+            Button(action: {
+                let providers = configuredProviders
+                if providers.count == 1, let singleProvider = providers.first {
+                    // 단일 프로바이더 → 바로 다듬기 시작
+                    performAIEnhancement(provider: singleProvider)
+                } else {
+                    // 복수 프로바이더 → 선택 팝업
+                    showAIEnhancement = true
+                }
+            }) {
                 HStack(spacing: WanderSpacing.space2) {
                     if isEnhancing {
                         ProgressView()
@@ -832,18 +841,25 @@ struct ResultView: View {
         // API 키 미설정 시 버튼 숨김
     }
 
-    /// API 키가 설정된 프로바이더가 있는지 확인
+    /// API 키 또는 OAuth가 설정된 프로바이더가 있는지 확인
     private var hasConfiguredAIProvider: Bool {
+        GoogleOAuthService.shared.isAuthenticated ||
         AIProvider.allCases.contains { provider in
             (try? KeychainManager.shared.getAPIKey(for: provider.keychainType)) != nil
         }
     }
 
-    /// API 키가 설정된 프로바이더 목록
+    /// API 키가 설정된 프로바이더 목록 (OAuth 포함)
+    /// - NOTE: Google OAuth 인증 시 .google을 목록에 포함
     private var configuredProviders: [AIProvider] {
-        AIProvider.allCases.filter { provider in
+        var providers = AIProvider.allCases.filter { provider in
             (try? KeychainManager.shared.getAPIKey(for: provider.keychainType)) != nil
         }
+        // OAuth로 인증된 Google도 포함 (API Key 미설정이지만 OAuth 가능)
+        if GoogleOAuthService.shared.isAuthenticated && !providers.contains(.google) {
+            providers.append(.google)
+        }
+        return providers
     }
 
     // MARK: - AI Enhancement Action
@@ -888,10 +904,15 @@ struct AIEnhancementSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedProvider: AIProvider?
 
+    /// API 키 또는 OAuth가 설정된 프로바이더 목록
     private var configuredProviders: [AIProvider] {
-        AIProvider.allCases.filter { provider in
+        var providers = AIProvider.allCases.filter { provider in
             (try? KeychainManager.shared.getAPIKey(for: provider.keychainType)) != nil
         }
+        if GoogleOAuthService.shared.isAuthenticated && !providers.contains(.google) {
+            providers.append(.google)
+        }
+        return providers
     }
 
     var body: some View {

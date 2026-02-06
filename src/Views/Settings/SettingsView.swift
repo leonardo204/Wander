@@ -260,22 +260,52 @@ struct SettingsRow: View {
 // MARK: - AI Provider Settings View
 struct AIProviderSettingsView: View {
     @State private var providerToEdit: AIProvider?
-
-    private var configuredProviders: Set<AIProvider> {
-        Set(AIProvider.allCases.filter { provider in
-            KeychainManager.shared.hasAPIKey(for: provider.keychainType)
-        })
-    }
+    @State private var configuredProviders: Set<AIProvider> = []
 
     var body: some View {
         List {
+            // OAuth 설정 섹션
             Section {
-                Text("AI 스토리 생성 기능을 사용하려면 API 키가 필요합니다. 직접 발급받은 키를 입력해 주세요.")
-                    .font(WanderTypography.caption1)
-                    .foregroundColor(WanderColors.textSecondary)
+                NavigationLink {
+                    GoogleOAuthSettingsView(onStatusChanged: refreshConfiguredProviders)
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Google Gemini")
+                                .font(WanderTypography.body)
+                                .foregroundColor(WanderColors.textPrimary)
+
+                            Text("Google 계정으로 로그인")
+                                .font(WanderTypography.caption1)
+                                .foregroundColor(WanderColors.textSecondary)
+                        }
+
+                        Spacer()
+
+                        if GoogleOAuthService.shared.isAuthenticated {
+                            HStack(spacing: WanderSpacing.space1) {
+                                Text("연결됨")
+                                    .font(WanderTypography.caption1)
+                                    .foregroundColor(WanderColors.success)
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(WanderColors.success)
+                            }
+                        } else {
+                            Text("로그인 필요")
+                                .font(WanderTypography.caption1)
+                                .foregroundColor(WanderColors.textTertiary)
+                        }
+                    }
+                }
+            } header: {
+                Text("Google 계정 연결")
+            } footer: {
+                Text("Google 계정으로 로그인하면 Gemini AI를 바로 사용할 수 있습니다.")
+                    .font(WanderTypography.caption2)
             }
 
-            Section("프로바이더") {
+            // API KEY 설정 섹션
+            Section {
                 ForEach(AIProvider.allCases) { provider in
                     Button(action: {
                         providerToEdit = provider
@@ -312,6 +342,11 @@ struct AIProviderSettingsView: View {
                         }
                     }
                 }
+            } header: {
+                Text("API 키 인증")
+            } footer: {
+                Text("직접 발급받은 API 키를 입력해 주세요.")
+                    .font(WanderTypography.caption2)
             }
 
             if !configuredProviders.isEmpty {
@@ -324,16 +359,31 @@ struct AIProviderSettingsView: View {
         }
         .navigationTitle("AI 설정")
         .onAppear {
+            refreshConfiguredProviders()
             logger.info("⚙️ [AIProviderSettingsView] AI 설정 화면 나타남 - 설정된 프로바이더: \(self.configuredProviders.count)개")
         }
         .sheet(item: $providerToEdit) { provider in
             APIKeyInputView(provider: provider)
         }
+        .onChange(of: providerToEdit) { _, newValue in
+            // NOTE: sheet 닫힘 시 (newValue == nil) Keychain 변경사항 반영
+            if newValue == nil {
+                refreshConfiguredProviders()
+            }
+        }
+    }
+
+    /// Keychain에서 설정된 프로바이더 목록 갱신
+    private func refreshConfiguredProviders() {
+        configuredProviders = Set(AIProvider.allCases.filter { provider in
+            KeychainManager.shared.hasAPIKey(for: provider.keychainType)
+        })
     }
 
     private func deleteAllKeys() {
         logger.info("⚙️ [AIProviderSettingsView] 모든 API 키 삭제")
         KeychainManager.shared.deleteAllAPIKeys()
+        refreshConfiguredProviders()
     }
 }
 
@@ -695,6 +745,244 @@ struct APIKeyInputView: View {
     private func openProviderWebsite() {
         if let url = provider.websiteURL {
             UIApplication.shared.open(url)
+        }
+    }
+}
+
+// MARK: - Google OAuth Settings View
+/// Google 계정 로그인 설정 화면
+/// - 사용자가 Google 계정으로 로그인하면 Gemini API 사용 가능
+/// - Client ID는 앱에 내장, 사용자는 로그인만 하면 됨
+struct GoogleOAuthSettingsView: View {
+    @StateObject private var oauthService = GoogleOAuthService.shared
+    @State private var isAuthenticating = false
+    @State private var isTesting = false
+    @State private var testResult: Bool?
+    @State private var errorMessage: String?
+    @State private var showLogoutConfirmation = false
+
+    /// 상태 변경 시 부모 뷰에 알림 (configuredProviders 갱신용)
+    var onStatusChanged: (() -> Void)?
+
+    var body: some View {
+        List {
+            // 안내 섹션
+            Section {
+                VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+                    HStack(spacing: WanderSpacing.space2) {
+                        Image(systemName: "globe")
+                            .font(.system(size: 32))
+                            .foregroundColor(WanderColors.primary)
+                        VStack(alignment: .leading, spacing: WanderSpacing.space1) {
+                            Text("Google Gemini")
+                                .font(WanderTypography.headline)
+                                .foregroundColor(WanderColors.textPrimary)
+                            Text("Google 계정으로 연결")
+                                .font(WanderTypography.caption1)
+                                .foregroundColor(WanderColors.textSecondary)
+                        }
+                    }
+
+                    Text("Google 계정으로 로그인하면 Gemini AI를 사용할 수 있습니다. 별도의 API 키 없이 내 Google 계정으로 바로 이용할 수 있습니다.")
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textSecondary)
+                }
+                .padding(.vertical, WanderSpacing.space2)
+            }
+
+            // 인증 상태 + 로그인 섹션
+            Section {
+                // 인증 상태 표시
+                HStack {
+                    Text("연결 상태")
+                        .font(WanderTypography.body)
+
+                    Spacer()
+
+                    if oauthService.isAuthenticated {
+                        HStack(spacing: WanderSpacing.space1) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(WanderColors.success)
+                            Text("연결됨")
+                                .font(WanderTypography.caption1)
+                                .foregroundColor(WanderColors.success)
+                        }
+                    } else {
+                        Text("연결 안됨")
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.textTertiary)
+                    }
+                }
+
+                // 로그인 / 재연결 버튼
+                Button(action: startAuthentication) {
+                    HStack {
+                        if isAuthenticating {
+                            ProgressView()
+                                .padding(.trailing, WanderSpacing.space2)
+                        } else {
+                            Image(systemName: oauthService.isAuthenticated ? "arrow.triangle.2.circlepath" : "person.crop.circle.badge.plus")
+                                .foregroundColor(WanderColors.primary)
+                        }
+                        Text(oauthService.isAuthenticated ? "다시 연결하기" : "Google 계정으로 로그인")
+                            .font(WanderTypography.headline)
+                    }
+                }
+                .disabled(isAuthenticating)
+
+                // 연결 테스트 (인증된 경우만)
+                if oauthService.isAuthenticated {
+                    Button(action: testOAuthConnection) {
+                        HStack {
+                            Image(systemName: "antenna.radiowaves.left.and.right")
+                                .foregroundColor(WanderColors.primary)
+                            Text("연결 테스트")
+                            Spacer()
+                            if isTesting {
+                                ProgressView()
+                            } else if let result = testResult {
+                                Image(systemName: result ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .foregroundColor(result ? WanderColors.success : WanderColors.error)
+                            }
+                        }
+                    }
+                    .disabled(isTesting)
+                }
+            } header: {
+                Text("Google 계정")
+            }
+
+            // 에러 메시지
+            if let error = errorMessage {
+                Section {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(WanderColors.error)
+                        Text(error)
+                            .font(WanderTypography.caption1)
+                            .foregroundColor(WanderColors.error)
+                    }
+                }
+            }
+
+            // 로그아웃 섹션
+            if oauthService.isAuthenticated {
+                Section {
+                    Button {
+                        showLogoutConfirmation = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .foregroundColor(WanderColors.warning)
+                            Text("로그아웃")
+                                .foregroundColor(WanderColors.warning)
+                        }
+                    }
+                } footer: {
+                    Text("로그아웃하면 Google Gemini를 사용할 수 없습니다. 다시 로그인하면 이용할 수 있습니다.")
+                        .font(WanderTypography.caption2)
+                }
+            }
+
+            // 안내 섹션
+            Section {
+                VStack(alignment: .leading, spacing: WanderSpacing.space2) {
+                    Label("사진은 전송되지 않습니다", systemImage: "lock.shield")
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.textSecondary)
+                    Text("AI 분석 시 장소명, 시간 등 텍스트 정보만 전송됩니다. 사진이나 개인정보는 기기에서만 처리됩니다.")
+                        .font(WanderTypography.caption2)
+                        .foregroundColor(WanderColors.textTertiary)
+                }
+                .padding(.vertical, WanderSpacing.space1)
+            } header: {
+                Text("개인정보")
+            }
+        }
+        .navigationTitle("Google Gemini")
+        .onAppear {
+            logger.info("🔐 [GoogleOAuthSettings] 나타남 - 인증: \(oauthService.isAuthenticated)")
+        }
+        .confirmationDialog(
+            "Google 계정 연결을 해제하시겠습니까?",
+            isPresented: $showLogoutConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("로그아웃", role: .destructive) {
+                oauthService.logout()
+                testResult = nil
+                onStatusChanged?()
+            }
+        } message: {
+            Text("인증 정보가 삭제됩니다. 다시 로그인하면 이용할 수 있습니다.")
+        }
+    }
+
+    // MARK: - Actions
+
+    private func startAuthentication() {
+        errorMessage = nil
+        isAuthenticating = true
+
+        Task {
+            do {
+                try await oauthService.authenticate()
+                await MainActor.run {
+                    isAuthenticating = false
+                    onStatusChanged?()
+                }
+            } catch let error as GoogleOAuthError where error == .userCancelled {
+                await MainActor.run {
+                    isAuthenticating = false
+                    // 사용자 취소는 에러 메시지 표시하지 않음
+                }
+            } catch {
+                await MainActor.run {
+                    isAuthenticating = false
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+
+    private func testOAuthConnection() {
+        isTesting = true
+        testResult = nil
+        errorMessage = nil
+
+        Task {
+            do {
+                let result = try await oauthService.testConnection()
+                await MainActor.run {
+                    testResult = result
+                    isTesting = false
+                }
+            } catch {
+                await MainActor.run {
+                    testResult = false
+                    isTesting = false
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+}
+
+/// GoogleOAuthError의 Equatable (userCancelled 비교용)
+extension GoogleOAuthError: Equatable {
+    static func == (lhs: GoogleOAuthError, rhs: GoogleOAuthError) -> Bool {
+        switch (lhs, rhs) {
+        case (.userCancelled, .userCancelled): return true
+        case (.noClientID, .noClientID): return true
+        case (.invalidClientID, .invalidClientID): return true
+        case (.notAuthenticated, .notAuthenticated): return true
+        case (.noCallbackURL, .noCallbackURL): return true
+        case (.noAuthorizationCode, .noAuthorizationCode): return true
+        case (.sessionStartFailed, .sessionStartFailed): return true
+        case (.tokenRefreshFailed, .tokenRefreshFailed): return true
+        case (.authenticationFailed(let a), .authenticationFailed(let b)): return a == b
+        case (.tokenExchangeFailed(let a), .tokenExchangeFailed(let b)): return a == b
+        default: return false
         }
     }
 }
