@@ -459,6 +459,9 @@ final class AIEnhancementService {
            - 과도한 감성이나 소설 같은 문체 지양. 담백하고 명료한 '에디터 노트' 스타일.
            - 'Chapter 1', '오프닝' 같은 형식적 구조 대신, 여행의 흐름이 자연스럽게 읽히도록 구성.
            - 인사이트는 정말 의미 있는 통계나 패턴이 있을 때만 포함.
+           - '0분 체류', '순간 포착' 등 짧은 방문은 '잠깐 들린 곳', '지나가다 본 풍경', '잠시 머문 순간' 등으로 자연스럽게 묘사.
+           - '0분 동안 머물렀습니다' 같은 기계적인 표현 절대 지양.
+           - 사진이 많은 장소는 그만큼 중요하거나 추억이 많은 곳이므로 상세히 묘사.
 
         3. 구성 제안 (Layout & Theme):
            - 여행 성격에 맞는 최적의 UI 레이아웃(timeline/magazine/grid) 제안.
@@ -492,7 +495,11 @@ final class AIEnhancementService {
         for (i, place) in input.places.enumerated() {
             var desc = "\(i + 1). \(place.visitTime) \(place.name) (\(place.activityType))"
             if let duration = place.durationMinutes {
-                desc += " \(duration)분 체류"
+                if duration == 0 {
+                    desc += " 순간 포착"
+                } else {
+                    desc += " \(duration)분 체류"
+                }
             }
             if let scene = place.sceneCategory {
                 desc += " [\(scene)]"
@@ -789,7 +796,7 @@ final class AIEnhancementService {
 
     // MARK: - Image Extraction (멀티모달)
 
-    /// 각 장소의 대표 사진 1장씩 추출 (최대 8장)
+    /// 전체 장소의 사진 중 최대 8장을 추출 (전체 사진 대상)
     /// 320×320 리사이즈, JPEG 0.6 압축
     private static func extractRepresentativeImages(
         from places: [PlaceCluster],
@@ -799,20 +806,25 @@ final class AIEnhancementService {
         let maxImages = 8
         let targetSize = CGSize(width: 320, height: 320)
 
-        // 각 장소의 첫 번째 사진의 localIdentifier 수집
-        var assetIdsToFetch: [(placeIndex: Int, assetId: String)] = []
-        for (index, place) in places.prefix(maxImages).enumerated() {
-            if let firstPhoto = place.photos.first {
-                assetIdsToFetch.append((index, firstPhoto.localIdentifier))
+        // 1. 모든 장소의 사진을 평탄화 (Flatten)
+        let allPhotos = places.flatMap { $0.photos }
+
+        // 2. selectedAssets에 존재하는 사진만 필터링하고 최대 8개 선택
+        // (순서는 장소 순서, 사진 순서 유지됨)
+        var assetsToProcess: [PHAsset] = []
+        
+        for photo in allPhotos {
+            if assetsToProcess.count >= maxImages { break }
+            
+            if let asset = selectedAssets.first(where: { $0.localIdentifier == photo.localIdentifier }) {
+                assetsToProcess.append(asset)
             }
         }
 
-        // PHAsset에서 이미지 추출
-        for item in assetIdsToFetch {
-            if let asset = selectedAssets.first(where: { $0.localIdentifier == item.assetId }) {
-                if let imageData = await loadImageData(from: asset, targetSize: targetSize) {
-                    images.append(AIImageData(data: imageData, mimeType: "image/jpeg"))
-                }
+        // 3. 이미지 데이터 로드
+        for asset in assetsToProcess {
+            if let imageData = await loadImageData(from: asset, targetSize: targetSize) {
+                images.append(AIImageData(data: imageData, mimeType: "image/jpeg"))
             }
         }
 
