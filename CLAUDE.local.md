@@ -6,9 +6,9 @@
 
 ### 핵심 특징
 - **서버리스**: 로그인/회원가입 없음, 100% On-Device
-- **BYOK (Bring Your Own Key)**: 사용자가 직접 AI API 키 입력
+- **Google OAuth**: Google 계정으로 Gemini AI 사용 (API Key 직접 입력 UI 제거)
 - **3탭 네비게이션**: 홈, 기록, 설정
-- **프리미엄 없음**: 모든 기능 무료
+- **Premium 예정**: 현재 무료, Wander Premium 구독 모델 준비 중
 
 ---
 
@@ -311,44 +311,35 @@ ResultView/RecordsView
 
 ---
 
-## AI 서비스 (BYOK)
+## AI 서비스
 
-### 지원 프로바이더
-| 프로바이더 | 서비스 파일 | 지원 모델 |
-|-----------|------------|----------|
-| OpenAI | `OpenAIService.swift` | GPT-4o, GPT-4o Mini |
-| Anthropic | `AnthropicService.swift` | Claude 3.5 Sonnet, Claude 3 Haiku |
-| Google | `GoogleAIService.swift` | Gemini 2.0 Flash, 2.0 Flash Lite, 1.5 Pro, 1.5 Flash |
-| Azure OpenAI | `AzureOpenAIService.swift` | GPT-4o (Azure 배포) |
+### Google OAuth (현재 사용)
+- `GoogleOAuthService.swift`: NWListener 로컬 HTTP 서버 방식
+- Cloud Code Assist API: `cloudcode-pa.googleapis.com/v1internal` 엔드포인트
+- Keychain 저장: access_token, refresh_token, token_expiry, project_id
+- gemini-2.5-flash 사용 (사고 토큰이 maxOutputTokens 소비 → 4배 보정)
 
-### 모델별 토큰 설정
-| 프로바이더 | 모델 | maxTokens | temperature |
-|-----------|------|-----------|-------------|
-| OpenAI | GPT-4o | 1024 | 0.8 |
-| OpenAI | GPT-4o Mini | 800 | 0.7 |
-| Anthropic | Claude 3.5 Sonnet | 1024 | - |
-| Anthropic | Claude 3 Haiku | 600 | - |
-| Google | Gemini 2.0 Flash | 1024 | 0.7 |
-| Google | Gemini 2.0 Flash Lite | 512 | 0.6 |
-| Google | Gemini 1.5 Pro | 1024 | 0.8 |
-| Google | Gemini 1.5 Flash | 800 | 0.7 |
+### AI 다듬기
+- `AIEnhancementService.swift`: 온디바이스 분석 결과를 AI로 고도화
+- 멀티모달: 대표 사진 전송 (320×320, JPEG 0.6, 최대 8장)
+- 팩트:감성 7:3 비율, 1~2문장
+- corrections: AI가 activityType/sceneCategory 오류 보정
 
-### 모델 선택 기능
-- 설정 > AI 설정 > 프로바이더 선택 시 모델 Picker 제공
-- 선택된 모델은 `UserDefaults`에 저장
-- 연결 테스트 시 최소 토큰(1) 사용으로 비용 절감
-- 429 Rate Limit은 연결 성공으로 처리 (API 키 유효 확인)
+### 레거시 BYOK 프로바이더
+> ⚠️ API Key 직접 입력 UI는 v3.0에서 제거. 코드 잔류 (향후 정리 대상)
 
-### API Key 저장
-- Keychain에 안전하게 저장 (`KeychainManager.swift`)
-- 앱 내에서만 접근 가능
-- 기존 키는 마스킹 표시 (`abcd••••••••efgh`)
+| 프로바이더 | 서비스 파일 |
+|-----------|------------|
+| OpenAI | `OpenAIService.swift` |
+| Anthropic | `AnthropicService.swift` |
+| Google | `GoogleAIService.swift` |
+| Azure OpenAI | `AzureOpenAIService.swift` |
 
 ---
 
 ## 디자인 시스템
 
-> 📄 **상세 디자인 가이드**: `Ref-Concepts/wander_design_concept.md`
+> 📄 **상세 디자인 가이드**: `Ref-Concepts/ui-scenarios/design-concept.md`
 
 ### 디자인 토큰 사용 규칙
 
@@ -621,8 +612,8 @@ cd src && xcodegen generate
 # UI 목업 확인
 open GUI/screens/SCR-005_home_empty/screen.png
 
-# 특정 화면 시나리오 검색
-grep -n "SCR-010" Ref-Concepts/wander_ui_scenario.md
+# UI 시나리오 문서 인덱스
+open Ref-Concepts/ui-scenarios/index.md
 ```
 
 ---
@@ -652,7 +643,8 @@ settings:
 - ✅ Phase 5: Wander Intelligence (스마트 분석, iOS 17+)
 - ✅ 추가 기능: 보안 잠금, 카테고리, 숨김 기록, 자주 가는 곳
 - ✅ Phase 6: P2P 공유 (CloudKit, 암호화, Deep Link)
-- ✅ Phase 7: AI 다듬기 (BYOK AI로 스마트 분석 텍스트 고도화)
+- ✅ Phase 7: AI 다듬기 (Google OAuth + 멀티모달, 스마트 분석 텍스트 고도화)
+- ✅ Phase 8: 설정 개편 (API Key → Premium UI, 공유 설정 제거, UI 시나리오 문서 분리)
 
 ---
 
@@ -693,6 +685,9 @@ options.deliveryMode = .fastFormat
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-06 | 공유 설정(ShareSettingsView) 제거 - 설정 탭에서 불필요한 공유 옵션 삭제 |
+| 2026-02-06 | UI 시나리오 문서 탭별 분리 (20개 파일 → `Ref-Concepts/ui-scenarios/`) |
+| 2026-02-06 | 설정 UI 개편: API Key → Wander Premium 플레이스홀더, 개인정보 문구 수정 |
 | 2026-02-06 | AI 다듬기 기능 구현 (AIEnhancementService, 4개 프로바이더 generateContent, ResultView + RecordDetailFullView 지원) |
 | 2026-02-06 | ResultView에서 이미지 공유/Wander 공유 버튼 제거 (분석 완료 화면 정리) |
 | 2026-02-06 | RecordDetailFullView에 AI 다듬기 버튼 및 Sheet 추가 |

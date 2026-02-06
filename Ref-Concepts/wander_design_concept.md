@@ -1,3 +1,6 @@
+> **⚠️ DEPRECATED**: 이 문서는 `Ref-Concepts/ui-scenarios/` 디렉토리로 이전되었습니다.
+> 최신 버전은 [`ui-scenarios/design-concept.md`](ui-scenarios/design-concept.md)를 참고하세요.
+
 # Wander Design Concept
 
 ## Document Info

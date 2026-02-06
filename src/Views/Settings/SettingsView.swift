@@ -15,7 +15,6 @@ enum SettingsDestination: Hashable {
     case languageSettings
     case categoryManagement
     case userPlaces
-    case shareSettings
     case about
 }
 
@@ -49,7 +48,7 @@ struct SettingsView: View {
                             icon: "sparkles",
                             iconColor: WanderColors.primary,
                             title: "AI 설정",
-                            subtitle: "API 키 관리, 프로바이더 선택"
+                            subtitle: "Google Gemini, Premium"
                         )
                     }
                 } header: {
@@ -125,20 +124,6 @@ struct SettingsView: View {
                     Text("settings.section.customization".localized)
                 }
 
-                // Share Settings Section
-                Section {
-                    NavigationLink(value: SettingsDestination.shareSettings) {
-                        SettingsRow(
-                            icon: "square.and.arrow.up",
-                            iconColor: WanderColors.warning,
-                            title: "공유 설정",
-                            subtitle: "기본 공유 옵션"
-                        )
-                    }
-                } header: {
-                    Text("공유")
-                }
-
                 // About Section
                 Section {
                     NavigationLink(value: SettingsDestination.about) {
@@ -195,8 +180,6 @@ struct SettingsView: View {
                     CategoryManagementView()
                 case .userPlaces:
                     UserPlacesView()
-                case .shareSettings:
-                    ShareSettingsView()
                 case .about:
                     AboutView()
                 }
@@ -259,15 +242,12 @@ struct SettingsRow: View {
 
 // MARK: - AI Provider Settings View
 struct AIProviderSettingsView: View {
-    @State private var providerToEdit: AIProvider?
-    @State private var configuredProviders: Set<AIProvider> = []
-
     var body: some View {
         List {
-            // OAuth 설정 섹션
+            // Google OAuth 설정 섹션
             Section {
                 NavigationLink {
-                    GoogleOAuthSettingsView(onStatusChanged: refreshConfiguredProviders)
+                    GoogleOAuthSettingsView()
                 } label: {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
@@ -304,86 +284,90 @@ struct AIProviderSettingsView: View {
                     .font(WanderTypography.caption2)
             }
 
-            // API KEY 설정 섹션
+            // Wander Premium 섹션
             Section {
-                ForEach(AIProvider.allCases) { provider in
-                    Button(action: {
-                        providerToEdit = provider
-                    }) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(provider.displayName)
-                                    .font(WanderTypography.body)
-                                    .foregroundColor(WanderColors.textPrimary)
-
-                                Text(provider.description)
-                                    .font(WanderTypography.caption1)
-                                    .foregroundColor(WanderColors.textSecondary)
-                            }
-
-                            Spacer()
-
-                            if configuredProviders.contains(provider) {
-                                HStack(spacing: WanderSpacing.space2) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(WanderColors.success)
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(WanderColors.textTertiary)
-                                }
-                            } else {
-                                HStack(spacing: WanderSpacing.space2) {
-                                    Text("설정 필요")
-                                        .font(WanderTypography.caption1)
-                                        .foregroundColor(WanderColors.textTertiary)
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(WanderColors.textTertiary)
-                                }
-                            }
-                        }
+                VStack(alignment: .leading, spacing: WanderSpacing.space4) {
+                    HStack(spacing: WanderSpacing.space2) {
+                        Image(systemName: "crown.fill")
+                            .foregroundColor(WanderColors.warning)
+                            .font(.system(size: 20))
+                        Text("Wander Premium")
+                            .font(WanderTypography.title3)
+                            .foregroundColor(WanderColors.textPrimary)
                     }
+                    .padding(.bottom, WanderSpacing.space1)
+
+                    Text("더 강력한 AI 기능을 준비 중입니다")
+                        .font(WanderTypography.bodySmall)
+                        .foregroundColor(WanderColors.textSecondary)
+
+                    VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+                        PremiumFeatureRow(
+                            icon: "sparkles",
+                            title: "AI 다듬기 무제한",
+                            description: "횟수 제한 없이 스토리를 다듬기"
+                        )
+                        PremiumFeatureRow(
+                            icon: "brain.head.profile",
+                            title: "고급 AI 모델",
+                            description: "더 정교한 분석과 스토리 생성"
+                        )
+                        PremiumFeatureRow(
+                            icon: "headphones",
+                            title: "우선 지원",
+                            description: "빠른 문의 응답 및 기능 제안"
+                        )
+                    }
+                    .padding(.top, WanderSpacing.space1)
+
+                    HStack {
+                        Spacer()
+                        Text("Coming Soon")
+                            .font(WanderTypography.caption1)
+                            .fontWeight(.semibold)
+                            .foregroundColor(WanderColors.primary)
+                            .padding(.horizontal, WanderSpacing.space3)
+                            .padding(.vertical, WanderSpacing.space1)
+                            .background(WanderColors.primaryPale)
+                            .clipShape(Capsule())
+                        Spacer()
+                    }
+                    .padding(.top, WanderSpacing.space2)
                 }
+                .padding(.vertical, WanderSpacing.space2)
             } header: {
-                Text("API 키 인증")
-            } footer: {
-                Text("직접 발급받은 API 키를 입력해 주세요.")
-                    .font(WanderTypography.caption2)
-            }
-
-            if !configuredProviders.isEmpty {
-                Section {
-                    Button(role: .destructive, action: deleteAllKeys) {
-                        Text("모든 API 키 삭제")
-                    }
-                }
+                Text("프리미엄")
             }
         }
         .navigationTitle("AI 설정")
         .onAppear {
-            refreshConfiguredProviders()
-            logger.info("⚙️ [AIProviderSettingsView] AI 설정 화면 나타남 - 설정된 프로바이더: \(self.configuredProviders.count)개")
+            logger.info("⚙️ [AIProviderSettingsView] AI 설정 화면 나타남")
         }
-        .sheet(item: $providerToEdit) { provider in
-            APIKeyInputView(provider: provider)
-        }
-        .onChange(of: providerToEdit) { _, newValue in
-            // NOTE: sheet 닫힘 시 (newValue == nil) Keychain 변경사항 반영
-            if newValue == nil {
-                refreshConfiguredProviders()
+    }
+}
+
+// MARK: - Premium Feature Row
+private struct PremiumFeatureRow: View {
+    let icon: String
+    let title: String
+    let description: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: WanderSpacing.space3) {
+            Image(systemName: icon)
+                .foregroundColor(WanderColors.primary)
+                .font(.system(size: 16))
+                .frame(width: 24)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(WanderTypography.headline)
+                    .foregroundColor(WanderColors.textPrimary)
+                Text(description)
+                    .font(WanderTypography.caption1)
+                    .foregroundColor(WanderColors.textSecondary)
             }
         }
-    }
-
-    /// Keychain에서 설정된 프로바이더 목록 갱신
-    private func refreshConfiguredProviders() {
-        configuredProviders = Set(AIProvider.allCases.filter { provider in
-            KeychainManager.shared.hasAPIKey(for: provider.keychainType)
-        })
-    }
-
-    private func deleteAllKeys() {
-        logger.info("⚙️ [AIProviderSettingsView] 모든 API 키 삭제")
-        KeychainManager.shared.deleteAllAPIKeys()
-        refreshConfiguredProviders()
     }
 }
 
@@ -884,13 +868,13 @@ struct GoogleOAuthSettingsView: View {
                 }
             }
 
-            // 안내 섹션
+            // 개인정보 처리 안내 섹션
             Section {
                 VStack(alignment: .leading, spacing: WanderSpacing.space2) {
-                    Label("사진은 전송되지 않습니다", systemImage: "lock.shield")
+                    Label("개인정보 처리 안내", systemImage: "shield.lefthalf.filled")
                         .font(WanderTypography.caption1)
                         .foregroundColor(WanderColors.textSecondary)
-                    Text("AI 분석 시 장소명, 시간 등 텍스트 정보만 전송됩니다. 사진이나 개인정보는 기기에서만 처리됩니다.")
+                    Text("AI 다듬기 시 텍스트 정보와 대표 사진이 Google에 전송됩니다. 전송된 데이터는 분석 후 저장되지 않습니다.")
                         .font(WanderTypography.caption2)
                         .foregroundColor(WanderColors.textTertiary)
                 }
@@ -1139,35 +1123,6 @@ struct PermissionSettingsView: View {
         if let url = URL(string: UIApplication.openSettingsURLString) {
             UIApplication.shared.open(url)
         }
-    }
-}
-
-// MARK: - Share Settings View
-struct ShareSettingsView: View {
-    @AppStorage("defaultShareFormat") private var defaultShareFormat = "text"
-
-    var body: some View {
-        List {
-            Section("기본 공유 형식") {
-                Picker("형식", selection: $defaultShareFormat) {
-                    Text("텍스트").tag("text")
-                    Text("이미지").tag("image")
-                }
-                .pickerStyle(.segmented)
-            }
-
-            Section {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(WanderColors.success)
-                    Text("워터마크 항상 포함")
-                        .foregroundColor(WanderColors.textSecondary)
-                }
-            } footer: {
-                Text("공유 시 'Wander' 워터마크가 자동으로 포함됩니다.")
-            }
-        }
-        .navigationTitle("공유 설정")
     }
 }
 

@@ -1,7 +1,10 @@
 # Wander UI 시나리오 명세서
 
+> ⚠️ **DEPRECATED**: 이 문서는 v3.0부터 탭별로 분리되었습니다.
+> 최신 문서는 [`Ref-Concepts/ui-scenarios/index.md`](ui-scenarios/index.md)를 참조하세요.
+
 ## 문서 정보
-- **버전**: v2.3
+- **버전**: v2.3 (DEPRECATED - v3.0에서 분리됨)
 - **작성일**: 2026년 2월 4일
 - **기반 문서**: wander_planning_report.md v2.0, todo.md
 - **목적**: 개발자가 구현 시 참고할 수 있는 상세 UI 시나리오 및 예외 케이스 정의
