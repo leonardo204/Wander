@@ -85,7 +85,9 @@ Wander/
 │   │   │   ├── OpenAIService.swift
 │   │   │   ├── AnthropicService.swift
 │   │   │   ├── GoogleAIService.swift
-│   │   │   └── AzureOpenAIService.swift
+│   │   │   ├── AzureOpenAIService.swift
+│   │   │   ├── AIEnhancementModels.swift   ← AI 다듬기 입출력 모델
+│   │   │   └── AIEnhancementService.swift  ← AI 다듬기 오케스트레이터
 │   │   ├── AnalysisService/
 │   │   │   ├── AnalysisEngine.swift
 │   │   │   ├── ClusteringService.swift
@@ -200,6 +202,7 @@ Wander/
 | 역지오코딩 | 좌표 → 주소 변환 | `GeocodingService.swift` |
 | 활동 추론 | 규칙 기반 활동 타입 추론 | `ActivityInferenceService.swift` |
 | AI 스토리 | BYOK AI로 여행 스토리 생성 | `AIStoryView.swift` |
+| AI 다듬기 | 규칙 기반 분석 텍스트를 AI로 자연스럽게 다듬기 | `AIEnhancementService.swift` |
 | SNS 공유 | 일반 공유, 글래스모피즘 템플릿 | `ShareService/`, `Views/Share/` |
 | P2P 공유 | CloudKit 기반 여행 기록 공유 | `P2PShare/`, `Views/P2PShare/` |
 | 내보내기 | 이미지/Markdown 내보내기 | `ExportService.swift` |
@@ -217,6 +220,30 @@ Wander/
 | `InsightEngine` | 인사이트 발견 | iOS 17+ |
 
 > 📄 상세 알고리즘: `Ref-docs/wander_intelligence_algorithm.md`
+
+### AI 다듬기 기능
+규칙 기반 스마트 분석(80%) 결과의 텍스트를 BYOK AI로 자연스럽게 다듬어 100% 완성도를 달성합니다.
+
+| 항목 | 설명 |
+|------|------|
+| 트리거 | 사용자가 "AI로 다듬기" 버튼 클릭 (분석 완료 화면 + 기록 상세 화면) |
+| API 호출 | 단일 호출로 모든 텍스트 산출물 처리 (maxTokens: 4096) |
+| 대상 | 제목, 스토리(오프닝/챕터/클라이맥스/엔딩/태그라인), 인사이트, TravelDNA 설명, 여행 점수 요약, 순간 하이라이트 |
+| 원칙 | 팩트(장소명, 시간, 거리) 변경 금지, 새로운 사실 생성 금지 |
+| 부분 실패 | 모든 필드 Optional → AI가 누락한 필드는 원본 유지 |
+| 프라이버시 | 장소명/시간 정보만 전송, 사진 미전송 |
+
+**관련 파일:**
+| 파일 | 역할 |
+|------|------|
+| `AIEnhancementModels.swift` | 입출력 데이터 모델 (AIEnhancementInput, AIEnhancementResult) |
+| `AIEnhancementService.swift` | 오케스트레이터 (buildInput → 프롬프트 → AI 호출 → JSON 파싱 → 머지) |
+| `AIServiceProtocol.swift` | `generateContent` 범용 메서드 (4개 프로바이더 공통) |
+
+**데이터 구조 주의사항:**
+- `TravelDNA.description`은 computed property → `aiEnhancedDNADescription` 오버레이 필드 사용
+- `TravelStory`, `TravelInsight`, `MomentScore`, `TripOverallScore` 모두 `let` 필드 → 머지 시 새 인스턴스 생성 필요
+- `TravelInsight`만 커스텀 init 있음 (relatedData 처리)
 
 ### 부가 기능
 | 기능 | 설명 | 관련 파일 |
@@ -625,6 +652,7 @@ settings:
 - ✅ Phase 5: Wander Intelligence (스마트 분석, iOS 17+)
 - ✅ 추가 기능: 보안 잠금, 카테고리, 숨김 기록, 자주 가는 곳
 - ✅ Phase 6: P2P 공유 (CloudKit, 암호화, Deep Link)
+- ✅ Phase 7: AI 다듬기 (BYOK AI로 스마트 분석 텍스트 고도화)
 
 ---
 
@@ -665,6 +693,10 @@ options.deliveryMode = .fastFormat
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-06 | AI 다듬기 기능 구현 (AIEnhancementService, 4개 프로바이더 generateContent, ResultView + RecordDetailFullView 지원) |
+| 2026-02-06 | ResultView에서 이미지 공유/Wander 공유 버튼 제거 (분석 완료 화면 정리) |
+| 2026-02-06 | RecordDetailFullView에 AI 다듬기 버튼 및 Sheet 추가 |
+| 2026-02-06 | AnalysisResult/TravelRecord에 AI 상태 필드 추가 (isAIEnhanced, aiEnhancedDNADescription 등) |
 | 2026-02-05 | P2P 공유 기간 옵션에 '3분' 추가 (테스트용 짧은 만료 시간) |
 | 2026-02-05 | 공유 배지 분리: "공유됨" + "D-day" 두 개 배지 (ShareStatusBadgesView, ExpirationBadgeView) |
 | 2026-02-05 | 만료된 공유 기록 클릭 시 즉시 삭제 기능 (ExpiredRecordPlaceholder) |
@@ -701,4 +733,4 @@ options.deliveryMode = .fastFormat
 
 ---
 
-*최종 업데이트: 2026-02-05*
+*최종 업데이트: 2026-02-06*

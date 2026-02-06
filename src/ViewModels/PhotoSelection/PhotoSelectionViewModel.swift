@@ -215,6 +215,22 @@ struct AnalysisResult {
     /// 인사이트 요약
     var insightSummary: InsightEngine.InsightSummary?
 
+    // MARK: - AI Enhancement State
+
+    /// AI 다듬기 적용 여부
+    var isAIEnhanced: Bool = false
+
+    /// AI 다듬기 적용 시간
+    var aiEnhancedAt: Date?
+
+    /// AI 다듬기에 사용된 프로바이더명
+    var aiEnhancedProvider: String?
+
+    /// AI가 다듬은 TravelDNA 설명 (computed property 오버레이)
+    /// TravelDNA.description은 primaryType의 computed property이므로
+    /// AI 결과를 별도 필드에 저장하고 UI에서 우선 사용
+    var aiEnhancedDNADescription: String?
+
     var placeCount: Int {
         places.count
     }

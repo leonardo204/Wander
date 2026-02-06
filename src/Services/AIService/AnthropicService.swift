@@ -182,6 +182,68 @@ final class AnthropicService: AIServiceProtocol {
         }
     }
 
+    // MARK: - Generate Content (범용)
+
+    func generateContent(
+        systemPrompt: String,
+        userPrompt: String,
+        maxTokens: Int,
+        temperature: Double
+    ) async throws -> String {
+        logger.info("🧠 [Anthropic] generateContent 시작 - maxTokens: \(maxTokens)")
+
+        guard let apiKey = apiKey else {
+            throw AIServiceError.noAPIKey
+        }
+
+        let requestBody = AnthropicRequest(
+            model: model,
+            maxTokens: maxTokens,
+            system: systemPrompt,
+            messages: [
+                AnthropicMessage(role: "user", content: userPrompt)
+            ]
+        )
+
+        let url = URL(string: "\(baseURL)/messages")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue(apiVersion, forHTTPHeaderField: "anthropic-version")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(requestBody)
+        request.timeoutInterval = 60
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw AIServiceError.invalidResponse
+            }
+            switch httpResponse.statusCode {
+            case 200:
+                let result = try JSONDecoder().decode(AnthropicResponse.self, from: data)
+                guard let textContent = result.content.first(where: { $0.type == "text" }),
+                      let text = textContent.text else {
+                    throw AIServiceError.invalidResponse
+                }
+                logger.info("🧠 [Anthropic] generateContent 성공 - \(text.count)자")
+                return text
+            case 401:
+                throw AIServiceError.invalidAPIKey
+            case 429:
+                throw AIServiceError.rateLimitExceeded
+            default:
+                throw AIServiceError.serverError(httpResponse.statusCode)
+            }
+        } catch let error as AIServiceError {
+            throw error
+        } catch is DecodingError {
+            throw AIServiceError.decodingError
+        } catch {
+            throw AIServiceError.networkError(error)
+        }
+    }
+
     // MARK: - Private Helpers
 
     private var systemPrompt: String {

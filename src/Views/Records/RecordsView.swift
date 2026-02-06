@@ -652,6 +652,11 @@ struct RecordDetailFullView: View {
     @State private var pendingP2PShareResult: P2PShareResult?  // onDismiss에서 사용할 임시 저장소
     @State private var p2pShareResultWrapper: P2PShareResultWrapper?
 
+    // AI 다듬기
+    @State private var showAIEnhancement = false
+    @State private var isEnhancing = false
+    @State private var enhancementError: String?
+
     var body: some View {
         ScrollView {
             VStack(spacing: WanderSpacing.space6) {
@@ -684,8 +689,8 @@ struct RecordDetailFullView: View {
                     wanderIntelligenceSection
                 }
 
-                // Share Button (at bottom)
-                shareButton
+                // AI 다듬기 + 공유 버튼
+                actionButtonsSection
             }
             .padding(.horizontal, WanderSpacing.screenMargin)
             .padding(.top, WanderSpacing.space4)
@@ -792,11 +797,27 @@ struct RecordDetailFullView: View {
                 p2pShareResultWrapper = nil
             }
         }
+        // AI 다듬기 시트
+        .sheet(isPresented: $showAIEnhancement) {
+            AIEnhancementSheet(
+                isEnhancing: $isEnhancing,
+                enhancementError: $enhancementError,
+                onEnhance: { provider in
+                    performRecordAIEnhancement(provider: provider)
+                }
+            )
+            .presentationDetents([.medium])
+        }
     }
 
-    // MARK: - Share Button
-    private var shareButton: some View {
+    // MARK: - Action Buttons Section
+    private var actionButtonsSection: some View {
         VStack(spacing: WanderSpacing.space3) {
+            // AI 다듬기 버튼 (Wander Intelligence가 있을 때만)
+            if record.hasWanderIntelligence {
+                recordAIEnhancementButton
+            }
+
             // 이미지 공유 버튼
             Button(action: { showShareSheet = true }) {
                 HStack(spacing: WanderSpacing.space2) {
@@ -1067,6 +1088,93 @@ struct RecordDetailFullView: View {
         logger.info("🙈 [RecordDetailFullView] 기록 숨김 상태 변경: \(record.title) → \(record.isHidden ? "숨김" : "표시")")
         if record.isHidden {
             dismiss()
+        }
+    }
+
+    // MARK: - AI Enhancement Button (기록 상세)
+
+    @ViewBuilder
+    private var recordAIEnhancementButton: some View {
+        if record.isAIEnhanced {
+            // 완료 상태 배지
+            HStack(spacing: WanderSpacing.space2) {
+                Image(systemName: "checkmark.seal.fill")
+                Text("AI로 다듬어짐")
+                if let provider = record.aiEnhancedProvider {
+                    Text("· \(provider)")
+                        .foregroundColor(WanderColors.textSecondary)
+                }
+            }
+            .font(WanderTypography.bodySmall)
+            .foregroundColor(WanderColors.success)
+            .frame(maxWidth: .infinity)
+            .frame(height: WanderSpacing.buttonHeight)
+            .background(WanderColors.successBackground)
+            .cornerRadius(WanderSpacing.radiusLarge)
+        } else if hasConfiguredAIProvider {
+            Button(action: { showAIEnhancement = true }) {
+                HStack(spacing: WanderSpacing.space2) {
+                    if isEnhancing {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.8)
+                    } else {
+                        Image(systemName: "sparkles")
+                    }
+                    Text(isEnhancing ? "다듬는 중..." : "AI로 다듬기")
+                }
+                .font(WanderTypography.headline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: WanderSpacing.buttonHeight)
+                .background(
+                    LinearGradient(
+                        colors: [WanderColors.primary, Color.purple.opacity(0.7)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(WanderSpacing.radiusLarge)
+            }
+            .disabled(isEnhancing)
+        }
+    }
+
+    private var hasConfiguredAIProvider: Bool {
+        AIProvider.allCases.contains { provider in
+            (try? KeychainManager.shared.getAPIKey(for: provider.keychainType)) != nil
+        }
+    }
+
+    // MARK: - AI Enhancement Action (기록 상세)
+
+    private func performRecordAIEnhancement(provider: AIProvider) {
+        isEnhancing = true
+        enhancementError = nil
+        showAIEnhancement = false
+
+        Task {
+            do {
+                let enhancementResult = try await AIEnhancementService.enhance(
+                    record: record,
+                    provider: provider
+                )
+
+                await MainActor.run {
+                    AIEnhancementService.apply(enhancementResult, to: record)
+                    record.aiEnhancedProvider = provider.displayName
+                    try? modelContext.save()
+                    isEnhancing = false
+                    logger.info("✨ [RecordDetail] AI 다듬기 완료 - provider: \(provider.displayName)")
+                }
+            } catch {
+                await MainActor.run {
+                    isEnhancing = false
+                    enhancementError = error.localizedDescription
+                    showAIEnhancement = true
+                    logger.error("✨ [RecordDetail] AI 다듬기 실패: \(error.localizedDescription)")
+                }
+            }
         }
     }
 }

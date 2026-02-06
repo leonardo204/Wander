@@ -66,6 +66,14 @@ protocol AIServiceProtocol {
 
     /// 여행 스토리 생성
     func generateStory(from travelData: TravelStoryInput) async throws -> String
+
+    /// 범용 콘텐츠 생성 (AI 다듬기 등에서 사용)
+    func generateContent(
+        systemPrompt: String,
+        userPrompt: String,
+        maxTokens: Int,
+        temperature: Double
+    ) async throws -> String
 }
 
 // MARK: - Travel Story Input

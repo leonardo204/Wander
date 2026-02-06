@@ -207,6 +207,69 @@ final class GoogleAIService: AIServiceProtocol {
         }
     }
 
+    // MARK: - Generate Content (범용)
+
+    func generateContent(
+        systemPrompt: String,
+        userPrompt: String,
+        maxTokens: Int,
+        temperature: Double
+    ) async throws -> String {
+        logger.info("💎 [Google] generateContent 시작 - maxTokens: \(maxTokens)")
+
+        guard let apiKey = apiKey else {
+            throw AIServiceError.noAPIKey
+        }
+
+        let fullPrompt = "\(systemPrompt)\n\n\(userPrompt)"
+        let url = URL(string: "\(baseURL):generateContent")!
+
+        let requestBody = GeminiRequest(
+            contents: [
+                GeminiContent(parts: [GeminiPart(text: fullPrompt)])
+            ],
+            generationConfig: GeminiGenerationConfig(
+                temperature: temperature,
+                maxOutputTokens: maxTokens
+            )
+        )
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
+        request.httpBody = try JSONEncoder().encode(requestBody)
+        request.timeoutInterval = 60
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw AIServiceError.invalidResponse
+            }
+            switch httpResponse.statusCode {
+            case 200:
+                let result = try JSONDecoder().decode(GeminiResponse.self, from: data)
+                guard let text = result.candidates?.first?.content.parts.first?.text else {
+                    throw AIServiceError.invalidResponse
+                }
+                logger.info("💎 [Google] generateContent 성공 - \(text.count)자")
+                return text
+            case 400, 403:
+                throw AIServiceError.invalidAPIKey
+            case 429:
+                throw AIServiceError.rateLimitExceeded
+            default:
+                throw AIServiceError.serverError(httpResponse.statusCode)
+            }
+        } catch let error as AIServiceError {
+            throw error
+        } catch is DecodingError {
+            throw AIServiceError.decodingError
+        } catch {
+            throw AIServiceError.networkError(error)
+        }
+    }
+
     // MARK: - Private Helpers
 
     private var systemPrompt: String {

@@ -32,6 +32,20 @@ final class TravelRecord {
     /// 공유 기록 만료일 (nil이면 영구 보관)
     var shareExpiresAt: Date?
 
+    // MARK: - AI Enhancement State
+
+    /// AI 다듬기 적용 여부
+    var isAIEnhanced: Bool = false
+
+    /// AI 다듬기 적용 시간
+    var aiEnhancedAt: Date?
+
+    /// AI 다듬기에 사용된 프로바이더명
+    var aiEnhancedProvider: String?
+
+    /// AI가 다듬은 TravelDNA 설명
+    var aiEnhancedDNADescription: String?
+
     // MARK: - Wander Intelligence Data (JSON 직렬화)
 
     /// 여행 점수 데이터 (JSON)

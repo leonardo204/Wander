@@ -175,6 +175,67 @@ final class OpenAIService: AIServiceProtocol {
         }
     }
 
+    // MARK: - Generate Content (범용)
+
+    func generateContent(
+        systemPrompt: String,
+        userPrompt: String,
+        maxTokens: Int,
+        temperature: Double
+    ) async throws -> String {
+        logger.info("🤖 [OpenAI] generateContent 시작 - maxTokens: \(maxTokens)")
+
+        guard let apiKey = apiKey else {
+            throw AIServiceError.noAPIKey
+        }
+
+        let requestBody = OpenAIRequest(
+            model: model,
+            messages: [
+                Message(role: "system", content: systemPrompt),
+                Message(role: "user", content: userPrompt)
+            ],
+            temperature: temperature,
+            maxTokens: maxTokens
+        )
+
+        let url = URL(string: "\(baseURL)/chat/completions")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(requestBody)
+        request.timeoutInterval = 60
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw AIServiceError.invalidResponse
+            }
+            switch httpResponse.statusCode {
+            case 200:
+                let result = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+                guard let content = result.choices.first?.message.content else {
+                    throw AIServiceError.invalidResponse
+                }
+                logger.info("🤖 [OpenAI] generateContent 성공 - \(content.count)자")
+                return content
+            case 401:
+                throw AIServiceError.invalidAPIKey
+            case 429:
+                throw AIServiceError.rateLimitExceeded
+            default:
+                throw AIServiceError.serverError(httpResponse.statusCode)
+            }
+        } catch let error as AIServiceError {
+            throw error
+        } catch is DecodingError {
+            throw AIServiceError.decodingError
+        } catch {
+            throw AIServiceError.networkError(error)
+        }
+    }
+
     // MARK: - Private Helpers
 
     private var systemPrompt: String {

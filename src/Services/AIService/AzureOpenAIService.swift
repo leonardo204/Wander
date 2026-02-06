@@ -160,6 +160,76 @@ final class AzureOpenAIService: AIServiceProtocol {
         }
     }
 
+    // MARK: - Generate Content (범용)
+
+    func generateContent(
+        systemPrompt: String,
+        userPrompt: String,
+        maxTokens: Int,
+        temperature: Double
+    ) async throws -> String {
+        logger.info("☁️ [Azure] generateContent 시작 - maxTokens: \(maxTokens)")
+
+        guard let apiKey = apiKey else {
+            throw AIServiceError.noAPIKey
+        }
+
+        guard !endpoint.isEmpty, !deploymentName.isEmpty else {
+            throw AIServiceError.invalidConfiguration
+        }
+
+        let urlString = "\(endpoint)/openai/deployments/\(deploymentName)/chat/completions?api-version=\(apiVersion)"
+        guard let url = URL(string: urlString) else {
+            throw AIServiceError.invalidConfiguration
+        }
+
+        let requestBody = AzureOpenAIRequest(
+            messages: [
+                AzureMessage(role: "system", content: systemPrompt),
+                AzureMessage(role: "user", content: userPrompt)
+            ],
+            temperature: temperature,
+            maxTokens: maxTokens
+        )
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(apiKey, forHTTPHeaderField: "api-key")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(requestBody)
+        request.timeoutInterval = 60
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw AIServiceError.invalidResponse
+            }
+            switch httpResponse.statusCode {
+            case 200:
+                let result = try JSONDecoder().decode(AzureOpenAIResponse.self, from: data)
+                guard let content = result.choices.first?.message.content else {
+                    throw AIServiceError.invalidResponse
+                }
+                logger.info("☁️ [Azure] generateContent 성공 - \(content.count)자")
+                return content
+            case 401:
+                throw AIServiceError.invalidAPIKey
+            case 404:
+                throw AIServiceError.invalidConfiguration
+            case 429:
+                throw AIServiceError.rateLimitExceeded
+            default:
+                throw AIServiceError.serverError(httpResponse.statusCode)
+            }
+        } catch let error as AIServiceError {
+            throw error
+        } catch is DecodingError {
+            throw AIServiceError.decodingError
+        } catch {
+            throw AIServiceError.networkError(error)
+        }
+    }
+
     // MARK: - Private Helpers
 
     private var systemPrompt: String {
