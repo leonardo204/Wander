@@ -290,6 +290,11 @@ struct AnalysisResult {
     var allBadges: [MomentScoreService.SpecialBadge] {
         Array(Set(momentScores.flatMap { $0.specialBadges }))
     }
+    
+    /// Wander Intelligence 데이터 유무
+    var hasWanderIntelligence: Bool {
+        tripScore != nil || travelDNA != nil || travelStory != nil
+    }
 }
 
 // MARK: - Place Cluster Model
