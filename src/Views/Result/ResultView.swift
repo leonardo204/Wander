@@ -64,9 +64,9 @@ struct ResultView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("닫기") {
-                        logger.info("📊 [ResultView] 닫기 버튼 클릭 - 저장됨: \(isSaved)")
-                        // onDismiss 콜백 호출 (부모 View 닫기)
+                    Button("취소") {
+                        logger.info("📊 [ResultView] 취소 버튼 클릭 - 저장됨: \(isSaved)")
+                        // onDismiss 콜백 → 홈 화면으로 복귀
                         onDismiss?()
                     }
                 }

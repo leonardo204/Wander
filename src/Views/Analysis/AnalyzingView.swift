@@ -78,6 +78,7 @@ struct AnalyzingView: View {
                             }
                         }
                     )
+                    .navigationBarBackButtonHidden(true)
                     .onAppear {
                         logger.info("📱 ResultView 표시됨 - places: \(result.places.count), photos: \(result.photoCount)")
                     }
