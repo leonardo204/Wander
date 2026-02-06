@@ -79,23 +79,23 @@ class TravelDNAService {
         var description: String {
             switch self {
             case .adventurer:
-                return "새로운 경험과 도전을 즐기는 모험가 스타일입니다. 남들이 가지 않는 곳을 찾아 떠나는 것을 좋아합니다."
+                return "야외 활동과 자연 탐험 비중이 높은 여행 패턴."
             case .foodie:
-                return "현지 맛집을 찾아다니는 미식 여행가입니다. 음식을 통해 그 지역의 문화를 경험합니다."
+                return "음식점/카페 방문 비중이 높은 여행 패턴."
             case .natureLover:
-                return "자연 속에서 힐링을 찾는 여행 스타일입니다. 산, 바다, 숲에서 에너지를 충전합니다."
+                return "산, 바다, 공원 등 자연 장소 방문이 중심."
             case .culturist:
-                return "역사와 예술을 탐구하는 문화 여행가입니다. 박물관, 유적지를 통해 깊이 있는 여행을 즐깁니다."
+                return "문화시설, 유적지 방문 비중이 높은 여행 패턴."
             case .photographer:
-                return "순간을 사진으로 담는 것을 좋아하는 스타일입니다. 포토스팟을 찾아 특별한 장면을 기록합니다."
+                return "장소당 평균 사진 수가 많은 여행 패턴."
             case .relaxer:
-                return "여유로운 휴식을 중시하는 여행 스타일입니다. 바쁜 일상에서 벗어나 재충전하는 시간을 갖습니다."
+                return "소수 장소에 오래 체류하는 여행 패턴."
             case .socialite:
-                return "사람들과 함께하는 여행을 즐기는 스타일입니다. 새로운 인연을 만드는 것을 좋아합니다."
+                return "식당, 카페 등 소셜 장소 비중이 높은 패턴."
             case .planner:
-                return "체계적인 계획을 세워 여행하는 스타일입니다. 효율적인 동선과 일정을 중요시합니다."
+                return "일정이 빈틈없이 구성된 여행 패턴."
             case .wanderer:
-                return "정해진 일정 없이 발길 닿는 대로 떠나는 자유로운 영혼입니다. 즉흥적인 발견을 즐깁니다."
+                return "다양한 유형의 장소를 넓게 방문하는 패턴."
             }
         }
 

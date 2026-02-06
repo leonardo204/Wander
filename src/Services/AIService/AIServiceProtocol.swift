@@ -56,6 +56,14 @@ enum AIProvider: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - AI Image Data
+
+/// 멀티모달 API에 전달할 이미지 데이터
+struct AIImageData {
+    let data: Data        // JPEG 바이너리
+    let mimeType: String  // "image/jpeg"
+}
+
 // MARK: - AI Service Protocol
 
 protocol AIServiceProtocol {
@@ -74,6 +82,36 @@ protocol AIServiceProtocol {
         maxTokens: Int,
         temperature: Double
     ) async throws -> String
+
+    /// 멀티모달 콘텐츠 생성 (이미지 + 텍스트)
+    /// 기본 구현: 이미지 무시하고 텍스트만 전송 (비멀티모달 프로바이더용 폴백)
+    func generateContentWithImages(
+        systemPrompt: String,
+        userPrompt: String,
+        images: [AIImageData],
+        maxTokens: Int,
+        temperature: Double
+    ) async throws -> String
+}
+
+// MARK: - Default Multimodal Fallback
+
+extension AIServiceProtocol {
+    /// 멀티모달 미지원 프로바이더: 이미지 무시, 텍스트만 전송
+    func generateContentWithImages(
+        systemPrompt: String,
+        userPrompt: String,
+        images: [AIImageData],
+        maxTokens: Int,
+        temperature: Double
+    ) async throws -> String {
+        return try await generateContent(
+            systemPrompt: systemPrompt,
+            userPrompt: userPrompt,
+            maxTokens: maxTokens,
+            temperature: temperature
+        )
+    }
 }
 
 // MARK: - Travel Story Input

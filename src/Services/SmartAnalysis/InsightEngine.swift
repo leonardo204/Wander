@@ -194,12 +194,12 @@ class InsightEngine {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .goldenMoment,
-                title: "황금 시간대를 놓치지 않았어요",
-                description: "일출이나 일몰 시간대에 \(goldenCount)곳을 방문했습니다. 가장 아름다운 빛을 담았네요!",
+                title: "골든아워 방문 \(goldenCount)곳",
+                description: "\(goldenCount)곳을 일출/일몰 시간대(05~07시, 17~19시)에 방문.",
                 emoji: "🌅",
                 importance: importance,
                 relatedData: InsightData(clusters: goldenHourClusters, timeRange: nil, location: nil, value: Double(goldenCount), comparison: nil),
-                actionSuggestion: "황금 시간대 사진을 모아 특별 앨범을 만들어보세요"
+                actionSuggestion: nil
             ))
         }
 
@@ -211,8 +211,8 @@ class InsightEngine {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .timePattern,
-                title: "\(hourString)가 당신의 활동 시간",
-                description: "이 여행에서 \(hourString)에 가장 활발하게 움직였어요. \(count)곳을 방문했습니다.",
+                title: "주요 활동 시간: \(hourString)",
+                description: "\(hourString) 시간대에 \(count)곳 방문. 가장 활동이 집중된 시간대.",
                 emoji: "⏰",
                 importance: .notable,
                 relatedData: InsightData(clusters: nil, timeRange: nil, location: nil, value: Double(count), comparison: hourString),
@@ -230,12 +230,12 @@ class InsightEngine {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .perfectTiming,
-                title: "밤의 탐험가",
-                description: "밤 시간대에 \(nightClusters.count)곳을 탐험했어요. 낮과는 다른 매력을 발견했네요!",
+                title: "야간 활동 \(nightClusters.count)곳",
+                description: "20시 이후 시간대에 \(nightClusters.count)곳 방문.",
                 emoji: "🌙",
                 importance: .notable,
                 relatedData: InsightData(clusters: nightClusters, timeRange: nil, location: nil, value: nil, comparison: nil),
-                actionSuggestion: "야경 사진들을 모아보세요"
+                actionSuggestion: nil
             ))
         }
 
@@ -258,12 +258,12 @@ class InsightEngine {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .hiddenGem,
-                title: "숨겨진 보석을 발견했어요",
-                description: "\(gemNames) - 많은 사람들이 지나치는 곳에서 특별한 순간을 찾았습니다.",
+                title: "고유성 높은 장소 \(hiddenGems.count)곳",
+                description: "\(gemNames) — 고유성 점수 8점 이상.",
                 emoji: "💎",
                 importance: .highlight,
                 relatedData: InsightData(clusters: hiddenGems.map { $0.0 }, timeRange: nil, location: nil, value: nil, comparison: nil),
-                actionSuggestion: "이 장소들을 '나만의 명소'로 저장해보세요"
+                actionSuggestion: nil
             ))
         }
 
@@ -299,8 +299,8 @@ class InsightEngine {
                 insights.append(TravelInsight(
                     id: UUID(),
                     type: .localFavorite,
-                    title: "시간 가는 줄 몰랐던 곳",
-                    description: "\(longest.name)에서 \(timeString)을 보냈어요. 그만큼 매력적인 장소였나봐요!",
+                    title: "\(longest.name)에서 \(timeString) 체류",
+                    description: "이 여행에서 가장 오래 머문 장소.",
                     emoji: "⏳",
                     importance: .significant,
                     relatedData: InsightData(clusters: [longest], timeRange: nil, location: nil, value: duration, comparison: timeString),
@@ -319,12 +319,12 @@ class InsightEngine {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .unexpectedDiscovery,
-                title: "계획에 없던 발견들",
-                description: "예상과 다른 곳에서 \(unexpectedDiscoveries.count)번의 특별한 순간을 만났어요. 여행의 묘미죠!",
+                title: "장면-활동 불일치 \(unexpectedDiscoveries.count)곳",
+                description: "\(unexpectedDiscoveries.count)곳에서 예상 활동 유형과 다른 장면이 감지됨.",
                 emoji: "🎲",
                 importance: .notable,
                 relatedData: InsightData(clusters: unexpectedDiscoveries.map { $0.0 }, timeRange: nil, location: nil, value: nil, comparison: nil),
-                actionSuggestion: "우연한 발견들을 기록해두세요"
+                actionSuggestion: nil
             ))
         }
 
@@ -344,12 +344,12 @@ class InsightEngine {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .diverseExperience,
-                title: "다양한 경험의 여행",
-                description: "\(diversityScore)가지 다른 종류의 활동을 즐겼어요. 풍성한 여행이었네요!",
+                title: "활동 유형 \(diversityScore)종류",
+                description: "\(diversityScore)가지 다른 활동 유형 방문. 다양한 구성.",
                 emoji: "🎨",
                 importance: .highlight,
                 relatedData: InsightData(clusters: nil, timeRange: nil, location: nil, value: Double(diversityScore), comparison: nil),
-                actionSuggestion: "각 활동별 하이라이트를 정리해보세요"
+                actionSuggestion: nil
             ))
         } else if diversityScore <= 2 && context.clusters.count >= 4 {
             let mainActivity = activityTypes.first?.koreanName ?? "활동"
@@ -357,8 +357,8 @@ class InsightEngine {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .deepDive,
-                title: "깊이 있는 \(mainActivity) 탐험",
-                description: "한 가지에 집중한 여행이었어요. \(mainActivity)의 진정한 매력을 느꼈을 거예요.",
+                title: "\(mainActivity) 집중 여행",
+                description: "\(context.clusters.count)곳 중 대부분이 \(mainActivity) 유형.",
                 emoji: "🔬",
                 importance: .notable,
                 relatedData: nil,
@@ -376,12 +376,12 @@ class InsightEngine {
                 insights.append(TravelInsight(
                     id: UUID(),
                     type: .balancedTrip,
-                    title: "완벽한 균형의 여행",
-                    description: "휴식과 활동, 실내와 야외가 조화롭게 어우러진 여행이었어요.",
+                    title: "균형 잡힌 활동 구성",
+                    description: "야외/실내, 활동/휴식 비율이 30~70% 범위 내.",
                     emoji: "⚖️",
                     importance: .significant,
                     relatedData: nil,
-                    actionSuggestion: "이 여행 스타일을 다음에도 참고해보세요"
+                    actionSuggestion: nil
                 ))
             }
         }
@@ -397,12 +397,13 @@ class InsightEngine {
         // 이동 거리 마일스톤
         let distanceKm = context.totalDistance / 1000
 
+        let distanceStr = String(format: "%.1f", distanceKm)
         if distanceKm >= 100 {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .distanceMilestone,
-                title: "대장정을 완료했어요!",
-                description: "총 \(String(format: "%.1f", distanceKm))km를 이동했습니다. 정말 대단한 여정이었네요!",
+                title: "총 이동 거리 \(distanceStr)km",
+                description: "이 여행에서 총 \(distanceStr)km를 이동.",
                 emoji: "🏆",
                 importance: .exceptional,
                 relatedData: InsightData(clusters: nil, timeRange: nil, location: nil, value: distanceKm, comparison: nil),
@@ -412,8 +413,8 @@ class InsightEngine {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .distanceMilestone,
-                title: "50km 돌파!",
-                description: "총 \(String(format: "%.1f", distanceKm))km를 이동했어요. 열심히 돌아다녔네요!",
+                title: "총 이동 거리 \(distanceStr)km",
+                description: "이 여행에서 총 \(distanceStr)km를 이동.",
                 emoji: "🚀",
                 importance: .highlight,
                 relatedData: InsightData(clusters: nil, timeRange: nil, location: nil, value: distanceKm, comparison: nil),
@@ -423,8 +424,8 @@ class InsightEngine {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .distanceMilestone,
-                title: "\(String(format: "%.1f", distanceKm))km의 발자취",
-                description: "이 여행에서 \(String(format: "%.1f", distanceKm))km를 함께 걸었어요.",
+                title: "총 이동 거리 \(distanceStr)km",
+                description: "이 여행에서 총 \(distanceStr)km를 이동.",
                 emoji: "👣",
                 importance: .notable,
                 relatedData: InsightData(clusters: nil, timeRange: nil, location: nil, value: distanceKm, comparison: nil),
@@ -437,19 +438,19 @@ class InsightEngine {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .photoMoment,
-                title: "100장 이상의 추억",
-                description: "\(context.totalPhotos)장의 사진에 이 여행을 담았어요. 소중한 순간들이 가득하네요!",
+                title: "촬영 사진 \(context.totalPhotos)장",
+                description: "이 여행에서 \(context.totalPhotos)장의 사진을 촬영.",
                 emoji: "📸",
                 importance: .highlight,
                 relatedData: InsightData(clusters: nil, timeRange: nil, location: nil, value: Double(context.totalPhotos), comparison: nil),
-                actionSuggestion: "베스트 10장을 선정해보세요"
+                actionSuggestion: nil
             ))
         } else if context.totalPhotos >= 50 {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .photoMoment,
-                title: "\(context.totalPhotos)컷의 이야기",
-                description: "많은 순간을 카메라에 담았네요. 각 사진마다 이야기가 있을 거예요.",
+                title: "촬영 사진 \(context.totalPhotos)장",
+                description: "이 여행에서 \(context.totalPhotos)장의 사진을 촬영.",
                 emoji: "📷",
                 importance: .notable,
                 relatedData: nil,
@@ -469,8 +470,8 @@ class InsightEngine {
                 insights.append(TravelInsight(
                     id: UUID(),
                     type: .timeWellSpent,
-                    title: "\(hours)시간의 알찬 여행",
-                    description: "아침부터 저녁까지 알차게 보낸 하루였어요!",
+                    title: "총 활동 시간 \(hours)시간",
+                    description: "첫 장소부터 마지막 장소까지 \(hours)시간 활동.",
                     emoji: "☀️",
                     importance: .significant,
                     relatedData: InsightData(clusters: nil, timeRange: firstCluster.startTime...lastEndTime, location: nil, value: Double(hours), comparison: nil),
@@ -494,12 +495,12 @@ class InsightEngine {
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .serendipity,
-                title: "전설이 될 순간을 만났어요",
-                description: "\(legendaryMoments.count)번의 전설적인 순간이 있었어요. 평생 기억될 거예요!",
+                title: "최고 등급 순간 \(legendaryMoments.count)회",
+                description: "\(legendaryMoments.count)회의 legendary 등급 순간 기록.",
                 emoji: "👑",
                 importance: .exceptional,
                 relatedData: nil,
-                actionSuggestion: "이 순간들은 꼭 별도로 보관하세요"
+                actionSuggestion: nil
             ))
         }
 
@@ -508,17 +509,17 @@ class InsightEngine {
         let uniqueBadges = Set(allBadges)
 
         if uniqueBadges.count >= 5 {
-            let badgeEmojis = uniqueBadges.prefix(5).map { $0.emoji }.joined(separator: " ")
+            let badgeNames = uniqueBadges.prefix(5).map { $0.koreanName }.joined(separator: ", ")
 
             insights.append(TravelInsight(
                 id: UUID(),
                 type: .personalRecord,
-                title: "배지 컬렉터",
-                description: "\(uniqueBadges.count)종류의 특별 배지를 획득했어요! \(badgeEmojis)",
+                title: "획득 배지 \(uniqueBadges.count)종",
+                description: "\(uniqueBadges.count)종류 배지 획득: \(badgeNames).",
                 emoji: "🏅",
                 importance: .highlight,
                 relatedData: nil,
-                actionSuggestion: "모든 배지 종류를 모아보세요"
+                actionSuggestion: nil
             ))
         }
 
@@ -535,8 +536,8 @@ class InsightEngine {
                 insights.append(TravelInsight(
                     id: UUID(),
                     type: .memoryTrigger,
-                    title: "원점으로 돌아온 여정",
-                    description: "시작점 근처에서 여행을 마무리했어요. 완벽한 원을 그린 하루였네요.",
+                    title: "순환 동선",
+                    description: "시작점에서 \(Int(returnDistance))m 이내로 복귀. 원형 동선.",
                     emoji: "🔄",
                     importance: .notable,
                     relatedData: InsightData(clusters: [firstPlace, lastPlace], timeRange: nil, location: nil, value: returnDistance, comparison: nil),
@@ -551,8 +552,8 @@ class InsightEngine {
                 insights.append(TravelInsight(
                     id: UUID(),
                     type: .personalRecord,
-                    title: "진정한 탐험가",
-                    description: "탐험 지수 \(dna.explorationScore)점! 새로운 곳을 발견하는 걸 즐기시는군요.",
+                    title: "탐험 지수 \(dna.explorationScore)점",
+                    description: "다양한 유형의 장소를 넓게 방문. 탐험 지수 상위.",
                     emoji: "🧭",
                     importance: .significant,
                     relatedData: nil,
@@ -564,8 +565,8 @@ class InsightEngine {
                 insights.append(TravelInsight(
                     id: UUID(),
                     type: .personalRecord,
-                    title: "문화 애호가",
-                    description: "문화 지수 \(dna.cultureScore)점! 그 지역의 문화를 깊이 경험했어요.",
+                    title: "문화 지수 \(dna.cultureScore)점",
+                    description: "문화시설/유적지 방문 비중 높음. 문화 지수 상위.",
                     emoji: "🎭",
                     importance: .significant,
                     relatedData: nil,
@@ -616,11 +617,11 @@ extension InsightEngine {
 
         var summaryText = ""
         if specialCount > 0 {
-            summaryText = "이 여행에서 \(specialCount)개의 특별한 발견이 있었어요!"
+            summaryText = "총 \(insights.count)개 인사이트, exceptional \(specialCount)개."
         } else if highlightCount > 0 {
-            summaryText = "\(highlightCount)개의 하이라이트 인사이트를 발견했어요."
+            summaryText = "총 \(insights.count)개 인사이트, highlight \(highlightCount)개."
         } else {
-            summaryText = "총 \(insights.count)개의 인사이트를 발견했습니다."
+            summaryText = "총 \(insights.count)개 인사이트 발견."
         }
 
         return InsightSummary(

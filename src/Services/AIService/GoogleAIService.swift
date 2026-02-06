@@ -329,6 +329,80 @@ final class GoogleAIService: AIServiceProtocol {
         }
     }
 
+    // MARK: - Generate Content with Images (멀티모달)
+
+    func generateContentWithImages(
+        systemPrompt: String,
+        userPrompt: String,
+        images: [AIImageData],
+        maxTokens: Int,
+        temperature: Double
+    ) async throws -> String {
+        let selectedModel = Self.getSelectedModel()
+
+        let adjustedMaxTokens: Int
+        let adjustedTimeout: TimeInterval
+        if selectedModel == .gemini25Flash {
+            adjustedMaxTokens = maxTokens * 4
+            adjustedTimeout = 120
+        } else {
+            adjustedMaxTokens = maxTokens
+            adjustedTimeout = 60
+        }
+
+        logger.info("💎 [Google] generateContentWithImages 시작 - model: \(selectedModel.displayName), images: \(images.count)장, maxTokens: \(maxTokens) → \(adjustedMaxTokens)")
+
+        // 멀티모달 parts 구성: 텍스트 + 이미지들
+        var parts: [GeminiPart] = []
+        parts.append(GeminiPart(text: "\(systemPrompt)\n\n\(userPrompt)"))
+
+        for (index, image) in images.enumerated() {
+            let base64 = image.data.base64EncodedString()
+            parts.append(GeminiPart(mimeType: image.mimeType, data: base64))
+            logger.info("💎 [Google] 이미지 \(index + 1) 추가 - \(image.mimeType), \(image.data.count) bytes")
+        }
+
+        let request = try await buildGeminiRequest(
+            contents: [GeminiContent(parts: parts)],
+            generationConfig: GeminiGenerationConfig(
+                temperature: temperature,
+                maxOutputTokens: adjustedMaxTokens
+            ),
+            timeoutInterval: adjustedTimeout
+        )
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw AIServiceError.invalidResponse
+            }
+            switch httpResponse.statusCode {
+            case 200:
+                let result = try decodeGeminiResponse(from: data)
+                guard let text = result.candidates?.first?.content.parts.first?.text else {
+                    logger.error("💎 [Google] generateContentWithImages 파싱 실패")
+                    throw AIServiceError.invalidResponse
+                }
+                logger.info("💎 [Google] generateContentWithImages 성공 - \(text.count)자")
+                return text
+            case 400, 401, 403:
+                let errorBody = String(data: data, encoding: .utf8) ?? "no body"
+                logger.error("💎 [Google] generateContentWithImages 실패 - status: \(httpResponse.statusCode), body: \(errorBody)")
+                throw AIServiceError.invalidAPIKey
+            case 429:
+                throw AIServiceError.rateLimitExceeded
+            default:
+                let errorBody = String(data: data, encoding: .utf8) ?? "no body"
+                logger.error("💎 [Google] generateContentWithImages 서버 오류 - status: \(httpResponse.statusCode), body: \(errorBody)")
+                throw AIServiceError.serverError(httpResponse.statusCode)
+            }
+        } catch let error as AIServiceError {
+            throw error
+        } catch {
+            throw AIServiceError.networkError(error)
+        }
+    }
+
     // MARK: - Response Decoder
 
     /// Cloud Code API / 표준 API 양쪽 응답 포맷을 모두 처리
@@ -413,7 +487,25 @@ private struct GeminiContent: Codable {
 }
 
 private struct GeminiPart: Codable {
-    let text: String
+    let text: String?
+    let inlineData: InlineData?
+
+    struct InlineData: Codable {
+        let mimeType: String  // "image/jpeg"
+        let data: String      // base64
+    }
+
+    /// 텍스트 전용 이니셜라이저
+    init(text: String) {
+        self.text = text
+        self.inlineData = nil
+    }
+
+    /// 이미지 전용 이니셜라이저
+    init(mimeType: String, data: String) {
+        self.text = nil
+        self.inlineData = InlineData(mimeType: mimeType, data: data)
+    }
 }
 
 private struct GeminiGenerationConfig: Encodable {

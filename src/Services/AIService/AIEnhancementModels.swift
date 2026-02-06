@@ -94,6 +94,7 @@ struct AIEnhancementResult: Codable {
     let tripScoreSummary: String?
     let momentHighlights: [EnhancedMomentHighlight]?
     let travelDNADescription: String?
+    let corrections: [PlaceCorrection]?  // AI 사실 보정
 
     struct EnhancedStory: Codable {
         let title: String?
@@ -119,5 +120,13 @@ struct AIEnhancementResult: Codable {
     struct EnhancedMomentHighlight: Codable {
         let placeName: String
         let highlights: [String]
+    }
+
+    /// AI가 사진/GPS/날짜를 보고 온디바이스 분석의 오류를 보정한 결과
+    struct PlaceCorrection: Codable {
+        let placeName: String
+        let correctedActivityType: String?   // 보정된 활동 유형
+        let correctedSceneCategory: String?  // 보정된 장면 분류
+        let note: String?                    // 보정 이유 (로그용)
     }
 }

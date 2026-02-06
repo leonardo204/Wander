@@ -477,13 +477,13 @@ extension MomentScoreService {
         let legendaryCount = momentScores.filter { $0.grade == .legendary }.count
         let epicCount = momentScores.filter { $0.grade == .epic }.count
 
-        var summary = "\(momentScores.count)개의 순간 중 "
+        var summary = "\(momentScores.count)개 순간, "
         if legendaryCount > 0 {
-            summary += "전설적인 순간 \(legendaryCount)개"
+            summary += "legendary \(legendaryCount)개, epic \(epicCount)개. 평균 \(averageScore)점."
         } else if epicCount > 0 {
-            summary += "특별한 순간 \(epicCount)개"
+            summary += "epic \(epicCount)개. 평균 \(averageScore)점."
         } else {
-            summary += "평균 \(averageScore)점의 여행"
+            summary += "평균 \(averageScore)점."
         }
 
         return TripOverallScore(

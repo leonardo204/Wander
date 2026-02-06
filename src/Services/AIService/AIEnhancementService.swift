@@ -1,11 +1,13 @@
 import Foundation
+import Photos
+import UIKit
 import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "AIEnhancement")
 
 /// AI 다듬기 서비스
-/// 규칙 기반 분석 결과의 텍스트를 AI로 자연스럽게 다듬는 오케스트레이터
-/// 단일 API 호출로 모든 텍스트 산출물을 한 번에 처리
+/// 온디바이스 분석의 사실 기반 텍스트를 AI가 보정 + 감성 추가
+/// 팩트:감성 = 7:3, 멀티모달(Gemini) 이미지 분석 지원
 final class AIEnhancementService {
 
     // MARK: - Build Input
@@ -119,14 +121,16 @@ final class AIEnhancementService {
 
     // MARK: - Enhance
 
-    /// AI로 분석 결과 다듬기
+    /// AI로 분석 결과 다듬기 (멀티모달 이미지 지원)
     /// - Parameters:
     ///   - result: 원본 분석 결과
     ///   - provider: AI 프로바이더
-    /// - Returns: AI로 다듬어진 분석 결과
+    ///   - selectedAssets: 선택된 사진 (멀티모달 전송용, 선택적)
+    /// - Returns: AI로 보정 + 감성 추가된 분석 결과
     static func enhance(
         result: AnalysisResult,
-        provider: AIProvider
+        provider: AIProvider,
+        selectedAssets: [PHAsset] = []
     ) async throws -> AIEnhancementResult {
         let input = buildInput(from: result)
         let systemPrompt = buildSystemPrompt()
@@ -136,12 +140,36 @@ final class AIEnhancementService {
         logger.info("✨ [AI Enhancement] userPrompt 길이: \(userPrompt.count)자")
 
         let service = AIServiceFactory.createService(for: provider)
-        let response = try await service.generateContent(
-            systemPrompt: systemPrompt,
-            userPrompt: userPrompt,
-            maxTokens: 4096,
-            temperature: 0.7
-        )
+
+        // 멀티모달: Gemini 프로바이더 + 사진 있을 때 이미지 추출
+        let images: [AIImageData]
+        if provider == .google && !selectedAssets.isEmpty {
+            images = await extractRepresentativeImages(
+                from: result.places,
+                selectedAssets: selectedAssets
+            )
+            logger.info("✨ [AI Enhancement] 멀티모달 이미지 \(images.count)장 준비")
+        } else {
+            images = []
+        }
+
+        let response: String
+        if !images.isEmpty {
+            response = try await service.generateContentWithImages(
+                systemPrompt: systemPrompt,
+                userPrompt: userPrompt,
+                images: images,
+                maxTokens: 4096,
+                temperature: 0.7
+            )
+        } else {
+            response = try await service.generateContent(
+                systemPrompt: systemPrompt,
+                userPrompt: userPrompt,
+                maxTokens: 4096,
+                temperature: 0.7
+            )
+        }
 
         logger.info("✨ [AI Enhancement] 응답 수신 - length: \(response.count)자")
 
@@ -202,6 +230,11 @@ final class AIEnhancementService {
         if let dnaDesc = enhancement.travelDNADescription, !dnaDesc.isEmpty {
             result.aiEnhancedDNADescription = dnaDesc
             logger.info("✨ [Merge] TravelDNA 설명 교체")
+        }
+
+        // 7. 사실 보정 (corrections)
+        if let corrections = enhancement.corrections, !corrections.isEmpty {
+            applyCorrections(corrections, to: &result)
         }
 
         // AI 개선 상태 업데이트
@@ -376,6 +409,11 @@ final class AIEnhancementService {
             logger.info("✨ [Merge/Record] TravelDNA 설명 교체")
         }
 
+        // 6. 사실 보정 (corrections) → TravelRecord의 장소에 반영
+        if let corrections = enhancement.corrections, !corrections.isEmpty {
+            applyCorrections(corrections, to: record)
+        }
+
         // AI 상태 업데이트
         record.isAIEnhanced = true
         record.aiEnhancedAt = Date()
@@ -386,25 +424,33 @@ final class AIEnhancementService {
 
     private static func buildSystemPrompt() -> String {
         """
-        당신은 여행 기록 편집자입니다. 규칙 기반으로 자동 생성된 여행 분석 텍스트를 사람이 쓴 것처럼 자연스럽고 감성적으로 다듬어주세요.
+        여행 기록 편집자. 온디바이스 분석의 사실 데이터를 보정하고 약간의 감성을 추가.
 
         역할:
-        - 기계적/틀에 박힌 표현을 자연스러운 한국어로 변환
-        - 각 장소의 분위기를 살려 구체적이고 생생한 묘사
-        - 여행자 시점(1인칭)으로 감정과 경험을 풍부하게
+        1. 사실 보정: 사진(첨부 시)/GPS/시간 정보를 보고 온디바이스 분석 오류 교정
+           - 활동 유형 오분류 (예: 카페→음식점) → corrections에 기재
+           - 장면 분류 오인식 → corrections에 기재
+        2. 감성 추가: 보정된 사실 위에 짧은 감성 한두 문장 추가
 
-        규칙:
-        1. 한국어로 작성
-        2. 장소명, 시간, 거리 등 팩트는 변경 금지
-        3. 입력에 없는 사실을 지어내지 않음
-        4. 길이 가이드:
-           - title: 15자 이내
-           - story.opening/climax/closing: 각 80-120자
-           - story.chapters[].content: 각 100-150자
-           - story.tagline: 20-30자
-           - insights[].description: 60-100자
-        5. 반드시 유효한 JSON으로만 응답 (코드블록 없이)
-        6. 포함하지 못한 필드는 생략 가능
+        원칙:
+        1. 팩트 70% + 감성 30% 비율 유지
+        2. 각 항목 1~2문장, 짧고 간결하게
+        3. 장소명, 시간, 거리, 수치는 절대 변경 금지 (보정 필요 시 corrections에 기재)
+        4. 입력에 없는 사실을 지어내지 않음 (사진에 보이는 것만 근거)
+        5. 사진이 첨부된 경우 사진의 실제 모습과 분위기를 우선시
+        6. 한국어로 작성
+        7. 반드시 유효한 JSON으로만 응답
+
+        길이 가이드:
+        - title: 15자 이내
+        - story.opening: 1~2문장 (40~80자)
+        - story.chapters[].content: 1~2문장 (40~80자)
+        - story.climax: 1문장 (30~60자)
+        - story.closing: 1문장 (30~60자)
+        - story.tagline: 15~25자
+        - insights[].description: 1문장 (30~60자)
+        - travelDNADescription: 1~2문장 (40~80자)
+        - tripScoreSummary: 1문장 (30~60자)
         """
     }
 
@@ -514,17 +560,19 @@ final class AIEnhancementService {
           "enhancedTitle": "다듬어진 제목",
           "story": {
             "title": "스토리 제목",
-            "opening": "오프닝 텍스트",
-            "chapters": [{"placeName": "장소명", "content": "챕터 내용"}],
-            "climax": "클라이맥스",
-            "closing": "엔딩",
-            "tagline": "태그라인"
+            "opening": "사실+감성 오프닝",
+            "chapters": [{"placeName": "장소명", "content": "사실+감성 챕터"}],
+            "climax": "하이라이트",
+            "closing": "마무리",
+            "tagline": "한줄 요약"
           },
-          "insights": [{"type": "인사이트타입", "title": "제목", "description": "설명", "actionSuggestion": "제안"}],
+          "insights": [{"type": "인사이트타입", "title": "제목", "description": "설명"}],
           "tripScoreSummary": "여행 점수 요약",
           "momentHighlights": [{"placeName": "장소명", "highlights": ["하이라이트"]}],
-          "travelDNADescription": "여행 DNA 설명"
+          "travelDNADescription": "여행 DNA 설명",
+          "corrections": [{"placeName": "장소명", "correctedActivityType": "보정된 활동유형", "correctedSceneCategory": "보정된 장면분류", "note": "보정 이유"}]
         }
+        corrections는 온디바이스 분석이 틀린 경우에만 포함. 보정할 것이 없으면 빈 배열 또는 생략.
         """)
 
         return parts.joined(separator: "\n\n")
@@ -657,6 +705,119 @@ final class AIEnhancementService {
                 )
             }
             return original
+        }
+    }
+
+    // MARK: - Corrections Merge
+
+    /// AI 사실 보정을 AnalysisResult에 반영
+    /// placeName으로 매칭하여 activityType, sceneCategory 교체
+    private static func applyCorrections(
+        _ corrections: [AIEnhancementResult.PlaceCorrection],
+        to result: inout AnalysisResult
+    ) {
+        for correction in corrections {
+            guard let index = result.places.firstIndex(where: { $0.name == correction.placeName }) else {
+                logger.info("✨ [Corrections] 장소 미매칭: \(correction.placeName)")
+                continue
+            }
+
+            if let correctedActivity = correction.correctedActivityType,
+               let activityType = ActivityType(rawValue: correctedActivity) {
+                let original = result.places[index].activityType.rawValue
+                result.places[index].activityType = activityType
+                logger.info("✨ [Corrections] \(correction.placeName) 활동 보정: \(original) → \(correctedActivity)")
+            }
+
+            if let correctedScene = correction.correctedSceneCategory,
+               let sceneCategory = VisionAnalysisService.SceneCategory(rawValue: correctedScene) {
+                let original = result.places[index].sceneCategory?.rawValue ?? "nil"
+                result.places[index].sceneCategory = sceneCategory
+                logger.info("✨ [Corrections] \(correction.placeName) 장면 보정: \(original) → \(correctedScene)")
+            }
+
+            if let note = correction.note {
+                logger.info("✨ [Corrections] \(correction.placeName) 보정 이유: \(note)")
+            }
+        }
+    }
+
+    /// AI 사실 보정을 TravelRecord에 반영
+    private static func applyCorrections(
+        _ corrections: [AIEnhancementResult.PlaceCorrection],
+        to record: TravelRecord
+    ) {
+        for correction in corrections {
+            // TravelRecord → days → places에서 이름으로 검색
+            for day in record.days {
+                if let place = day.places.first(where: { $0.name == correction.placeName }) {
+                    if let correctedActivity = correction.correctedActivityType {
+                        let original = place.activityLabel
+                        place.activityLabel = correctedActivity
+                        logger.info("✨ [Corrections/Record] \(correction.placeName) 활동 보정: \(original) → \(correctedActivity)")
+                    }
+                    if let note = correction.note {
+                        logger.info("✨ [Corrections/Record] \(correction.placeName) 보정 이유: \(note)")
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Image Extraction (멀티모달)
+
+    /// 각 장소의 대표 사진 1장씩 추출 (최대 8장)
+    /// 320×320 리사이즈, JPEG 0.6 압축
+    private static func extractRepresentativeImages(
+        from places: [PlaceCluster],
+        selectedAssets: [PHAsset]
+    ) async -> [AIImageData] {
+        var images: [AIImageData] = []
+        let maxImages = 8
+        let targetSize = CGSize(width: 320, height: 320)
+
+        // 각 장소의 첫 번째 사진의 localIdentifier 수집
+        var assetIdsToFetch: [(placeIndex: Int, assetId: String)] = []
+        for (index, place) in places.prefix(maxImages).enumerated() {
+            if let firstPhoto = place.photos.first {
+                assetIdsToFetch.append((index, firstPhoto.localIdentifier))
+            }
+        }
+
+        // PHAsset에서 이미지 추출
+        for item in assetIdsToFetch {
+            if let asset = selectedAssets.first(where: { $0.localIdentifier == item.assetId }) {
+                if let imageData = await loadImageData(from: asset, targetSize: targetSize) {
+                    images.append(AIImageData(data: imageData, mimeType: "image/jpeg"))
+                }
+            }
+        }
+
+        return images
+    }
+
+    /// PHAsset에서 JPEG 이미지 데이터 추출
+    private static func loadImageData(from asset: PHAsset, targetSize: CGSize) async -> Data? {
+        await withCheckedContinuation { continuation in
+            let options = PHImageRequestOptions()
+            options.deliveryMode = .fastFormat
+            options.resizeMode = .exact
+            options.isSynchronous = false
+            options.isNetworkAccessAllowed = true
+
+            PHImageManager.default().requestImage(
+                for: asset,
+                targetSize: targetSize,
+                contentMode: .aspectFill,
+                options: options
+            ) { image, _ in
+                guard let image = image else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                let data = image.jpegData(compressionQuality: 0.6)
+                continuation.resume(returning: data)
+            }
         }
     }
 }

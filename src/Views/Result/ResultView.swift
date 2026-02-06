@@ -873,7 +873,8 @@ struct ResultView: View {
             do {
                 let enhancementResult = try await AIEnhancementService.enhance(
                     result: result,
-                    provider: provider
+                    provider: provider,
+                    selectedAssets: selectedAssets
                 )
 
                 await MainActor.run {
