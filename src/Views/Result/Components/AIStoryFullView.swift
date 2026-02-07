@@ -3,6 +3,7 @@ import SwiftUI
 // MARK: - AI Story Full View
 struct AIStoryFullView: View {
     let story: StoryWeavingService.TravelStory
+    var context: TravelContext = .travel
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -83,7 +84,7 @@ struct AIStoryFullView: View {
             .padding(WanderSpacing.screenMargin)
         }
         .background(WanderColors.background)
-        .navigationTitle("여행 스토리")
+        .navigationTitle(context == .travel ? "여행 스토리" : "스토리")
         .navigationBarTitleDisplayMode(.inline)
     }
 

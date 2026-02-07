@@ -574,7 +574,8 @@ class VisionAnalysisService {
     // MARK: - Keywords Extraction for SNS Sharing
 
     /// SNS 공유용 감성 키워드 매핑 (Vision 분류 → 감성 키워드)
-    private static let keywordMapping: [SceneCategory: [String]] = [
+    /// NOTE: Context별로 여행/일상 어감이 다르므로 travel/daily 두 세트 관리
+    private static let travelKeywordMapping: [SceneCategory: [String]] = [
         .cafe: ["카페투어", "브런치", "커피타임", "감성카페", "힐링"],
         .restaurant: ["맛집탐방", "미식", "먹스타그램", "로컬푸드", "맛있는하루"],
         .beach: ["바다여행", "파도소리", "일몰", "해변산책", "시원한바람"],
@@ -590,20 +591,54 @@ class VisionAnalysisService {
         .food: ["먹방", "맛집", "음식스타그램", "미식여행", "맛있다"],
         .people: ["추억", "소중한시간", "함께", "우정", "행복"],
         .landmark: ["명소탐방", "인생샷", "포토스팟", "랜드마크", "여행"],
-        .unknown: ["여행", "추억", "힐링", "일상", "소중한시간"]
+        .unknown: ["여행", "추억", "힐링", "소중한시간", "행복"]
     ]
+
+    /// 일상/외출 컨텍스트용 키워드 매핑 (여행 관련 단어 제거)
+    private static let dailyKeywordMapping: [SceneCategory: [String]] = [
+        .cafe: ["카페", "브런치", "커피타임", "감성카페", "힐링"],
+        .restaurant: ["맛집", "미식", "먹스타그램", "로컬푸드", "맛있는하루"],
+        .beach: ["바다", "파도소리", "일몰", "해변산책", "시원한바람"],
+        .mountain: ["등산", "트레킹", "자연힐링", "정상정복", "산책"],
+        .park: ["피크닉", "공원산책", "여유", "힐링", "자연"],
+        .museum: ["문화생활", "전시관람", "예술", "감성", "영감"],
+        .shopping: ["쇼핑", "힙스터", "빈티지", "플리마켓", "득템"],
+        .airport: ["공항", "설렘", "출발", "떠나요", "시작"],
+        .hotel: ["휴식", "리프레시", "힐링", "쉼표", "여유"],
+        .temple: ["고즈넉함", "힐링", "역사", "명상", "산책"],
+        .city: ["거리산책", "도심", "야경", "산책", "나들이"],
+        .nature: ["자연", "힐링", "청량함", "숲속", "산책"],
+        .food: ["먹방", "맛집", "음식스타그램", "맛있다", "한끼"],
+        .people: ["추억", "소중한시간", "함께", "우정", "행복"],
+        .landmark: ["나들이", "인생샷", "포토스팟", "산책", "외출"],
+        .unknown: ["일상", "추억", "힐링", "소중한시간", "행복"]
+    ]
+
+    /// Context에 따른 키워드 매핑 선택
+    private static func keywordMapping(for context: TravelContext) -> [SceneCategory: [String]] {
+        switch context {
+        case .travel, .mixed:
+            return travelKeywordMapping
+        case .daily, .outing:
+            return dailyKeywordMapping
+        }
+    }
 
     /// 여러 사진에서 SNS용 감성 키워드 추출
     /// - Parameters:
     ///   - assets: 분석할 PHAsset 배열
     ///   - maxKeywords: 최대 키워드 수 (기본 5개)
+    ///   - context: 분석 컨텍스트 (일상/외출은 여행 키워드 제외)
     /// - Returns: 감성 키워드 배열 (중복 제거, 빈도순 정렬)
-    func extractKeywords(from assets: [PHAsset], maxKeywords: Int = 5) async -> [String] {
+    func extractKeywords(from assets: [PHAsset], maxKeywords: Int = 5, context: TravelContext = .travel) async -> [String] {
+        let isTravel = (context == .travel || context == .mixed)
+        let defaultKeywords = isTravel ? ["여행", "추억", "힐링"] : ["일상", "추억", "힐링"]
+
         guard !assets.isEmpty else {
-            return ["여행", "추억", "힐링"]
+            return defaultKeywords
         }
 
-        logger.info("✨ [Vision] 키워드 추출 시작 - \(assets.count)장 사진")
+        logger.info("✨ [Vision] 키워드 추출 시작 - \(assets.count)장 사진, context: \(context.displayName)")
 
         // 최대 5장 샘플링하여 분석
         let samples = sampleAssets(from: assets, count: min(assets.count, 5))
@@ -628,12 +663,15 @@ class VisionAnalysisService {
 
         logger.info("✨ [Vision] 상위 3개 카테고리: \(sortedCategories.map { $0.rawValue }.joined(separator: ", "))")
 
+        // Context에 맞는 키워드 매핑 선택
+        let mapping = Self.keywordMapping(for: context)
+
         // 키워드 수집 (상위 카테고리에서 키워드 선택)
         var keywordScores: [String: Float] = [:]
 
         for (index, category) in sortedCategories.enumerated() {
             let weight = Float(3 - index)  // 상위 카테고리에 높은 가중치
-            if let categoryKeywords = Self.keywordMapping[category] {
+            if let categoryKeywords = mapping[category] {
                 let selectedKeywords = Array(categoryKeywords.prefix(2))
                 logger.info("✨ [Vision] \(category.rawValue) → 키워드: \(selectedKeywords.joined(separator: ", "))")
                 for keyword in selectedKeywords {
@@ -650,8 +688,10 @@ class VisionAnalysisService {
             .prefix(maxKeywords)
             .map { $0.key }
 
-        // 최소 3개 보장
-        let fallbackKeywords = ["여행", "추억", "힐링", "소중한시간", "행복"]
+        // 최소 3개 보장 (context에 맞는 폴백)
+        let fallbackKeywords = isTravel
+            ? ["여행", "추억", "힐링", "소중한시간", "행복"]
+            : ["일상", "추억", "힐링", "소중한시간", "행복"]
         let originalCount = keywords.count
         while keywords.count < 3 {
             for fallback in fallbackKeywords {
@@ -672,12 +712,13 @@ class VisionAnalysisService {
     }
 
     /// UIImage 배열에서 SNS용 감성 키워드 추출 (PHAsset 없이)
-    func extractKeywords(from images: [UIImage], maxKeywords: Int = 5) async -> [String] {
+    func extractKeywords(from images: [UIImage], maxKeywords: Int = 5, context: TravelContext = .travel) async -> [String] {
+        let isTravel = (context == .travel || context == .mixed)
         guard !images.isEmpty else {
-            return ["여행", "추억", "힐링"]
+            return isTravel ? ["여행", "추억", "힐링"] : ["일상", "추억", "힐링"]
         }
 
-        logger.info("✨ [Vision] UIImage 키워드 추출 시작 - \(images.count)장")
+        logger.info("✨ [Vision] UIImage 키워드 추출 시작 - \(images.count)장, context: \(context.displayName)")
 
         // 최대 5장 샘플링
         let samples = Array(images.prefix(5))
@@ -698,12 +739,15 @@ class VisionAnalysisService {
             .prefix(3)
             .map { $0.key }
 
+        // Context에 맞는 키워드 매핑 선택
+        let mapping = Self.keywordMapping(for: context)
+
         // 키워드 수집
         var keywordScores: [String: Float] = [:]
 
         for (index, category) in sortedCategories.enumerated() {
             let weight = Float(3 - index)
-            if let categoryKeywords = Self.keywordMapping[category] {
+            if let categoryKeywords = mapping[category] {
                 for keyword in categoryKeywords.prefix(2) {
                     keywordScores[keyword, default: 0] += weight
                 }
@@ -716,7 +760,9 @@ class VisionAnalysisService {
             .map { $0.key }
 
         // 최소 3개 보장
-        let fallbackKeywords = ["여행", "추억", "힐링", "소중한시간", "행복"]
+        let fallbackKeywords = isTravel
+            ? ["여행", "추억", "힐링", "소중한시간", "행복"]
+            : ["일상", "추억", "힐링", "소중한시간", "행복"]
         while keywords.count < 3 {
             for fallback in fallbackKeywords {
                 if !keywords.contains(fallback) {

@@ -41,16 +41,25 @@ struct ResultView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: WanderSpacing.space6) {
-                    // 1. Map & Stats (Fact)
-                    ResultMapSection(places: result.places)
+                    // 1. Map & Stats
+                    // NOTE: 연구 문서 Section 7.5 - 일상은 심플(사진+태그), 여행은 풀(지도+통계+타임라인)
+                    if result.context != .daily {
+                        ResultMapSection(places: result.places, context: result.context)
+                    }
                     ResultStatsSection(result: result)
 
                     // 2. Layout Based Content
                     layoutContentView
 
-                    // 3. Wander Intelligence (Optional/Insight)
-                    // 사용자 피드백: "필요한 경우만 나타나고" -> 접기/펼치기 UI 적용
-                    if result.hasWanderIntelligence || !result.insights.isEmpty {
+                    // 2.5. Keywords (감성 키워드)
+                    if !result.keywords.isEmpty {
+                        keywordsSection
+                    }
+
+                    // 3. Wander Intelligence (여행/혼합에서만 표시)
+                    // NOTE: 연구 문서 Section 7.4 - 스토리+인사이트만 유지, DNA/점수 제거
+                    if (result.context == .travel || result.context == .mixed),
+                       result.hasWanderIntelligence || !result.insights.isEmpty {
                         intelligenceDisclosureGroup
                     }
 
@@ -118,7 +127,7 @@ struct ResultView: View {
     private var layoutContentView: some View {
         switch result.layoutType {
         case "magazine":
-            MagazineLayoutView(places: result.places)
+            MagazineLayoutView(places: result.places, context: result.context)
         case "grid":
             GridLayoutView(places: result.places)
         default: // timeline
@@ -126,24 +135,52 @@ struct ResultView: View {
         }
     }
 
+    // MARK: - Keywords Section (감성 키워드)
+    private var keywordsSection: some View {
+        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
+            HStack {
+                Image(systemName: "tag.fill")
+                    .foregroundColor(WanderColors.primary)
+                Text("감성 키워드")
+                    .font(WanderTypography.headline)
+                    .foregroundColor(WanderColors.textPrimary)
+            }
+
+            FlowLayout(spacing: WanderSpacing.space2) {
+                ForEach(result.keywords, id: \.self) { keyword in
+                    Text(keyword)
+                        .font(WanderTypography.caption1)
+                        .foregroundColor(WanderColors.primary)
+                        .padding(.horizontal, WanderSpacing.space3)
+                        .padding(.vertical, WanderSpacing.space2)
+                        .background(WanderColors.primaryPale)
+                        .cornerRadius(WanderSpacing.radiusMedium)
+                }
+            }
+        }
+        .padding(WanderSpacing.space4)
+        .background(WanderColors.surface)
+        .cornerRadius(WanderSpacing.radiusLarge)
+    }
+
     // MARK: - Intelligence Section (Expandable)
     private var intelligenceDisclosureGroup: some View {
         DisclosureGroup(isExpanded: $isIntelligenceExpanded) {
             VStack(spacing: WanderSpacing.space5) {
                 Divider()
-                WanderIntelligenceSection(result: result)
+                WanderIntelligenceSection(result: result, context: result.context)
             }
             .padding(.top, WanderSpacing.space2)
         } label: {
             HStack {
                 Image(systemName: "sparkles")
                     .foregroundColor(WanderColors.primary)
-                Text("여행 분석 더보기")
+                Text(intelligenceSectionTitle)
                     .font(WanderTypography.headline)
                     .foregroundColor(WanderColors.textPrimary)
                 Spacer()
                 if !isIntelligenceExpanded {
-                    Text("DNA, 인사이트 등")
+                    Text(intelligenceSectionHint)
                         .font(WanderTypography.caption1)
                         .foregroundColor(WanderColors.textTertiary)
                 }
@@ -156,11 +193,31 @@ struct ResultView: View {
         .cornerRadius(WanderSpacing.radiusLarge)
     }
 
+    /// Context에 따른 분석 섹션 제목
+    private var intelligenceSectionTitle: String {
+        switch result.context {
+        case .travel: return "여행 인사이트"
+        case .mixed: return "인사이트"
+        default: return "인사이트"
+        }
+    }
+
+    /// Context에 따른 분석 섹션 힌트
+    private var intelligenceSectionHint: String {
+        switch result.context {
+        case .travel: return "스토리, 인사이트"
+        case .mixed: return "스토리, 인사이트"
+        default: return "인사이트"
+        }
+    }
+
     // MARK: - Action Buttons
     private var actionButtons: some View {
         VStack(spacing: WanderSpacing.space3) {
-            // AI 다듬기 버튼
-            aiEnhancementButton
+            // AI 다듬기 버튼 (여행/혼합에서만 표시)
+            if result.context == .travel || result.context == .mixed {
+                aiEnhancementButton
+            }
 
             Button(action: saveRecord) {
                 HStack(spacing: WanderSpacing.space2) {
@@ -188,15 +245,20 @@ struct ResultView: View {
         let record = TravelRecord(
             title: result.title,
             startDate: result.startDate,
-            endDate: result.endDate
+            endDate: result.endDate,
+            context: result.context
         )
         record.totalDistance = result.totalDistance
         record.placeCount = result.placeCount
         record.photoCount = selectedAssets.count
-        
+
         // Layout & Theme 저장
         record.layoutType = result.layoutType
         record.theme = result.theme
+
+        // v3.1 Context Classification
+        record.context = result.context
+        record.contextConfidence = result.contextConfidence
 
         // Collect photos that are in clusters
         var savedPhotoIds = Set<String>()

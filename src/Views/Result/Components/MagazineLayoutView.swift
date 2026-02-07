@@ -3,10 +3,21 @@ import Photos
 
 struct MagazineLayoutView: View {
     let places: [PlaceCluster]
+    var context: TravelContext = .travel
+
+    /// Context에 따른 매거진 제목
+    private var magazineTitle: String {
+        switch context {
+        case .travel: return "여행 매거진"
+        case .outing: return "외출 매거진"
+        case .daily: return "오늘의 기록"
+        case .mixed: return "매거진"
+        }
+    }
 
     var body: some View {
         VStack(spacing: WanderSpacing.space5) {
-            Text("여행 매거진")
+            Text(magazineTitle)
                 .font(WanderTypography.headline)
                 .foregroundColor(WanderColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)

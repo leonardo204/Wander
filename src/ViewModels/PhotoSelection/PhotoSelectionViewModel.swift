@@ -185,13 +185,13 @@ struct AnalysisResult {
     var title: String = ""
     var startDate: Date = Date()
     var endDate: Date = Date()
-    
+
     /// 결과 화면 레이아웃 타입 (timeline, magazine, grid)
     var layoutType: String = "timeline"
-    
+
     /// 여행 테마 (예: "식도락", "힐링", "액티비티" 등)
     var theme: String?
-    
+
     var places: [PlaceCluster] = []
     var totalDistance: Double = 0
     var photoCount: Int = 0
@@ -201,6 +201,20 @@ struct AnalysisResult {
 
     /// 스마트 분석 결과 (iOS 17+)
     var smartAnalysisResult: SmartAnalysisCoordinator.SmartAnalysisResult?
+
+    // MARK: - v3.1 Context Classification
+
+    /// 기록 Context (일상/외출/여행/혼합)
+    var context: TravelContext = .travel
+
+    /// Context 분류 신뢰도 (0.0~1.0)
+    var contextConfidence: Double = 0.0
+
+    /// Context 분류 근거
+    var contextReasoning: String?
+
+    /// 혼합 Context 정보 (분리 필요 시)
+    var mixedContextInfo: MixedContextInfo?
 
     // MARK: - Wander Intelligence Results
 
@@ -292,8 +306,10 @@ struct AnalysisResult {
     }
     
     /// Wander Intelligence 데이터 유무
+    /// NOTE: 연구 문서 Section 7.4에 따라 TravelDNA/TripScore는 UI에 노출하지 않음
+    /// 실제 UI에 표시되는 스토리+인사이트만 체크
     var hasWanderIntelligence: Bool {
-        tripScore != nil || travelDNA != nil || travelStory != nil
+        travelStory != nil || !insights.isEmpty
     }
 }
 
@@ -310,6 +326,17 @@ class PlaceCluster: Identifiable, Hashable {
     var endTime: Date?
     var photos: [PHAsset] = []
     var userPlaceMatched: Bool = false  // 사용자 등록 장소와 매칭됨
+
+    // MARK: - v3.1 Context Classification (행정구역 정보)
+
+    /// 시/도 (예: 서울특별시, 경기도)
+    var administrativeArea: String?
+
+    /// 시/군/구 (예: 강남구, 성남시)
+    var locality: String?
+
+    /// 읍/면/동 (예: 역삼동, 분당동)
+    var subLocality: String?
 
     // MARK: - Smart Analysis Results (iOS 17+)
 

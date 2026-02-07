@@ -21,6 +21,8 @@
 | 데이터 저장 | **SwiftData** |
 | 아키텍처 | **MVVM** |
 | 테마 | **Light Mode Only** |
+| H3 그리드 | **SwiftyH3** (Apache 2.0, SPM) |
+| DBSCAN | **NSHipster/DBSCAN** (MIT, SPM) |
 
 ### 필수 프레임워크
 ```swift
@@ -32,6 +34,8 @@ import CoreLocation  // GPS, CLGeocoder
 import MapKit        // 지도
 import Security      // Keychain (API Key 저장)
 import LocalAuthentication // Face ID/Touch ID
+import SwiftyH3      // Uber H3 헥사곤 그리드 (오프라인 GPS 분류)
+import DBSCAN        // NSHipster DBSCAN 밀도 기반 클러스터링
 ```
 
 ---
@@ -77,7 +81,8 @@ Wander/
 │   │   ├── Place.swift
 │   │   ├── PhotoItem.swift
 │   │   ├── RecordCategory.swift
-│   │   └── UserPlace.swift
+│   │   ├── UserPlace.swift
+│   │   └── LearnedPlace.swift       ← v3.2: HoWDe 비율 기반 자동 학습 장소
 │   │
 │   ├── Services/
 │   │   ├── AIService/
@@ -90,7 +95,8 @@ Wander/
 │   │   │   └── AIEnhancementService.swift  ← AI 다듬기 오케스트레이터
 │   │   ├── AnalysisService/
 │   │   │   ├── AnalysisEngine.swift
-│   │   │   ├── ClusteringService.swift
+│   │   │   ├── ClusteringService.swift        ← v3.2: DBSCAN 밀도 기반 클러스터링
+│   │   │   ├── ContextClassificationService.swift ← v3.2: H3 기반 Context 분류
 │   │   │   └── ActivityInferenceService.swift
 │   │   ├── SmartAnalysis/           ← Wander Intelligence
 │   │   │   ├── SmartAnalysisCoordinator.swift
@@ -198,7 +204,9 @@ Wander/
 | 기능 | 설명 | 관련 파일 |
 |------|------|----------|
 | 사진 분석 | GPS/시간 메타데이터 기반 타임라인 생성 | `AnalysisEngine.swift` |
-| 장소 클러스터링 | 거리/시간 기반 장소 그룹핑 | `ClusteringService.swift` |
+| 장소 클러스터링 | DBSCAN 밀도 기반 + 시간 세그먼테이션 | `ClusteringService.swift` |
+| **Context 분류** | H3 헥사곤 그리드 기반 일상/외출/여행 자동 분류 | `ContextClassificationService.swift` |
+| **장소 자동 학습** | HoWDe 비율 기반 집/회사/학교 자동 감지 | `LearnedPlace.swift` |
 | 역지오코딩 | 좌표 → 주소 변환 | `GeocodingService.swift` |
 | 활동 추론 | 규칙 기반 활동 타입 추론 | `ActivityInferenceService.swift` |
 | AI 스토리 | BYOK AI로 여행 스토리 생성 | `AIStoryView.swift` |
@@ -488,6 +496,21 @@ Button { } label: {
     var activityLabel: String
     var photos: [PhotoItem]
 }
+
+@Model class LearnedPlace {
+    var h3CellRes9: String        // H3 건물 수준 ID
+    var h3CellRes7: String        // H3 동네 수준
+    var latitude: Double
+    var longitude: Double
+    var displayName: String?
+    var visitLogJSON: String?     // 방문 날짜 배열 (90일 제한)
+    var nightVisitProportion: Double   // HoWDe 야간 비율
+    var weekdayDaytimeProportion: Double // HoWDe 평일 주간 비율
+    var suggestedTypeRaw: String? // "home" | "work" | "school"
+    var confidence: Double
+    var isConfirmed: Bool
+    var isIgnored: Bool
+}
 ```
 
 ---
@@ -588,7 +611,15 @@ HomeView
             │   - PhotoAssetManager로 PHAsset fetch
             └→ AnalyzingViewWrapper (fullScreenCover, item 기반)
                  └→ AnalyzingView
+                      │   - UserPlace + LearnedPlace SwiftData 로드
                       └→ AnalysisEngine.analyze()
+                           │   Step 1-3: 메타데이터/GPS/클러스터링(DBSCAN)
+                           │   Step 4: 역지오코딩
+                           │   Step 5: 활동 추론
+                           │   Step 6: 기본 결과 생성
+                           │   Step 6.5: Context Classification (H3 비교)
+                           │   Step 6.6: LearnedPlace 패턴 업데이트
+                           │   Step 7+: 스마트 분석 (Wander Intelligence)
                            └→ ResultView (저장/공유)
 ```
 
@@ -645,6 +676,7 @@ settings:
 - ✅ Phase 6: P2P 공유 (CloudKit, 암호화, Deep Link)
 - ✅ Phase 7: AI 다듬기 (Google OAuth + 멀티모달, 스마트 분석 텍스트 고도화)
 - ✅ Phase 8: 설정 개편 (API Key → Premium UI, 공유 설정 제거, UI 시나리오 문서 분리)
+- 🔄 Phase 9: Context Classification v3.2 (H3 + DBSCAN 기반 일상/외출/여행 자동 분류)
 
 ---
 
@@ -685,6 +717,11 @@ options.deliveryMode = .fastFormat
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-02-07 | Context Classification v3.2: H3 헥사곤 그리드 + DBSCAN 밀도 클러스터링 도입 |
+| 2026-02-07 | SwiftyH3 (Apache 2.0), NSHipster DBSCAN (MIT) SPM 의존성 추가 |
+| 2026-02-07 | LearnedPlace HoWDe 비율 기반 알고리즘으로 전면 재작성 |
+| 2026-02-07 | ContextClassificationService H3 셀 비교 기반으로 재작성 |
+| 2026-02-07 | ClusteringService DBSCAN + 시간 세그먼테이션으로 전면 재작성 |
 | 2026-02-06 | 공유 설정(ShareSettingsView) 제거 - 설정 탭에서 불필요한 공유 옵션 삭제 |
 | 2026-02-06 | UI 시나리오 문서 탭별 분리 (20개 파일 → `Ref-Concepts/ui-scenarios/`) |
 | 2026-02-06 | 설정 UI 개편: API Key → Wander Premium 플레이스홀더, 개인정보 문구 수정 |
@@ -728,4 +765,4 @@ options.deliveryMode = .fastFormat
 
 ---
 
-*최종 업데이트: 2026-02-06*
+*최종 업데이트: 2026-02-07*

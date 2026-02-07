@@ -1,241 +1,24 @@
 import SwiftUI
 
+/// Wander Intelligence 섹션
+/// NOTE: 연구 문서 Section 7.4에 따라 TravelDNA/TripScore/MomentScore는 제거됨 (근거 불명확)
+/// 여행/혼합 컨텍스트에서만 스토리와 인사이트를 표시
 struct WanderIntelligenceSection: View {
     let result: AnalysisResult
+    var context: TravelContext = .travel
 
     var body: some View {
         VStack(spacing: WanderSpacing.space5) {
-            // Trip Score Card
-            if let tripScore = result.tripScore {
-                TripScoreCard(tripScore: tripScore, allBadges: result.allBadges)
-            }
-
-            // Travel DNA Card
-            if let dna = result.travelDNA {
-                TravelDNACard(dna: dna)
-            }
-
-            // Insights Preview
+            // Insights Preview (여행/혼합에서만 표시)
             if !result.insights.isEmpty {
                 InsightsPreview(insights: result.insights, summary: result.insightSummary)
             }
 
-            // Story Preview
+            // Story Preview (여행/혼합에서만 표시)
             if let story = result.travelStory {
-                StoryPreviewCard(story: story)
+                StoryPreviewCard(story: story, context: context)
             }
         }
-    }
-}
-
-// MARK: - Trip Score Card
-struct TripScoreCard: View {
-    let tripScore: MomentScoreService.TripOverallScore
-    let allBadges: [MomentScoreService.SpecialBadge]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
-            HStack {
-                Text("여행 점수")
-                    .font(WanderTypography.headline)
-                    .foregroundColor(WanderColors.textPrimary)
-
-                Spacer()
-
-                // Star Rating
-                HStack(spacing: 2) {
-                    ForEach(0..<5) { index in
-                        Image(systemName: index < Int(tripScore.starRating) ? "star.fill" : "star")
-                            .font(.system(size: 14))
-                            .foregroundColor(WanderColors.warning)
-                    }
-                }
-            }
-
-            HStack(spacing: WanderSpacing.space4) {
-                // Score Circle
-                ZStack {
-                    Circle()
-                        .stroke(WanderColors.border, lineWidth: 4)
-                        .frame(width: 80, height: 80)
-
-                    Circle()
-                        .trim(from: 0, to: CGFloat(tripScore.averageScore) / 100)
-                        .stroke(gradeColor(for: tripScore.tripGrade), style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                        .frame(width: 80, height: 80)
-                        .rotationEffect(.degrees(-90))
-
-                    VStack(spacing: 2) {
-                        Text("\(tripScore.averageScore)")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(WanderColors.textPrimary)
-                        Text("점")
-                            .font(WanderTypography.caption2)
-                            .foregroundColor(WanderColors.textSecondary)
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: WanderSpacing.space2) {
-                    // Grade Badge
-                    HStack(spacing: WanderSpacing.space1) {
-                        Text(tripScore.tripGrade.emoji)
-                        Text(tripScore.tripGrade.koreanName)
-                            .font(WanderTypography.headline)
-                    }
-                    .foregroundColor(gradeColor(for: tripScore.tripGrade))
-
-                    // Summary
-                    Text(tripScore.summary)
-                        .font(WanderTypography.caption1)
-                        .foregroundColor(WanderColors.textSecondary)
-                        .lineLimit(2)
-
-                    // Peak Moment
-                    if tripScore.peakMomentScore > tripScore.averageScore {
-                        Text("최고 순간: \(tripScore.peakMomentScore)점")
-                            .font(WanderTypography.caption2)
-                            .foregroundColor(WanderColors.primary)
-                    }
-                }
-
-                Spacer()
-            }
-
-            // Badges
-            if !allBadges.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: WanderSpacing.space2) {
-                        ForEach(allBadges, id: \.self) { badge in
-                            HStack(spacing: 4) {
-                                Text(badge.emoji)
-                                Text(badge.koreanName)
-                                    .font(WanderTypography.caption2)
-                            }
-                            .padding(.horizontal, WanderSpacing.space2)
-                            .padding(.vertical, 4)
-                            .background(WanderColors.primaryPale)
-                            .cornerRadius(WanderSpacing.radiusSmall)
-                        }
-                    }
-                }
-            }
-        }
-        .padding(WanderSpacing.space4)
-        .background(WanderColors.surface)
-        .cornerRadius(WanderSpacing.radiusLarge)
-    }
-
-    private func gradeColor(for grade: MomentScoreService.MomentGrade) -> Color {
-        switch grade {
-        case .legendary: return Color(hex: "#FFD700") // Gold
-        case .epic: return Color(hex: "#9B59B6") // Purple
-        case .memorable: return WanderColors.primary
-        case .pleasant: return WanderColors.success
-        case .ordinary: return WanderColors.textSecondary
-        case .casual: return WanderColors.textTertiary
-        }
-    }
-}
-
-// MARK: - Travel DNA Card
-struct TravelDNACard: View {
-    let dna: TravelDNAService.TravelDNA
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: WanderSpacing.space3) {
-            HStack {
-                Text("여행자 DNA")
-                    .font(WanderTypography.headline)
-                    .foregroundColor(WanderColors.textPrimary)
-
-                Spacer()
-
-                // DNA Code
-                Text(dna.dnaCode)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(WanderColors.primary)
-                    .padding(.horizontal, WanderSpacing.space2)
-                    .padding(.vertical, 4)
-                    .background(WanderColors.primaryPale)
-                    .cornerRadius(WanderSpacing.radiusSmall)
-            }
-
-            HStack(spacing: WanderSpacing.space4) {
-                // Primary Type Icon
-                VStack(spacing: WanderSpacing.space2) {
-                    ZStack {
-                        Circle()
-                            .fill(WanderColors.primaryPale)
-                            .frame(width: 60, height: 60)
-
-                        Text(dna.primaryType.emoji)
-                            .font(.system(size: 28))
-                    }
-
-                    Text(dna.primaryType.koreanName)
-                        .font(WanderTypography.caption1)
-                        .foregroundColor(WanderColors.textPrimary)
-                }
-
-                VStack(alignment: .leading, spacing: WanderSpacing.space2) {
-                    // Description
-                    Text(dna.description)
-                        .font(WanderTypography.body)
-                        .foregroundColor(WanderColors.textSecondary)
-                        .lineLimit(2)
-
-                    // Stats
-                    HStack(spacing: WanderSpacing.space3) {
-                        DNAStatChip(label: "탐험", value: dna.explorationScore)
-                        DNAStatChip(label: "문화", value: dna.cultureScore)
-                        DNAStatChip(label: "소셜", value: dna.socialScore)
-                    }
-                }
-
-                Spacer()
-            }
-
-            // Traits
-            if !dna.traits.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: WanderSpacing.space2) {
-                        ForEach(dna.traits, id: \.self) { trait in
-                            HStack(spacing: 4) {
-                                Text(trait.emoji)
-                                Text(trait.koreanName)
-                                    .font(WanderTypography.caption2)
-                            }
-                            .foregroundColor(WanderColors.textSecondary)
-                            .padding(.horizontal, WanderSpacing.space2)
-                            .padding(.vertical, 4)
-                            .background(WanderColors.background)
-                            .cornerRadius(WanderSpacing.radiusSmall)
-                        }
-                    }
-                }
-            }
-        }
-        .padding(WanderSpacing.space4)
-        .background(WanderColors.surface)
-        .cornerRadius(WanderSpacing.radiusLarge)
-    }
-}
-
-// MARK: - DNA Stat Chip
-struct DNAStatChip: View {
-    let label: String
-    let value: Int
-
-    var body: some View {
-        VStack(spacing: 2) {
-            Text("\(value)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(WanderColors.textPrimary)
-            Text(label)
-                .font(WanderTypography.caption2)
-                .foregroundColor(WanderColors.textTertiary)
-        }
-        .frame(width: 40)
     }
 }
 
@@ -327,11 +110,20 @@ struct InsightCard: View {
 // MARK: - Story Preview Card
 struct StoryPreviewCard: View {
     let story: StoryWeavingService.TravelStory
+    var context: TravelContext = .travel
+
+    private var storyTitle: String {
+        switch context {
+        case .daily, .outing: return "스토리"
+        case .travel: return "여행 스토리"
+        case .mixed: return "스토리"
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space3) {
             HStack {
-                Text("여행 스토리")
+                Text(storyTitle)
                     .font(WanderTypography.headline)
                     .foregroundColor(WanderColors.textPrimary)
 
@@ -380,7 +172,7 @@ struct StoryPreviewCard: View {
             }
 
             // Read Full Story Button
-            NavigationLink(destination: AIStoryFullView(story: story)) {
+            NavigationLink(destination: AIStoryFullView(story: story, context: context)) {
                 HStack {
                     Text("전체 스토리 보기")
                     Image(systemName: "chevron.right")

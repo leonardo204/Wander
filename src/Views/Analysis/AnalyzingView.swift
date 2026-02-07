@@ -80,7 +80,7 @@ struct AnalyzingView: View {
                     )
                     .navigationBarBackButtonHidden(true)
                     .onAppear {
-                        logger.info("📱 ResultView 표시됨 - places: \(result.places.count), photos: \(result.photoCount)")
+                        logger.info("📱 ResultView 표시됨 - places: \(result.places.count), photos: \(result.photoCount), context: \(result.context.emoji) \(result.context.displayName) (\(Int(result.contextConfidence * 100))%)")
                     }
                 }
             }
@@ -308,6 +308,21 @@ struct AnalyzingView: View {
         } catch {
             logger.warning("⚠️ 사용자 장소 로드 실패: \(error.localizedDescription)")
         }
+
+        // v3.1: 학습된 장소 패턴 로드
+        do {
+            let learnedDescriptor = FetchDescriptor<LearnedPlace>(
+                predicate: #Predicate { $0.isConfirmed && !$0.isIgnored }
+            )
+            let learnedPlaces = try modelContext.fetch(learnedDescriptor)
+            engine.learnedPlaces = learnedPlaces
+            logger.info("📊 학습된 장소 \(learnedPlaces.count)개 로드됨")
+        } catch {
+            logger.warning("⚠️ 학습된 장소 로드 실패: \(error.localizedDescription)")
+        }
+
+        // v3.2: ModelContext 전달 (LearnedPlace 자동 학습용)
+        engine.modelContext = modelContext
 
         do {
             let result = try await engine.analyze(assets: viewModel.selectedAssets)

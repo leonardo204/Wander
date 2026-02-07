@@ -94,6 +94,7 @@ struct UserPlacesView: View {
         }
         .onAppear {
             initializePlacesIfNeeded()
+            migrateH3IndicesIfNeeded()
         }
         .sheet(isPresented: $showAddPlace) {
             UserPlaceEditView(mode: .add) { name, icon, latitude, longitude, address in
@@ -130,13 +131,31 @@ struct UserPlacesView: View {
 
     // MARK: - Actions
     private func initializePlacesIfNeeded() {
-        if places.isEmpty {
-            logger.info("📍 [UserPlaces] 기본 장소 생성")
-            for place in UserPlace.createDefaultPlaces() {
-                modelContext.insert(place)
-            }
-            try? modelContext.save()
+        guard places.isEmpty else { return }
+
+        logger.info("📍 [UserPlaces] 기본 장소 생성")
+        for place in UserPlace.createDefaultPlaces() {
+            modelContext.insert(place)
         }
+        try? modelContext.save()
+    }
+
+    /// v3.2: 기존 장소의 H3 인덱스 레이지 마이그레이션
+    /// 좌표가 설정되어 있지만 H3 인덱스가 없는 장소에 대해 계산
+    private func migrateH3IndicesIfNeeded() {
+        let placesNeedingMigration = places.filter { place in
+            place.latitude != 0 && place.longitude != 0 && !place.hasH3Indices
+        }
+
+        guard !placesNeedingMigration.isEmpty else { return }
+
+        logger.info("📍 [UserPlaces] H3 마이그레이션 시작 - \(placesNeedingMigration.count)개 장소")
+        for place in placesNeedingMigration {
+            place.computeH3Indices()
+            logger.info("📍 [UserPlaces] H3 마이그레이션: \(place.name) → res7=\(place.h3CellRes7 ?? "nil")")
+        }
+        try? modelContext.save()
+        logger.info("📍 [UserPlaces] H3 마이그레이션 완료")
     }
 
     private func addPlace(name: String, icon: String, latitude: Double, longitude: Double, address: String) {
@@ -150,9 +169,11 @@ struct UserPlacesView: View {
             isDefault: false,
             order: maxOrder
         )
+        // v3.2: H3 셀 인덱스 계산 (오프라인 Context Classification용)
+        place.computeH3Indices()
         modelContext.insert(place)
         try? modelContext.save()
-        logger.info("📍 [UserPlaces] 장소 추가: \(name)")
+        logger.info("📍 [UserPlaces] 장소 추가: \(name) (H3: \(place.hasH3Indices ? "✓" : "✗"))")
     }
 
     private func updatePlace(_ place: UserPlace, name: String, icon: String, latitude: Double, longitude: Double, address: String) {
@@ -163,8 +184,10 @@ struct UserPlacesView: View {
         place.latitude = latitude
         place.longitude = longitude
         place.address = address
+        // v3.2: 좌표 변경 시 H3 셀 인덱스 재계산
+        place.computeH3Indices()
         try? modelContext.save()
-        logger.info("📍 [UserPlaces] 장소 수정: \(name)")
+        logger.info("📍 [UserPlaces] 장소 수정: \(name) (H3: \(place.hasH3Indices ? "✓" : "✗"))")
     }
 
     private func deletePlace(_ place: UserPlace) {

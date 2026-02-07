@@ -3,11 +3,22 @@ import MapKit
 
 struct ResultMapSection: View {
     let places: [PlaceCluster]
+    var context: TravelContext = .travel
+
+    /// Context에 따른 지도 섹션 제목
+    private var mapTitle: String {
+        switch context {
+        case .daily: return "이동 경로"
+        case .outing: return "외출 동선"
+        case .travel: return "여행 동선"
+        case .mixed: return "이동 동선"
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: WanderSpacing.space3) {
             HStack {
-                Text("여행 동선")
+                Text(mapTitle)
                     .font(WanderTypography.headline)
                     .foregroundColor(WanderColors.textPrimary)
 

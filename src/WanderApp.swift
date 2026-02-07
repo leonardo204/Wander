@@ -23,7 +23,8 @@ struct WanderApp: App {
             Place.self,
             PhotoItem.self,
             RecordCategory.self,
-            UserPlace.self
+            UserPlace.self,
+            LearnedPlace.self  // v3.1: 자동 학습된 장소 패턴
         ])
         // CloudKit 동기화 비활성화 (P2P 공유는 Public DB를 직접 사용)
         let modelConfiguration = ModelConfiguration(
@@ -59,6 +60,10 @@ struct WanderApp: App {
             }
             .onAppear {
                 logger.info("🚀 [WanderApp] 앱 시작 - isOnboardingCompleted: \(self.isOnboardingCompleted)")
+
+                // v3.2: 레거시 LearnedPlace 정리 (H3 인덱스 없는 레코드 삭제)
+                cleanupLegacyLearnedPlaces()
+
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     withAnimation(.easeOut(duration: 0.5)) {
                         logger.info("🚀 [WanderApp] 스플래시 종료")
@@ -132,6 +137,30 @@ struct WanderApp: App {
             showSharedRecord = true
         } else {
             logger.error("🔗 [WanderApp] 공유 데이터 디코딩 실패")
+        }
+    }
+
+    // MARK: - Legacy Data Cleanup
+
+    /// v3.2: H3 인덱스가 없는 레거시 LearnedPlace 레코드 삭제
+    /// 이전 버전에서 행정구역 문자열 기반으로 생성된 레코드를 정리하고 재학습 유도
+    private func cleanupLegacyLearnedPlaces() {
+        let context = sharedModelContainer.mainContext
+        do {
+            let descriptor = FetchDescriptor<LearnedPlace>()
+            let allPlaces = try context.fetch(descriptor)
+
+            let legacyPlaces = allPlaces.filter { $0.h3CellRes9.isEmpty }
+            guard !legacyPlaces.isEmpty else { return }
+
+            logger.info("🚀 [WanderApp] 레거시 LearnedPlace 정리: \(legacyPlaces.count)개 삭제")
+            for place in legacyPlaces {
+                context.delete(place)
+            }
+            try context.save()
+            logger.info("🚀 [WanderApp] 레거시 LearnedPlace 정리 완료")
+        } catch {
+            logger.warning("🚀 [WanderApp] LearnedPlace 정리 실패: \(error.localizedDescription)")
         }
     }
 

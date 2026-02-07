@@ -82,17 +82,33 @@ final class TravelRecord {
     @Relationship(deleteRule: .nullify, inverse: \RecordCategory.records)
     var category: RecordCategory?
 
+    // MARK: - v3.1 Context Classification
+
+    /// 기록 Context (daily, outing, travel)
+    var contextRaw: String = "travel"
+
+    /// Context 분류 신뢰도 (0.0~1.0)
+    var contextConfidence: Double = 0.0
+
+    /// Context (computed)
+    var context: TravelContext {
+        get { TravelContext(rawValue: contextRaw) ?? .travel }
+        set { contextRaw = newValue.rawValue }
+    }
+
     init(
         title: String,
         startDate: Date,
         endDate: Date,
-        category: RecordCategory? = nil
+        category: RecordCategory? = nil,
+        context: TravelContext = .travel
     ) {
         self.id = UUID()
         self.title = title
         self.startDate = startDate
         self.endDate = endDate
         self.category = category
+        self.contextRaw = context.rawValue
         self.totalDistance = 0
         self.placeCount = 0
         self.photoCount = 0
@@ -307,8 +323,10 @@ extension TravelRecord {
     }
 
     /// Wander Intelligence 데이터 유무
+    /// NOTE: 연구 문서 Section 7.4에 따라 TravelDNA/TripScore는 UI에 노출하지 않음
+    /// 실제 UI에 표시되는 스토리+인사이트만 체크
     var hasWanderIntelligence: Bool {
-        tripScoreJSON != nil || travelDNAJSON != nil || travelStoryJSON != nil
+        travelStoryJSON != nil || insightsJSON != nil
     }
 
     // MARK: - Vision Keywords (SNS 공유용 감성 키워드)

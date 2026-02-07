@@ -2,6 +2,7 @@ import Foundation
 import Photos
 import CoreLocation
 import SwiftData
+import SwiftyH3
 import os.log
 
 private let logger = Logger(subsystem: "com.zerolive.wander", category: "AnalysisEngine")
@@ -26,12 +27,22 @@ class AnalysisEngine {
     private let activityService = ActivityInferenceService()
     private let smartCoordinator = SmartAnalysisCoordinator()
     private let visionService = VisionAnalysisService()
+    private let contextService = ContextClassificationService()
 
     /// 사용자 장소 목록 (분석 전 설정)
     var userPlaces: [UserPlace] = []
 
+    /// 학습된 장소 목록 (분석 전 설정)
+    var learnedPlaces: [LearnedPlace] = []
+
     /// 스마트 분석 활성화 여부 (기본: true)
     var enableSmartAnalysis: Bool = true
+
+    /// Context Classification 활성화 여부 (기본: true)
+    var enableContextClassification: Bool = true
+
+    /// SwiftData ModelContext (학습 장소 업데이트용, 분석 전 설정)
+    var modelContext: ModelContext?
 
     // MARK: - Analyze
     func analyze(assets: [PHAsset]) async throws -> AnalysisResult {
@@ -87,7 +98,7 @@ class AnalysisEngine {
         progress = 0.20
         logger.info("🔬 [Step 4] Reverse geocoding 시작")
 
-        // Geocoding 결과 저장 (스마트 분석에서 활용)
+        // Geocoding 결과 저장 (스마트 분석 및 Context Classification에서 활용)
         var geocodingResults: [UUID: GeocodingService.GeocodingResult] = [:]
 
         for (index, cluster) in clusters.enumerated() {
@@ -100,8 +111,14 @@ class AnalysisEngine {
                 cluster.name = address.name
                 cluster.address = address.fullAddress
                 cluster.placeType = address.placeType
+
+                // v3.1: 행정구역 정보 저장 (Context Classification용)
+                cluster.administrativeArea = address.administrativeArea
+                cluster.locality = address.locality
+                cluster.subLocality = address.subLocality
+
                 geocodingResults[cluster.id] = address
-                logger.info("🔬 [Step 4] → \(address.name)")
+                logger.info("🔬 [Step 4] → \(address.name) (\(address.administrativeArea ?? "-") \(address.locality ?? "-"))")
             } catch {
                 logger.warning("🔬 [Step 4] geocoding 실패: \(error.localizedDescription)")
                 // 좌표 기반 기본 이름 생성
@@ -164,6 +181,33 @@ class AnalysisEngine {
             clusters: clusters
         )
 
+        // Step 6.5: Context Classification (v3.1)
+        if enableContextClassification {
+            currentStep = "🏠 일상/여행 판별 중..."
+            progress = 0.42
+            logger.info("🔬 [Step 6.5] Context Classification 시작")
+
+            let classificationResult = classifyContext(clusters: clusters, geocodingResults: geocodingResults)
+            result.context = classificationResult.context
+            result.contextConfidence = classificationResult.confidence
+            result.contextReasoning = classificationResult.reasoning
+            result.mixedContextInfo = classificationResult.mixedInfo
+
+            logger.info("🔬 [Step 6.5] Context: \(classificationResult.context.emoji) \(classificationResult.context.displayName) (신뢰도: \(Int(classificationResult.confidence * 100))%)")
+
+            // Context에 따른 제목 조정
+            result.title = adjustTitleForContext(
+                baseTitle: result.title,
+                context: classificationResult.context,
+                clusters: clusters
+            )
+
+            // Step 6.6: 학습 장소 업데이트 (v3.2: H3 res9 기반)
+            if let modelContext = modelContext {
+                updateLearnedPlaces(clusters: clusters, modelContext: modelContext)
+            }
+        }
+
         // ===== Phase 2: 스마트 분석 (iOS 17+) =====
 
         if enableSmartAnalysis && currentAnalysisLevel >= .smart {
@@ -176,7 +220,8 @@ class AnalysisEngine {
                 let smartResult = try await smartCoordinator.runSmartAnalysis(
                     clusters: clusters,
                     basicResult: result,
-                    level: currentAnalysisLevel
+                    level: currentAnalysisLevel,
+                    context: result.context
                 )
 
                 // 스마트 분석 결과 병합
@@ -218,7 +263,7 @@ class AnalysisEngine {
         progress = 0.90
         logger.info("🔬 [Keywords] 감성 키워드 추출 시작")
 
-        let keywords = await visionService.extractKeywords(from: assets, maxKeywords: 5)
+        let keywords = await visionService.extractKeywords(from: assets, maxKeywords: 5, context: result.context)
         result.keywords = keywords
         logger.info("🔬 [Keywords] 키워드 추출 완료: \(keywords.joined(separator: ", "))")
 
@@ -448,6 +493,147 @@ class AnalysisEngine {
             }
         }
         return nil
+    }
+
+    // MARK: - Context Classification (v3.2: H3 기반)
+
+    /// 클러스터들을 분석하여 Context 분류 (H3 셀 비교, 오프라인)
+    private func classifyContext(
+        clusters: [PlaceCluster],
+        geocodingResults: [UUID: GeocodingService.GeocodingResult]
+    ) -> ContextClassificationResult {
+        // ClusterH3Info 생성 (SwiftyH3로 좌표 → H3 셀 인덱스 변환)
+        let clusterInfos: [ClusterH3Info] = clusters.map { cluster in
+            let dateRange = cluster.startTime...(cluster.endTime ?? cluster.startTime)
+            return ClusterH3Info.from(
+                clusterId: cluster.id,
+                coordinate: cluster.coordinate,
+                photoCount: cluster.photos.count,
+                dateRange: dateRange
+            )
+        }
+
+        return contextService.classify(
+            clusterInfos: clusterInfos,
+            userPlaces: userPlaces,
+            learnedPlaces: learnedPlaces
+        )
+    }
+
+    // MARK: - Learned Place Update (v3.2: H3 기반)
+
+    /// 분석된 클러스터들로 LearnedPlace 방문 기록 업데이트
+    /// H3 res9 셀 ID로 장소를 식별하고 HoWDe 비율 재계산
+    private func updateLearnedPlaces(
+        clusters: [PlaceCluster],
+        modelContext: ModelContext
+    ) {
+        logger.info("📊 [LearnedPlace] 학습 장소 업데이트 시작 - 클러스터: \(clusters.count)개")
+
+        for cluster in clusters {
+            let coord = CLLocationCoordinate2D(latitude: cluster.latitude, longitude: cluster.longitude)
+            guard let h3Cell = try? coord.h3LatLng.cell(at: .res9).description else {
+                logger.warning("📊 [LearnedPlace] H3 인덱스 계산 실패: (\(cluster.latitude), \(cluster.longitude))")
+                continue
+            }
+
+            // 기존 LearnedPlace 찾기 (H3 res9 매칭)
+            let existingPlace = learnedPlaces.first { $0.matches(h3CellRes9: h3Cell) }
+
+            if let place = existingPlace {
+                // 기존 장소: 방문 기록 추가
+                place.recordVisit(at: cluster.startTime)
+                logger.info("📊 [LearnedPlace] 기존 장소 업데이트: \(place.locationSummary) (방문 \(place.totalVisitDays)일)")
+            } else {
+                // 새 장소: LearnedPlace 생성
+                let newPlace = LearnedPlace(coordinate: coord)
+                newPlace.recordVisit(at: cluster.startTime)
+                modelContext.insert(newPlace)
+                learnedPlaces.append(newPlace)
+                logger.info("📊 [LearnedPlace] 새 장소 학습: H3=\(h3Cell.prefix(12))...")
+            }
+        }
+
+        try? modelContext.save()
+        let totalCount = self.learnedPlaces.count
+        logger.info("📊 [LearnedPlace] 학습 장소 업데이트 완료 - 총 \(totalCount)개")
+    }
+
+    /// Context에 따른 제목 조정
+    private func adjustTitleForContext(
+        baseTitle: String,
+        context: TravelContext,
+        clusters: [PlaceCluster]
+    ) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+
+        switch context {
+        case .daily:
+            // 일상: "1월 17일 금요일"
+            formatter.dateFormat = "M월 d일 EEEE"
+            if let firstDate = clusters.first?.startTime {
+                return formatter.string(from: firstDate)
+            }
+            return baseTitle
+
+        case .outing:
+            // 외출: 장소명 중심 "성수동 맛집 탐방"
+            if let mainLocality = clusters.first?.locality ?? clusters.first?.subLocality {
+                // 활동 유형에 따른 접미사
+                let suffix = determineOutingSuffix(clusters: clusters)
+                return "\(mainLocality) \(suffix)"
+            }
+            return baseTitle
+
+        case .travel:
+            // 여행: 기본 제목 유지 or "제주도 3박4일"
+            if let mainArea = clusters.first?.administrativeArea {
+                let dayCount = calculateTripDayCount(clusters: clusters)
+                if dayCount > 1 {
+                    return "\(mainArea) \(dayCount - 1)박\(dayCount)일"
+                }
+                return "\(mainArea) 당일치기"
+            }
+            return baseTitle
+
+        case .mixed:
+            // 혼합: 기본 제목 유지
+            return baseTitle
+        }
+    }
+
+    /// 외출 제목 접미사 결정
+    private func determineOutingSuffix(clusters: [PlaceCluster]) -> String {
+        var activityCounts: [ActivityType: Int] = [:]
+        for cluster in clusters {
+            activityCounts[cluster.activityType, default: 0] += 1
+        }
+
+        guard let dominant = activityCounts.max(by: { $0.value < $1.value }) else {
+            return "나들이"
+        }
+
+        switch dominant.key {
+        case .cafe: return "카페 투어"
+        case .restaurant: return "맛집 탐방"
+        case .shopping: return "쇼핑"
+        case .culture, .tourist: return "문화 나들이"
+        case .nature, .mountain: return "산책"
+        default: return "나들이"
+        }
+    }
+
+    /// 여행 일수 계산
+    private func calculateTripDayCount(clusters: [PlaceCluster]) -> Int {
+        guard let first = clusters.first?.startTime,
+              let last = clusters.last?.endTime ?? clusters.last?.startTime else {
+            return 1
+        }
+
+        let calendar = Calendar.current
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: first), to: calendar.startOfDay(for: last)).day ?? 0
+        return max(1, days + 1)
     }
 }
 

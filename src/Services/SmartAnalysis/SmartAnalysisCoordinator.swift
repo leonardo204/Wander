@@ -203,7 +203,8 @@ class SmartAnalysisCoordinator {
     func runSmartAnalysis(
         clusters: [PlaceCluster],
         basicResult: AnalysisResult,
-        level: AnalysisLevel? = nil
+        level: AnalysisLevel? = nil,
+        context: TravelContext = .travel
     ) async throws -> SmartAnalysisResult {
         let targetLevel = level ?? Self.availableLevel
         let startTime = Date()
@@ -311,6 +312,8 @@ class SmartAnalysisCoordinator {
         logger.info("🔬 [SmartAnalysis] 제목 생성 완료: \(smartTitle)")
 
         // Step 4: Wander Intelligence 분석
+        // NOTE: 연구 문서 Section 7.4에 따라 TravelDNA/TripScore/MomentScore는 UI에 노출하지 않음
+        // StoryWeaving과 InsightEngine은 여행/혼합 컨텍스트에서만 실행
         var travelDNA: TravelDNAService.TravelDNA?
         var momentScores: [MomentScoreService.MomentScore] = []
         var tripScore: MomentScoreService.TripOverallScore?
@@ -318,78 +321,83 @@ class SmartAnalysisCoordinator {
         var insights: [InsightEngine.TravelInsight] = []
         var insightSummary: InsightEngine.InsightSummary?
 
-        updateProgress(step: .advancedAI, stepProgress: 0, message: "여행 분석 중...")
+        let shouldRunWanderIntelligence = (context == .travel || context == .mixed)
 
-        // 4-1: TravelDNA 분석
-        let sceneCategories = enhancedPlaces.map { $0.sceneCategory }
-        travelDNA = travelDNAService.analyzeDNA(from: clusters, sceneCategories: sceneCategories)
-        logger.info("🧬 [WanderIntelligence] TravelDNA 분석 완료: \(travelDNA?.primaryType.koreanName ?? "N/A")")
+        if shouldRunWanderIntelligence {
+            updateProgress(step: .advancedAI, stepProgress: 0, message: "여행 분석 중...")
 
-        updateProgress(step: .advancedAI, stepProgress: 0.2, message: "순간 점수 계산 중...")
+            // 4-1: TravelDNA 분석 (스토리/인사이트 입력용 내부 데이터, UI 미노출)
+            let sceneCategories = enhancedPlaces.map { $0.sceneCategory }
+            travelDNA = travelDNAService.analyzeDNA(from: clusters, sceneCategories: sceneCategories)
+            logger.info("🧬 [WanderIntelligence] TravelDNA 분석 완료: \(travelDNA?.primaryType.koreanName ?? "N/A")")
 
-        // 4-2: MomentScore 계산
-        for (index, enhanced) in enhancedPlaces.enumerated() {
-            let score = momentScoreService.calculateScore(
-                for: enhanced.cluster,
-                sceneCategory: enhanced.sceneCategory,
-                nearbyHotspots: enhanced.nearbyHotspots,
-                allClusters: clusters
-            )
-            momentScores.append(score)
-            logger.info("⭐ [WanderIntelligence] \(enhanced.cluster.name): \(score.totalScore)점 (\(score.grade.koreanName))")
+            updateProgress(step: .advancedAI, stepProgress: 0.2, message: "순간 점수 계산 중...")
 
-            let progress = 0.2 + (0.2 * Double(index + 1) / Double(enhancedPlaces.count))
-            updateProgress(step: .advancedAI, stepProgress: progress, message: "순간 점수 계산 중... (\(index + 1)/\(enhancedPlaces.count))")
-        }
+            // 4-2: MomentScore 계산 (스토리/인사이트 입력용 내부 데이터, UI 미노출)
+            for (index, enhanced) in enhancedPlaces.enumerated() {
+                let score = momentScoreService.calculateScore(
+                    for: enhanced.cluster,
+                    sceneCategory: enhanced.sceneCategory,
+                    nearbyHotspots: enhanced.nearbyHotspots,
+                    allClusters: clusters
+                )
+                momentScores.append(score)
+                logger.info("⭐ [WanderIntelligence] \(enhanced.cluster.name): \(score.totalScore)점 (\(score.grade.koreanName))")
 
-        // 4-3: 전체 여행 점수
-        tripScore = momentScoreService.calculateTripScore(momentScores: momentScores)
-        logger.info("🏆 [WanderIntelligence] 여행 종합 점수: \(tripScore?.averageScore ?? 0)점")
-
-        updateProgress(step: .advancedAI, stepProgress: 0.5, message: "스토리 생성 중...")
-
-        // 4-4: StoryWeaving (스토리 생성)
-        let sceneDescriptions = sceneCategories.compactMap { $0?.koreanName }
-        let storyContext = StoryWeavingService.StoryContext(
-            clusters: clusters,
-            travelDNA: travelDNA,
-            momentScores: momentScores,
-            sceneDescriptions: sceneDescriptions,
-            startDate: basicResult.startDate,
-            endDate: basicResult.endDate,
-            totalDistance: basicResult.totalDistance,
-            photoCount: basicResult.photoCount
-        )
-        travelStory = storyWeavingService.generateStory(from: storyContext)
-        logger.info("📖 [WanderIntelligence] 스토리 생성 완료: \(travelStory?.title ?? "N/A")")
-
-        updateProgress(step: .advancedAI, stepProgress: 0.7, message: "인사이트 발굴 중...")
-
-        // 4-5: InsightEngine (인사이트 발굴)
-        let insightContext = InsightEngine.AnalysisContext(
-            clusters: clusters,
-            sceneCategories: sceneCategories,
-            momentScores: momentScores,
-            travelDNA: travelDNA,
-            totalDistance: basicResult.totalDistance * 1000, // km → m
-            totalPhotos: basicResult.photoCount
-        )
-        insights = insightEngine.discoverInsights(from: insightContext)
-        insightSummary = insightEngine.generateSummary(from: insights)
-        logger.info("🔍 [WanderIntelligence] 인사이트 발굴 완료: \(insights.count)개")
-
-        // 4-6: iOS 18.2+ FastVLM 고급 분석 (선택적)
-        if targetLevel >= .advanced {
-            if #available(iOS 18.2, *) {
-                updateProgress(step: .advancedAI, stepProgress: 0.85, message: "고급 AI 분석 중...")
-                // FastVLM 분석은 선택적으로 추가 가능
-                // 현재는 기본 Vision 분석으로 대체
-                logger.info("🤖 [WanderIntelligence] iOS 18.2+ FastVLM 분석 준비 완료")
+                let progress = 0.2 + (0.2 * Double(index + 1) / Double(enhancedPlaces.count))
+                updateProgress(step: .advancedAI, stepProgress: progress, message: "순간 점수 계산 중... (\(index + 1)/\(enhancedPlaces.count))")
             }
-        }
 
-        updateProgress(step: .advancedAI, stepProgress: 1.0, message: "AI 분석 완료")
-        logger.info("✨ [WanderIntelligence] 전체 분석 완료!")
+            // 4-3: 전체 여행 점수 (내부 데이터, UI 미노출)
+            tripScore = momentScoreService.calculateTripScore(momentScores: momentScores)
+            logger.info("🏆 [WanderIntelligence] 여행 종합 점수: \(tripScore?.averageScore ?? 0)점")
+
+            updateProgress(step: .advancedAI, stepProgress: 0.5, message: "스토리 생성 중...")
+
+            // 4-4: StoryWeaving (스토리 생성)
+            let sceneDescriptions = sceneCategories.compactMap { $0?.koreanName }
+            let storyContext = StoryWeavingService.StoryContext(
+                clusters: clusters,
+                travelDNA: travelDNA,
+                momentScores: momentScores,
+                sceneDescriptions: sceneDescriptions,
+                startDate: basicResult.startDate,
+                endDate: basicResult.endDate,
+                totalDistance: basicResult.totalDistance,
+                photoCount: basicResult.photoCount
+            )
+            travelStory = storyWeavingService.generateStory(from: storyContext)
+            logger.info("📖 [WanderIntelligence] 스토리 생성 완료: \(travelStory?.title ?? "N/A")")
+
+            updateProgress(step: .advancedAI, stepProgress: 0.7, message: "인사이트 발굴 중...")
+
+            // 4-5: InsightEngine (인사이트 발굴)
+            let insightContext = InsightEngine.AnalysisContext(
+                clusters: clusters,
+                sceneCategories: sceneCategories,
+                momentScores: momentScores,
+                travelDNA: travelDNA,
+                totalDistance: basicResult.totalDistance * 1000, // km → m
+                totalPhotos: basicResult.photoCount
+            )
+            insights = insightEngine.discoverInsights(from: insightContext)
+            insightSummary = insightEngine.generateSummary(from: insights)
+            logger.info("🔍 [WanderIntelligence] 인사이트 발굴 완료: \(insights.count)개")
+
+            // 4-6: iOS 18.2+ FastVLM 고급 분석 (선택적)
+            if targetLevel >= .advanced {
+                if #available(iOS 18.2, *) {
+                    updateProgress(step: .advancedAI, stepProgress: 0.85, message: "고급 AI 분석 중...")
+                    logger.info("🤖 [WanderIntelligence] iOS 18.2+ FastVLM 분석 준비 완료")
+                }
+            }
+
+            updateProgress(step: .advancedAI, stepProgress: 1.0, message: "AI 분석 완료")
+            logger.info("✨ [WanderIntelligence] 전체 분석 완료!")
+        } else {
+            logger.info("⏭️ [WanderIntelligence] \(context.displayName) 컨텍스트 → Wander Intelligence 건너뜀")
+            updateProgress(step: .advancedAI, stepProgress: 1.0, message: "분석 완료")
+        }
 
         // Step 5: 마무리
         updateProgress(step: .finalizing, stepProgress: 1.0, message: "완료!")

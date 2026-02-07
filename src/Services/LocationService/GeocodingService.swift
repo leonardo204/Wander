@@ -11,8 +11,11 @@ class GeocodingService {
         var name: String
         var fullAddress: String
         var placeType: String?
-        var locality: String?
-        var subLocality: String?
+
+        // v3.1 Context Classification 지원
+        var administrativeArea: String?  // 시/도
+        var locality: String?            // 시/군/구
+        var subLocality: String?         // 읍/면/동
         var thoroughfare: String?
     }
 
@@ -69,6 +72,7 @@ class GeocodingService {
             name: name,
             fullAddress: fullAddress,
             placeType: placeType,
+            administrativeArea: placemark.administrativeArea,
             locality: placemark.locality,
             subLocality: placemark.subLocality,
             thoroughfare: placemark.thoroughfare
